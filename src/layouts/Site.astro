@@ -45,7 +45,7 @@ const sections = [
 <html lang="en-GB">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
     <meta name="theme-color" content="#000000" />
     <title>{title}</title>
     <meta name="description" content={description} />
@@ -102,7 +102,7 @@ const sections = [
         <slot />
         <footer class="site-footer">
           <p>
-            Built with Astro and React, deployed by GitHub Actions. There's a terminal hidden in here: press <kbd>`</kbd>&nbsp;on any page, or <a href={`${base}terminal/`} data-open-terminal>open it</a>. The <a href="https://github.com/iamzainrizwan/modul0/releases/tag/v0-handwritten">first version</a> of this site was hand-written.
+            Built with Astro and React, deployed by GitHub Actions. There's a terminal hidden in here: <span class="kbd-hint">press <kbd>`</kbd>&nbsp;on any page, or </span><a href={`${base}terminal/`} data-open-terminal>open it</a>. The <a href="https://github.com/iamzainrizwan/modul0/releases/tag/v0-handwritten">first version</a> of this site was hand-written.
           </p>
         </footer>
       </main>

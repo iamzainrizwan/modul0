@@ -68,6 +68,7 @@
 .terminal .post h3::before { content: '### '; color: var(--muted); }
 .terminal .post p, .terminal .post ul, .terminal .post ol { margin: 0 0 1em; }
 .terminal .post ul, .terminal .post ol { padding-left: 1.5em; }
+.terminal .post ul { list-style: square; }
 .terminal .post li::marker { color: var(--purple); }
 .terminal .post code { color: var(--purple); }
 .terminal .post pre { margin: 0 0 1em; padding: 0.75em 1em; overflow-x: auto; white-space: pre; border: 1px solid var(--line); }

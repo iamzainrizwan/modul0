@@ -11,16 +11,17 @@ import { motion } from 'motion/react';
 // purple panel wipes up and away to reveal the site. any key/tap skips
 // straight to the wipe.
 
-type Line = { text: string; status: 'ok' | 'wait' };
+// `short` is shown on narrow screens so each line stays on one row
+type Line = { text: string; short: string; status: 'ok' | 'wait' };
 
 const LINES: Line[] = [
-  { text: 'identifying user: zain rizwan', status: 'ok' },
-  { text: 'mounting /kcl/computer-science/year-2', status: 'ok' },
-  { text: 'loading cybersoc/treasurer', status: 'ok' },
-  { text: 'connecting to alexandria', status: 'ok' },
-  { text: 'starting s3ntry health daemon', status: 'ok' },
-  { text: 'ledgr: categoriser', status: 'wait' },
-  { text: 'indexing 3 featured projects, 11 archived', status: 'ok' },
+  { text: 'identifying user: zain rizwan', short: 'user: zain rizwan', status: 'ok' },
+  { text: 'mounting /kcl/computer-science/year-2', short: 'mount /kcl/cs/year-2', status: 'ok' },
+  { text: 'loading cybersoc/treasurer', short: 'load cybersoc/treasurer', status: 'ok' },
+  { text: 'connecting to alexandria', short: 'connect alexandria', status: 'ok' },
+  { text: 'starting s3ntry health daemon', short: 'start s3ntry health', status: 'ok' },
+  { text: 'ledgr: categoriser', short: 'ledgr: categoriser', status: 'wait' },
+  { text: 'indexing 3 featured projects, 11 archived', short: 'index 14 projects', status: 'ok' },
 ];
 
 const LINE_STEP = 115;
@@ -116,7 +117,10 @@ export default function BootSequence() {
               const done = i < resolved;
               return (
                 <div key={i} className="boot-line">
-                  <span>{l.text}</span>
+                  <span className="boot-text">
+                    <span className="boot-long">{l.text}</span>
+                    <span className="boot-short">{l.short}</span>
+                  </span>
                   <span className={`boot-status ${done ? l.status : 'pending'}`}>
                     {done ? (l.status === 'ok' ? '[  ok  ]' : '[ wait ]') : '[ .... ]'}
                   </span>
@@ -133,7 +137,10 @@ export default function BootSequence() {
             {phase === 'log' ? ' ' : typed}
             {phase !== 'log' && <span className="boot-cursor" />}
           </div>
-          <span className="boot-skip">any key skips</span>
+          <span className="boot-skip">
+            <span className="boot-long">any key skips</span>
+            <span className="boot-short">tap to skip</span>
+          </span>
         </div>
       )}
       {(phase === 'wipe' || phase === 'reveal') && (

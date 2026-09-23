@@ -9,7 +9,7 @@ JavaScript over a couple of weekends. It was fun to build and fairly
 miserable to use if you just wanted to know what I'd worked on.
 
 This version is a site you can actually read, with a blog attached. The terminal
-is still here: press `` ` `` on any page, or use the terminal button in the sidebar.
+is still here: press `` ` `` on any page, or hit “open it” at the bottom of any page.
 
 ## What's in the terminal
 
