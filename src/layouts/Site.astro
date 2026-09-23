@@ -51,6 +51,13 @@ const sections = [
     <meta name="description" content={description} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={new URL(Astro.url.pathname, Astro.site)} />
+    <meta property="og:image" content={new URL(`${base}og.png`, Astro.site)} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="627" />
+    <meta property="og:image:alt" content="Zain Rizwan, modul0.dev: I like breaking things (CTFs) and building things that don't break." />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href={`${base}favicon.svg`} type="image/svg+xml" />
     <link rel="alternate" type="application/rss+xml" title={person.name} href={`${base}rss.xml`} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
