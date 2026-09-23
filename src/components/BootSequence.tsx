@@ -1,40 +1,64 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 
 // first-visit boot animation. the page is fully rendered underneath. an inline
 // script in Site.astro sets html[data-boot=pending] before first paint, which
 // shows a static black cover (no flash of the page); this component swaps it
-// for the animated overlay and removes the attribute when done. skipped for reduced motion and on
-// repeat visits within a session (the inline script decides both).
+// for the animated overlay and removes the attribute when done.
+//
+// sequence: log lines resolve [ .... ] -> [  ok  ] while a square progress
+// bar fills, the name types itself (typo included, then fixed), and a solid
+// purple panel wipes up and away to reveal the site. any key/tap skips
+// straight to the wipe.
 
-type Line = { text: string; status?: 'ok' | 'wait' };
+type Line = { text: string; status: 'ok' | 'wait' };
 
 const LINES: Line[] = [
-  { text: 'modul0 bootloader v0.3' },
   { text: 'identifying user: zain rizwan', status: 'ok' },
   { text: 'mounting /kcl/computer-science/year-2', status: 'ok' },
   { text: 'loading cybersoc/treasurer', status: 'ok' },
   { text: 'connecting to alexandria', status: 'ok' },
   { text: 'starting s3ntry health daemon', status: 'ok' },
   { text: 'ledgr: categoriser', status: 'wait' },
-  { text: 'indexing 3 featured projects, 10 more in the archive', status: 'ok' },
+  { text: 'indexing 3 featured projects, 11 archived', status: 'ok' },
 ];
 
-const STEP = 170; // ms between lines
-const HOLD = 650; // name on screen before the reveal
+const LINE_STEP = 115;
+const RESOLVE = 190;
+const BAR = 16;
+
+// keystrokes for the name: 'rizwna' is the typo, two backspaces fix it
+type Key = { ch: string; wait: number } | { back: true; wait: number };
+const KEYS: Key[] = (() => {
+  const jitter = [62, 48, 81, 55, 70, 44, 90, 58, 66, 51, 77];
+  const typed = (s: string, start: number) => [...s].map((ch, i) => ({ ch, wait: jitter[(start + i) % jitter.length] }));
+  return [
+    ...typed('zain rizw', 0),
+    ...typed('na', 9),
+    { back: true, wait: 420 }, // notice the typo
+    { back: true, wait: 70 },
+    ...typed('an', 3),
+  ];
+})();
+
+type Phase = 'log' | 'name' | 'wipe' | 'reveal' | 'done';
 
 export default function BootSequence() {
   const [active, setActive] = useState(false);
   const [shown, setShown] = useState(0);
-  const [phase, setPhase] = useState<'log' | 'name' | 'out'>('log');
+  const [resolved, setResolved] = useState(0);
+  const [typed, setTyped] = useState('');
+  const [phase, setPhase] = useState<Phase>('log');
   const timers = useRef<number[]>([]);
-  const done = useRef(false);
+  const skipped = useRef(false);
 
-  const finish = () => {
-    if (done.current) return;
-    done.current = true;
+  const later = (fn: () => void, ms: number) => timers.current.push(window.setTimeout(fn, ms));
+
+  const toWipe = () => {
+    if (skipped.current) return;
+    skipped.current = true;
     timers.current.forEach(clearTimeout);
-    setPhase('out');
+    setPhase('wipe');
     try {
       sessionStorage.setItem('modul0-booted', '1');
     } catch {}
@@ -46,58 +70,87 @@ export default function BootSequence() {
     // hand over from the static cover to the animated overlay
     root.dataset.boot = 'running';
     setActive(true);
-    const t = timers.current;
-    LINES.forEach((_, i) => t.push(window.setTimeout(() => setShown(i + 1), STEP * (i + 1))));
-    const nameAt = STEP * (LINES.length + 1) + 150;
-    t.push(window.setTimeout(() => setPhase('name'), nameAt));
-    t.push(window.setTimeout(finish, nameAt + HOLD + 700));
+
+    LINES.forEach((_, i) => {
+      later(() => setShown(i + 1), LINE_STEP * (i + 1));
+      later(() => setResolved(i + 1), LINE_STEP * (i + 1) + RESOLVE);
+    });
+
+    let t = LINE_STEP * LINES.length + RESOLVE + 260;
+    later(() => setPhase('name'), t);
+    t += 180;
+    for (const k of KEYS) {
+      t += k.wait;
+      if ('back' in k) later(() => setTyped((s) => s.slice(0, -1)), t);
+      else later(() => setTyped((s) => s + k.ch), t);
+    }
+    later(toWipe, t + 520);
+
     const skip = (e: Event) => {
       if (e instanceof KeyboardEvent && ['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return;
-      finish();
+      toWipe();
     };
     window.addEventListener('keydown', skip);
     window.addEventListener('pointerdown', skip);
     return () => {
-      t.forEach(clearTimeout);
+      timers.current.forEach(clearTimeout);
       window.removeEventListener('keydown', skip);
       window.removeEventListener('pointerdown', skip);
     };
   }, []);
 
-  if (!active) return null;
+  if (!active || phase === 'done') return null;
+
+  const filled = Math.round((resolved / LINES.length) * BAR);
 
   return (
-    <AnimatePresence onExitComplete={() => document.documentElement.removeAttribute('data-boot')}>
-      {phase !== 'out' && (
-        <motion.div
-          className="bootseq"
-          role="presentation"
-          aria-hidden="true"
-          exit={{ clipPath: 'inset(0 0 100% 0)' }}
-          initial={{ clipPath: 'inset(0 0 0% 0)' }}
-          transition={{ duration: 0.55, ease: [0.7, 0, 0.2, 1] }}
-        >
+    <div className="bootseq" role="presentation" aria-hidden="true" data-phase={phase}>
+      {phase !== 'reveal' && (
+        <div className="boot-screen">
           <div className="boot-log">
-            {LINES.slice(0, shown).map((l, i) => (
-              <div key={i} className="boot-line">
-                <span>{l.text}</span>
-                {l.status && <span className={`boot-status ${l.status}`}>{l.status === 'ok' ? '[  ok  ]' : '[ wait ]'}</span>}
-              </div>
-            ))}
-            {phase === 'log' && <span className="boot-cursor" />}
+            <div className="boot-head">
+              <span>modul0 bootloader</span>
+              <span>v0.4</span>
+            </div>
+            {LINES.slice(0, shown).map((l, i) => {
+              const done = i < resolved;
+              return (
+                <div key={i} className="boot-line">
+                  <span>{l.text}</span>
+                  <span className={`boot-status ${done ? l.status : 'pending'}`}>
+                    {done ? (l.status === 'ok' ? '[  ok  ]' : '[ wait ]') : '[ .... ]'}
+                  </span>
+                </div>
+              );
+            })}
+            <div className="boot-bar">
+              {Array.from({ length: BAR }, (_, i) => (
+                <span key={i} className={i < filled ? 'on' : ''} />
+              ))}
+            </div>
           </div>
-          {/* always rendered so the log doesn't jump when the name appears */}
-          <motion.div
-            className="boot-name"
-            initial={{ opacity: 0, letterSpacing: '0.4em', filter: 'blur(8px)' }}
-            animate={phase === 'name' ? { opacity: 1, letterSpacing: '-0.02em', filter: 'blur(0px)' } : undefined}
-            transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1] }}
-          >
-            zain rizwan<span className="boot-cursor" />
-          </motion.div>
-          <span className="boot-skip">press any key to skip</span>
-        </motion.div>
+          <div className="boot-name">
+            {phase === 'log' ? ' ' : typed}
+            {phase !== 'log' && <span className="boot-cursor" />}
+          </div>
+          <span className="boot-skip">any key skips</span>
+        </div>
       )}
-    </AnimatePresence>
+      {(phase === 'wipe' || phase === 'reveal') && (
+        <motion.div
+          className="boot-wipe"
+          initial={{ y: '100%' }}
+          animate={phase === 'wipe' ? { y: '0%' } : { y: '-100%' }}
+          transition={phase === 'wipe' ? { duration: 0.28, ease: [0.7, 0, 0.84, 0] } : { duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+          onAnimationComplete={() => {
+            if (phase === 'wipe') {
+              // page shows through as soon as the black screen is gone
+              document.documentElement.removeAttribute('data-boot');
+              setPhase('reveal');
+            } else setPhase('done');
+          }}
+        />
+      )}
+    </div>
   );
 }

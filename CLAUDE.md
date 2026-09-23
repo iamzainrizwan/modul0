@@ -4,8 +4,11 @@ modul0: Zain's portfolio + blog. Astro 7 with React islands, fully static,
 deployed to GitHub Pages by `.github/workflows/deploy.yml` on push to `main`.
 Live at https://iamzainrizwan.github.io/modul0/ (base path `/modul0/`).
 
-Look: AMOLED black + purple (`src/styles/tokens.css`), dark-only on purpose.
-IBM Plex Mono for display/nav, IBM Plex Sans for reading.
+Look: brutalist AMOLED + purple (`src/styles/tokens.css`), dark-only on
+purpose. Zain's rules: square corners only (no border-radius anywhere), serif
+or monospace fonts only (Newsreader for reading/display, IBM Plex Mono for
+ui/terminal, never sans-serif), loud but minimal: hard 2px rules, hard offset
+shadows, solid purple blocks, no blur or glow.
 
 ## Accuracy is the top rule
 
@@ -26,7 +29,9 @@ those. When sources disagree, ask; don't pick one.
   now/uptime, links, terminal button) + content. `boot` prop plays the boot
   animation (home only); `section` highlights a nav item on non-home pages.
 - `src/pages/index.astro` - home, every section in order.
-- `src/components/` - React islands: `BootSequence` (first visit per session,
+- `src/components/` - React islands: `BootSequence` (first visit per session;
+  log -> typed name with a deliberate typo + backspace fix -> purple wipe. The
+  "N archived" count in its log is hardcoded: keep it equal to `archive.length`;
   skipped for reduced motion; an inline script in Site.astro sets
   `html[data-boot=pending]` before paint so there's no flash), `ProjectExplorer`
   (featured + filterable archive), `QuakeTerminal` (drop-down terminal on every
@@ -40,6 +45,8 @@ those. When sources disagree, ask; don't pick one.
 ## Rules
 
 - Anything user-typed in the terminal goes through `escape()` before innerHTML.
+- React islands are wrapped in `<astro-island>`, so `.parent > *` selectors
+  don't reach them (the rail uses `display: contents` on the wrapper).
 - Terminal CSS is scoped under `.terminal`; don't add global classes that
   could collide with the engine's (`entry`, `boot`, `echo`, `response`, `run`).
 - Every page must work without JS (islands render server-side) and at 320px

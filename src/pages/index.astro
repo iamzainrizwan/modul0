@@ -39,13 +39,19 @@ const email = links[0];
   </section>
 
   <section id="projects" aria-labelledby="projects-h">
-    <h2 id="projects-h" class="section-h">Projects</h2>
+    <header class="section-head">
+      <h2 id="projects-h" class="section-h">Projects</h2>
+      <span class="section-meta">{featured.length + archive.length} projects</span>
+    </header>
     <p class="section-lede">Three I'd most like to talk about, then everything else I've built, most recent first.</p>
     <ProjectExplorer client:load featured={featured} archive={archive} areas={areas} />
   </section>
 
   <section id="homelab" aria-labelledby="homelab-h">
-    <h2 id="homelab-h" class="section-h">Homelab</h2>
+    <header class="section-head">
+      <h2 id="homelab-h" class="section-h">Homelab</h2>
+      <span class="section-meta">2 machines, 1 pipeline</span>
+    </header>
     <p class="section-lede">
       alexandria is where my projects actually run. Every change reaches it through a pipeline I built (s3ntry), and a
       monitor I wrote tells me when something breaks.
@@ -73,22 +79,34 @@ const email = links[0];
   </section>
 
   <section id="experience" aria-labelledby="experience-h">
-    <h2 id="experience-h" class="section-h">Experience</h2>
+    <header class="section-head">
+      <h2 id="experience-h" class="section-h">Experience</h2>
+      <span class="section-meta">{experience.length} roles</span>
+    </header>
     <Timeline roles={experience} />
   </section>
 
   <section id="education" aria-labelledby="education-h">
-    <h2 id="education-h" class="section-h">Education</h2>
+    <header class="section-head">
+      <h2 id="education-h" class="section-h">Education</h2>
+      <span class="section-meta">{education.length} schools</span>
+    </header>
     <Timeline roles={education} />
   </section>
 
   <section id="leadership" aria-labelledby="leadership-h">
-    <h2 id="leadership-h" class="section-h">Leadership and activities</h2>
+    <header class="section-head">
+      <h2 id="leadership-h" class="section-h">Leadership and activities</h2>
+      <span class="section-meta">{leadership.length} roles</span>
+    </header>
     <Timeline roles={leadership} />
   </section>
 
   <section id="awards" aria-labelledby="awards-h">
-    <h2 id="awards-h" class="section-h">Awards and hackathons</h2>
+    <header class="section-head">
+      <h2 id="awards-h" class="section-h">Awards and hackathons</h2>
+      <span class="section-meta">{awards.length} awards, {hackathons.length} hackathons</span>
+    </header>
     <ul class="awards">
       {awards.map((a) => (
         <li>
@@ -110,7 +128,10 @@ const email = links[0];
   </section>
 
   <section id="skills" aria-labelledby="skills-h">
-    <h2 id="skills-h" class="section-h">Skills</h2>
+    <header class="section-head">
+      <h2 id="skills-h" class="section-h">Skills</h2>
+      <span class="section-meta">{skills.reduce((n, g) => n + g.items.length, 0)} tools</span>
+    </header>
     <dl class="skills">
       {skills.map((g) => (
         <div>
@@ -130,7 +151,10 @@ const email = links[0];
   </section>
 
   <section id="writing" aria-labelledby="writing-h">
-    <h2 id="writing-h" class="section-h">Writing</h2>
+    <header class="section-head">
+      <h2 id="writing-h" class="section-h">Writing</h2>
+      <span class="section-meta">{posts.length} {posts.length === 1 ? 'post' : 'posts'}</span>
+    </header>
     {posts.length ? (
       <ul class="post-list">
         {posts.map((p) => (
@@ -145,8 +169,10 @@ const email = links[0];
   </section>
 
   <section id="contact" aria-labelledby="contact-h">
-    <h2 id="contact-h" class="section-h">Contact</h2>
-    <p class="section-lede">The fastest way to reach me is email.</p>
+    <header class="section-head">
+      <h2 id="contact-h" class="section-h">Contact</h2>
+      <span class="section-meta">email is fastest</span>
+    </header>
     <dl class="contact">
       {links.map((l) => <><dt>{l.label}</dt><dd><a href={l.href}>{l.text}</a></dd></>)}
     </dl>
