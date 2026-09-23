@@ -2,7 +2,8 @@
 
 modul0: Zain's portfolio + blog. Astro 7 with React islands, fully static,
 deployed to GitHub Pages by `.github/workflows/deploy.yml` on push to `main`.
-Live at https://iamzainrizwan.github.io/modul0/ (base path `/modul0/`).
+Live at https://modul0.dev (GitHub Pages custom domain, DNS at name.com; the old
+iamzainrizwan.github.io/modul0/ URL redirects there).
 
 Look: brutalist AMOLED + purple (`src/styles/tokens.css`), dark-only on
 purpose. Zain's rules: square corners only (no border-radius anywhere), serif

@@ -24,11 +24,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # project page lives under /modul0/ until a custom domain is set up
+      # served at the root of the custom domain (github pages custom domain: modul0.dev)
       - run: npm run build
         env:
-          SITE: https://iamzainrizwan.github.io
-          BASE: /modul0/
+          SITE: https://modul0.dev
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
