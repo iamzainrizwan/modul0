@@ -52,4 +52,9 @@ export const achievements = [
   "Top 5 twice in King's College London CTF competitions",
 ];
 
-export const links = [{ label: 'GitHub', href: 'https://github.com/iamzainrizwan' }];
+// shown as "label: text" so the address itself is visible and copyable
+export const links = [
+  { label: 'Email', text: 'iamzainrizwan@gmail.com', href: 'mailto:iamzainrizwan@gmail.com' },
+  { label: 'LinkedIn', text: 'linkedin.com/in/iamzainrizwan', href: 'https://www.linkedin.com/in/iamzainrizwan/' },
+  { label: 'GitHub', text: 'github.com/iamzainrizwan', href: 'https://github.com/iamzainrizwan' },
+];

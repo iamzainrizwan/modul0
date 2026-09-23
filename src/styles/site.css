@@ -189,3 +189,7 @@ ul.projects, ul.posts, ul.plain { list-style: none; margin: 0; padding: 0; }
 @media (max-width: 360px) {
   .site-header nav { margin-left: 0; }
 }
+
+.contact { display: grid; grid-template-columns: max-content 1fr; gap: 0.4rem 1.5rem; margin: 0; }
+.contact dt { color: var(--muted); }
+.contact dd { margin: 0; overflow-wrap: anywhere; }

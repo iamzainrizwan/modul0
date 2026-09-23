@@ -55,8 +55,8 @@ const base = import.meta.env.BASE_URL;
 
   <section id="contact" aria-labelledby="contact-h">
     <h2 id="contact-h">Contact</h2>
-    <ul class="plain">
-      {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
-    </ul>
+    <dl class="contact">
+      {links.map((l) => <><dt>{l.label}</dt><dd><a href={l.href}>{l.text}</a></dd></>)}
+    </dl>
   </section>
 </Site>

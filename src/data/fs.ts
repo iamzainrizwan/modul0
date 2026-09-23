@@ -25,7 +25,9 @@ security   > ctf tooling, wireshark, educated guessing.</pre>`,
 > kcl ctfs - 2x top 5</pre>`,
   'status.log': status,
   'contact.txt': `<pre>
-github  > <a href="https://github.com/iamzainrizwan">github.com/iamzainrizwan</a></pre>`,
+email     > <a href="mailto:iamzainrizwan@gmail.com">iamzainrizwan@gmail.com</a>
+linkedin  > <a href="https://www.linkedin.com/in/iamzainrizwan/">linkedin.com/in/iamzainrizwan</a>
+github    > <a href="https://github.com/iamzainrizwan">github.com/iamzainrizwan</a></pre>`,
 };
 
 export const projects: Record<string, string> = {
