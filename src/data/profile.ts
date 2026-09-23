@@ -5,8 +5,8 @@
 export const name = 'Zain Rizwan';
 
 export const intro = [
-  "I study Computer Science (MSci) at King's College London. I'm most interested in what happens to software after it ships: deploying it, monitoring it, and keeping it secure.",
-  'Outside lectures I compete in capture-the-flag security competitions with KCL CyberSoc and tutor students in programming.',
+  "I'm a second-year Computer Science student at King's College London. I'm most interested in what happens to software after it ships: deploying it, monitoring it, and keeping it secure.",
+  "Outside lectures I'm treasurer of KCL's Cyber Security Society and compete in capture-the-flag security competitions.",
 ];
 
 export const lookingFor = "I'm looking for summer 2027 internships in site reliability, security or backend engineering.";
@@ -23,7 +23,7 @@ export const projects: Project[] = [
   {
     name: 'ledgr',
     summary:
-      'A personal finance app that reads my bank statements from three UK banks, records every transaction in a double-entry ledger, and sorts spending into categories automatically.',
+      'A personal finance app that reads my HSBC and Revolut bank statements, checks each one against its own printed balance, and records every transaction in a double-entry ledger. Automatic spending categories are next.',
     stack: ['Python', 'FastAPI', 'PostgreSQL'],
     status: 'In progress',
     repo: 'https://github.com/iamzainrizwan/ledgr',
@@ -47,9 +47,9 @@ export const projects: Project[] = [
 ];
 
 export const achievements = [
-  'Won KCL Informatics Puzzled',
-  'Second place at the Uber Global Hackathon',
-  "Top 5 twice in King's College London CTF competitions",
+  'My team placed 1st of 200 to 300 undergraduates in KCL Informatics Puzzled',
+  'Regional finalist, Uber Global Hackathon (Middle East and North Africa, 2023)',
+  'Top 5 in the UCL vs KCL CTF and the KCL Welcome CTF',
 ];
 
 // shown as "label: text" so the address itself is visible and copyable

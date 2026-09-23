@@ -3,7 +3,7 @@
 // src/content/blog.
 
 export const whoami =
-  'zain - cs @ kcl (msci) · kcl cybersoc · coding tutor<br>' +
+  'zain - cs @ kcl (y2) · kcl cybersoc treasurer<br>' +
   'heading toward: sre / security engineering / distributed systems';
 
 export const status = 'rebuilding modul0 (you are looking at it)';
@@ -20,9 +20,9 @@ languages  > java, python, go, c#, bash
 infra      > linux, docker, nginx, github actions, ssh tunnels into alexandria at 2am.
 security   > ctf tooling, wireshark, educated guessing.</pre>`,
   'achievements.txt': `<pre>
-> 1st - kcl informatics puzzled
-> 2nd - uber global hackathon
-> kcl ctfs - 2x top 5</pre>`,
+> 1st - kcl informatics puzzled (team, of 200-300)
+> regional finalist - uber global hackathon, mena
+> top 5 - ucl vs kcl ctf, kcl welcome ctf</pre>`,
   'status.log': status,
   'contact.txt': `<pre>
 email     > <a href="mailto:iamzainrizwan@gmail.com">iamzainrizwan@gmail.com</a>
@@ -32,8 +32,8 @@ github    > <a href="https://github.com/iamzainrizwan">github.com/iamzainrizwan<
 
 export const projects: Record<string, string> = {
   'ledgr.md':
-    '<b>ledgr</b> - personal finance across three banks. double-entry ledger (postgres, immutable entries), ' +
-    'statement ingestion from pdf/excel, categorisation with a from-scratch embedding model. fastapi. in progress.',
+    '<b>ledgr</b> - double-entry personal finance. immutable entries, idempotent posts, ' +
+    'hsbc pdf + revolut parsers that self-check against printed totals. fastapi + postgres. categoriser next.',
   's3ntry.md':
     '<b>s3ntry</b> - deploy + monitoring tooling for alexandria. ci/cd on a self-hosted runner, ' +
     'a go health-check daemon (goroutine per service), alerting via webhook.',
