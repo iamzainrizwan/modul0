@@ -29,7 +29,7 @@ export const person = {
   ],
   lookingFor:
     "Looking for summer 2027 internships, 2027/28 placements, and anything else that needs fixing (or is bound to). On-site, hybrid or remote, London area.",
-  now: 'ledgr: statement parsers done, building the categoriser',
+  now: 'ledgr: building the stats view',
 };
 
 export const links = [
@@ -64,19 +64,21 @@ export const featured: Project[] = [
     year: '2026',
     tagline: 'Double-entry personal finance',
     summary:
-      'A personal finance system built the way accounting software is: every transaction becomes balanced, permanent ledger entries. It reads my real bank statements, checks each one against its own printed totals, and only then posts it.',
+      'A personal finance system built the way accounting software is: every transaction becomes balanced, permanent ledger entries. It reads my real bank statements, checks each one against its own printed totals, and stages every transaction for me to categorise before it posts. There’s a [live demo](https://ledgr-demo.fly.dev/).',
     status: 'building',
-    statusText: 'In progress: categoriser next',
-    stack: ['Python', 'FastAPI', 'PostgreSQL'],
+    statusText: 'Live demo, stats view next',
+    stack: ['Python', 'FastAPI', 'SQLAlchemy', 'SQLite'],
     areas: ['Backend', 'Data'],
     repo: 'https://github.com/iamzainrizwan/ledgr',
     details: [
-      'Double-entry [ledger](https://github.com/iamzainrizwan/ledgr/blob/main/backend/src/backend/ledger.py) in FastAPI and PostgreSQL that enforces a balanced-entry invariant at write time.',
+      'Double-entry [ledger](https://github.com/iamzainrizwan/ledgr/blob/main/backend/src/backend/ledger.py) in FastAPI and SQLAlchemy that enforces a balanced-entry invariant at write time.',
       'Posts are idempotent via an external ID, so re-importing the same statement never duplicates money.',
       'Entries are immutable: corrections are reversals, never updates or deletes.',
       'Hierarchical accounts (Assets:Checking:HSBC, Income:Salary). Balances are always computed by query, never stored.',
       'Bank-specific parsers for [HSBC](https://github.com/iamzainrizwan/ledgr/blob/main/backend/src/backend/ingestion/hsbc.py) (PDF) and [Revolut](https://github.com/iamzainrizwan/ledgr/blob/main/backend/src/backend/ingestion/revolut.py) (Excel/CSV), each validating itself against the statement’s printed balance before posting anything.',
-      'Planned: automatic categorisation with a manual correction UI, cross-account stats, spending anomalies, and an anonymised CSV export for use with LLMs.',
+      'Parsed transactions are staged for review instead of posted straight away: the app suggests a category from ledger history, and I confirm them one at a time or in bulk.',
+      '[Deployed to Fly.io](https://ledgr-demo.fly.dev/) on SQLite (Postgres-ready via config): upload a statement, categorise it, see balances.',
+      'Next: a stats view of spend by category and month.',
     ],
   },
   {
@@ -443,7 +445,7 @@ export const hackathons = [
 
 export const skills = [
   { group: 'Languages', items: ['Python', 'Go', 'Java', 'C#', 'C / Embedded C', 'TypeScript', 'Bash'] },
-  { group: 'Backend', items: ['FastAPI', 'Flask', 'PostgreSQL', 'SQLite'] },
+  { group: 'Backend', items: ['FastAPI', 'Flask', 'SQLAlchemy', 'SQLite'] },
   { group: 'Infrastructure', items: ['Linux', 'Docker', 'nginx', 'systemd', 'GitHub Actions', 'Self-hosted runners', 'Azure', 'Azure CLI', 'Git'] },
   { group: 'Security', items: ['CTF tooling', 'Wireshark'] },
   { group: 'Also', items: ['Unity', 'Figma', 'Arduino', 'Microsoft 365'] },

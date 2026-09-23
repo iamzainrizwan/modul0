@@ -20,7 +20,7 @@ const LINES: Line[] = [
   { text: 'loading cybersoc/treasurer', short: 'load cybersoc/treasurer', status: 'ok' },
   { text: 'connecting to alexandria', short: 'connect alexandria', status: 'ok' },
   { text: 'starting s3ntry health daemon', short: 'start s3ntry health', status: 'ok' },
-  { text: 'ledgr: categoriser', short: 'ledgr: categoriser', status: 'wait' },
+  { text: 'ledgr: stats view', short: 'ledgr: stats view', status: 'wait' },
   { text: 'indexing 3 featured projects, 11 archived', short: 'index 14 projects', status: 'ok' },
 ];
 
