@@ -1,6 +1,7 @@
 ---
 import Site from '../../layouts/Site.astro';
-import { name } from '../../data/profile';
+import { person } from '../../data/profile';
+const name = person.name;
 import { getPosts, longDate } from '../../data/buildFs';
 import { render } from 'astro:content';
 
@@ -13,12 +14,13 @@ const { post } = Astro.props;
 const { Content } = await render(post);
 ---
 
-<Site title={`${post.data.title} - ${name}`} description={post.data.description}>
+<Site section="writing" title={`${post.data.title} - ${name}`} description={post.data.description}>
   <article class="article">
     <header>
       <h1>{post.data.title}</h1>
       <time datetime={post.data.date.toISOString()}>{longDate(post.data.date)}</time>
     </header>
     <Content />
+    <p class="back"><a href={`${import.meta.env.BASE_URL}#writing`}>All writing</a></p>
   </article>
 </Site>

@@ -1,20 +1,44 @@
 ---
+import '../styles/tokens.css';
+import '../styles/terminal.css';
 import '../styles/site.css';
-import { name } from '../data/profile';
+import { person, links } from '../data/profile';
+import { buildFs } from '../data/buildFs';
+import BootSequence from '../components/BootSequence';
+import QuakeTerminal from '../components/QuakeTerminal';
+import SectionNav from '../components/SectionNav';
+import Uptime from '../components/Uptime';
 
 interface Props {
   title?: string;
   description?: string;
-  // the home page carries the name in its hero, so the header stays minimal there
-  home?: boolean;
+  // only the home page plays the boot animation
+  boot?: boolean;
+  // nav item to highlight on pages without the home sections
+  section?: string;
 }
 
 const {
-  title = name,
-  description = `${name}, Computer Science student at King's College London. Projects and writing on reliability, security and backend engineering.`,
-  home = false,
+  title = `${person.name} | SRE, software and security`,
+  description = `${person.name}: ${person.study}. Projects, homelab, experience and writing.`,
+  boot = false,
+  section,
 } = Astro.props;
 const base = import.meta.env.BASE_URL;
+const fs = await buildFs();
+
+const sections = [
+  { id: 'about', label: 'about' },
+  { id: 'projects', label: 'projects/' },
+  { id: 'homelab', label: 'homelab/' },
+  { id: 'experience', label: 'experience' },
+  { id: 'education', label: 'education' },
+  { id: 'leadership', label: 'leadership' },
+  { id: 'awards', label: 'awards' },
+  { id: 'skills', label: 'skills' },
+  { id: 'writing', label: 'writing/' },
+  { id: 'contact', label: 'contact' },
+];
 ---
 
 <!doctype html>
@@ -22,37 +46,76 @@ const base = import.meta.env.BASE_URL;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <link rel="icon" href={`${base}favicon.svg`} type="image/svg+xml" />
-    <link rel="alternate" type="application/rss+xml" title={name} href={`${base}rss.xml`} />
+    <link rel="alternate" type="application/rss+xml" title={person.name} href={`${base}rss.xml`} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+    <script is:inline define:vars={{ boot }}>
+      // decide before first paint whether the boot animation runs, so the page
+      // never flashes underneath it. fails open after 5s if react never loads.
+      try {
+        if (boot && !sessionStorage.getItem('modul0-booted') && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          var root = document.documentElement;
+          root.dataset.boot = 'pending';
+          setTimeout(function () {
+            if (root.dataset.boot === 'pending') delete root.dataset.boot;
+          }, 5000);
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
-    <header class="site-header">
-      {home ? <span /> : <a class="home-link" href={base}>{name}</a>}
-      <nav aria-label="Main">
-        <a href={`${base}#projects`}>Projects</a>
-        <a href={`${base}blog/`}>Writing</a>
-        <a href={`${base}#contact`}>Contact</a>
-      </nav>
-    </header>
-    <main id="main">
-      <slot />
-    </main>
-    <footer class="site-footer">
-      <p>There's also a <a href={`${base}terminal/`}>terminal version</a> of this site. Press <kbd>`</kbd> to open it from any page.</p>
-    </footer>
-    <script is:inline define:vars={{ terminal: `${base}terminal/` }}>
-      document.addEventListener('keydown', (e) => {
-        if (e.key !== '`' || e.ctrlKey || e.metaKey || e.altKey) return;
-        if (e.target.closest('input, textarea, [contenteditable]')) return;
-        location.href = terminal;
+    {boot && <div class="boot-cover" aria-hidden="true" />}
+    {boot && <BootSequence client:load />}
+
+    <div class="shell">
+      <aside class="rail">
+        <a class="rail-name" href={base}>{person.name.toLowerCase()}<span class="caret" aria-hidden="true" /></a>
+        <p class="rail-study">{person.study}</p>
+        <SectionNav client:load items={sections} base={base} initial={section} />
+        <dl class="rail-facts">
+          <div>
+            <dt>now</dt>
+            <dd>{person.now}</dd>
+          </div>
+          <div>
+            <dt>uptime</dt>
+            <dd class="mono"><Uptime client:idle birth={person.birth} /></dd>
+          </div>
+        </dl>
+        <ul class="rail-links">
+          {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+        </ul>
+        <a class="rail-terminal" href={`${base}terminal/`} data-open-terminal>
+          <span aria-hidden="true">&gt;_</span> Open the terminal <kbd>`</kbd>
+        </a>
+      </aside>
+
+      <main id="main">
+        <slot />
+        <footer class="site-footer">
+          <p>
+            Built with Astro and React, deployed by GitHub Actions. There's a terminal hidden in here: press <kbd>`</kbd>&nbsp;on any page, or <a href={`${base}terminal/`} data-open-terminal>open it</a>. The <a href="https://github.com/iamzainrizwan/modul0/releases/tag/v0-handwritten">first version</a> of this site was hand-written.
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <QuakeTerminal client:idle fs={fs} />
+    <script>
+      // terminal links open the drop-down once it's hydrated, else fall back to /terminal/
+      document.addEventListener('click', (e) => {
+        const a = (e.target as HTMLElement).closest('[data-open-terminal]');
+        if (!a || !(window as any).__quakeReady || (e as MouseEvent).metaKey || (e as MouseEvent).ctrlKey) return;
+        e.preventDefault();
+        window.dispatchEvent(new Event('modul0:terminal'));
       });
     </script>
   </body>

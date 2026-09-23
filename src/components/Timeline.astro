@@ -1,0 +1,22 @@
+---
+import type { Role } from '../data/profile';
+interface Props { roles: Role[] }
+const { roles } = Astro.props;
+---
+
+<ol class="timeline">
+  {roles.map((r) => (
+    <li class="tl-item">
+      <div class="tl-when">{r.when}</div>
+      <div class="tl-body">
+        <h3 class="tl-role">{r.role}</h3>
+        <p class="tl-org">{r.org}<span class="tl-place">{r.place}</span></p>
+        {r.details.length > 0 && (
+          <ul class="details">
+            {r.details.map((d) => <li>{d}</li>)}
+          </ul>
+        )}
+      </div>
+    </li>
+  ))}
+</ol>

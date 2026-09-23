@@ -1,10 +1,10 @@
 ---
+import '../styles/tokens.css';
 import '../styles/terminal.css';
 import { buildFs } from '../data/buildFs';
 
-// the easter-egg version of the site. the readable site lives in Site.astro.
-const title = 'modul0';
-const description = 'Zain Rizwan, the terminal version.';
+// the full-screen terminal at /terminal/. the site itself uses the same
+// engine in a drop-down (QuakeTerminal).
 const fs = await buildFs();
 const base = import.meta.env.BASE_URL;
 ---
@@ -14,21 +14,24 @@ const base = import.meta.env.BASE_URL;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{title}</title>
-    <meta name="description" content={description} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
+    <meta name="theme-color" content="#000000" />
+    <title>modul0</title>
+    <meta name="description" content="Zain Rizwan, the terminal version." />
     <link rel="icon" href={`${base}favicon.svg`} type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+    <style is:global>
+      html, body { margin: 0; background: #000; }
+      .terminal { min-height: 100vh; min-height: 100dvh; }
+    </style>
   </head>
   <body>
     <main class="terminal">
-      <div id="output" aria-live="polite"></div>
-      <form id="input" hidden>
-        <label for="cmd" class="prompt"><span id="prompt-text">zain@modul0:~$</span></label>
-        <input id="cmd" type="text" enterkeyhint="send" autocomplete="off" autocapitalize="off" spellcheck="false" />
+      <div class="t-output" aria-live="polite"></div>
+      <form class="t-input" hidden>
+        <label for="cmd" class="prompt"><span class="t-prompt-text">zain@modul0:~$</span></label>
+        <input id="cmd" class="t-cmd" type="text" enterkeyhint="send" autocomplete="off" autocapitalize="off" spellcheck="false" />
       </form>
       <noscript>
         <p>the terminal needs js. <a href={base}>back to the normal site</a></p>
@@ -37,7 +40,7 @@ const base = import.meta.env.BASE_URL;
     <script type="application/json" id="fs" set:html={JSON.stringify(fs).replace(/</g, '\\u003c')} />
     <script>
       import { boot } from '../scripts/terminal';
-      boot();
+      boot(document.querySelector('.terminal')!, JSON.parse(document.getElementById('fs')!.textContent!));
     </script>
   </body>
 </html>

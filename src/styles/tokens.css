@@ -1,0 +1,19 @@
+/* amoled + purple. the site is dark-only on purpose: true black is the brand. */
+:root {
+  --void: #000;
+  --raised: #07060a;      /* panels: barely off black so borders do the work */
+  --line: #1d1a24;
+  --line-strong: #2d2838;
+  --text: #ece9f4;
+  --soft: #bdb7cb;
+  --muted: #8a8499;
+  --purple: #a769ff;
+  --purple-deep: #7c4ddb;
+  --purple-glow: rgba(167, 105, 255, 0.28);
+  --green: #5fe3a1;       /* status: live */
+  --amber: #ffc46b;       /* status: in progress */
+  --red: #ff6978;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  color-scheme: dark;
+}

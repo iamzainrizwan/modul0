@@ -1,7 +1,7 @@
 import { listing, postView } from './render';
 
 type Post = { title: string; date: string; description: string; html: string };
-type Fs = {
+export type Fs = {
   files: Record<string, string>;
   projects: Record<string, string>;
   blog: Record<string, Post>;
@@ -40,13 +40,20 @@ const escape = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 const error = (msg: string) => `<span class="error">${msg}</span>`;
 
-export function boot() {
-  const fs: Fs = JSON.parse(document.getElementById('fs')!.textContent!);
-  const terminal = document.querySelector<HTMLElement>('.terminal')!;
-  const output = document.getElementById('output')!;
-  const form = document.getElementById('input') as HTMLFormElement;
-  const input = document.getElementById('cmd') as HTMLInputElement;
-  const promptText = document.getElementById('prompt-text')!;
+type Options = {
+  // called by `exit`; defaults to leaving for the readable site
+  onExit?: () => void;
+  // element that scrolls the output; defaults to the page
+  scroller?: HTMLElement;
+};
+
+// mounts the terminal inside `terminal`, which must contain the markup from
+// TerminalMarkup (.t-output, form.t-input, .t-prompt-text, input.t-cmd)
+export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
+  const output = terminal.querySelector<HTMLElement>('.t-output')!;
+  const form = terminal.querySelector<HTMLFormElement>('.t-input')!;
+  const input = terminal.querySelector<HTMLInputElement>('.t-cmd')!;
+  const promptText = terminal.querySelector<HTMLElement>('.t-prompt-text')!;
 
   let cwd: Dir = '';
   const history: string[] = [];
@@ -71,7 +78,8 @@ export function boot() {
       entry.append(res);
     }
     output.append(entry);
-    form.scrollIntoView({ block: 'end' });
+    if (opts.scroller) opts.scroller.scrollTop = opts.scroller.scrollHeight;
+    else form.scrollIntoView({ block: 'end' });
   }
 
   // "blog/foo.md", "../about.txt", "~/projects" -> [dir, name]; name '' means the dir itself
@@ -131,9 +139,9 @@ export function boot() {
     };
     // only the most recent uptime ticks
     clearInterval(uptimeTimer);
-    document.querySelectorAll('.uptime').forEach((el) => el.classList.remove('uptime'));
+    terminal.querySelectorAll('.uptime').forEach((el) => el.classList.remove('uptime'));
     uptimeTimer = window.setInterval(() => {
-      const el = document.querySelector('.uptime');
+      const el = terminal.querySelector('.uptime');
       if (el) el.textContent = fmt();
     }, 1000);
     return `<span class="uptime">${fmt()}</span>`;
@@ -203,6 +211,11 @@ export function boot() {
         out = error('zain is not in the sudoers file. this incident will be reported.');
         break;
       case 'exit':
+        if (opts.onExit) {
+          print('logout', raw, promptAt);
+          opts.onExit();
+          return;
+        }
         location.href = fs.base;
         out = 'logout';
         break;
@@ -292,4 +305,6 @@ export function boot() {
   const delay = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 150;
   BOOT.forEach((line, i) => setTimeout(() => print(line, undefined, '', i === BOOT.length - 1 ? 'entry' : 'entry boot'), i * delay));
   setTimeout(ready, BOOT.length * delay);
+
+  return { focus: () => input.focus({ preventScroll: true }) };
 }

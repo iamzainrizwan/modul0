@@ -1,46 +1,53 @@
 # CLAUDE.md
 
-modul0: personal portfolio + blog. Two faces:
+modul0: Zain's portfolio + blog. Astro 7 with React islands, fully static,
+deployed to GitHub Pages by `.github/workflows/deploy.yml` on push to `main`.
+Live at https://iamzainrizwan.github.io/modul0/ (base path `/modul0/`).
 
-1. **The readable site** (`/`, `/blog/`, `/blog/<slug>/`) — the default, written
-   for non-technical recruiters. Plain English, fast to scan.
-2. **The terminal** (`/terminal/`) — an easter egg. Reached via the blinking
-   cursor after the name on the home page, the footer link, or pressing `` ` ``
-   on any page; `exit` returns to the site.
+Look: AMOLED black + purple (`src/styles/tokens.css`), dark-only on purpose.
+IBM Plex Mono for display/nav, IBM Plex Sans for reading.
 
-Astro 7, fully static, deployed to GitHub Pages by
-`.github/workflows/deploy.yml` on push to `main`.
+## Accuracy is the top rule
+
+Recruiters read this. Every claim in `src/data/profile.ts` must trace to a
+source: the current CV (vault `cv/bsc/cv-master.tex`, never its `% DREAM`
+blocks or `cv/dream/`), LinkedIn, the GitHub profile README, a project's own
+README, or something Zain confirmed. The header comment in `profile.ts` lists
+conflicts Zain has already resolved (degree wording, Uber result, CTFs) - keep
+those. When sources disagree, ask; don't pick one.
 
 ## Layout
 
-- `src/data/profile.ts` — content for the readable site (intro, projects,
-  recognition, contact links). Written for non-technical readers.
-- `src/layouts/Site.astro` + `src/styles/site.css` — the readable site's one
-  layout. IBM Plex Sans, light by default, true-black dark mode.
-- `src/data/fs.ts` — the fake filesystem's static files (`about.txt`,
-  `projects/*.md`, …) as html strings. Edit content here.
-- `src/content/blog/*.md` — blog posts (schema in `src/content.config.ts`,
-  `draft: true` hides a post from production builds).
-- `src/data/buildFs.ts` — assembles fs + rendered posts into the JSON blob
-  embedded in the terminal page (`<script id="fs">`).
-- `src/scripts/terminal.ts` — the whole client: command parser, path
-  resolution (`cd`/`..`/`~`), tab completion, history, boot sequence.
-- `src/scripts/render.ts` — blog listing / post html inside the terminal.
-- `src/layouts/Terminal.astro` — terminal layout (only `/terminal/` uses it).
+- `src/data/profile.ts` - all site content (projects, homelab, experience,
+  education, leadership, awards, skills...). Edit content here, not in pages.
+- `src/data/fs.ts` - the terminal's files, same facts in a lowercase voice.
+  Deliberately separate from profile.ts: update both when facts change.
+- `src/layouts/Site.astro` - the one site layout: sticky rail (file-tree nav,
+  now/uptime, links, terminal button) + content. `boot` prop plays the boot
+  animation (home only); `section` highlights a nav item on non-home pages.
+- `src/pages/index.astro` - home, every section in order.
+- `src/components/` - React islands: `BootSequence` (first visit per session,
+  skipped for reduced motion; an inline script in Site.astro sets
+  `html[data-boot=pending]` before paint so there's no flash), `ProjectExplorer`
+  (featured + filterable archive), `QuakeTerminal` (drop-down terminal on every
+  page, `` ` `` toggles, esc/exit closes), `SectionNav`, `Uptime`. Astro:
+  `Pipeline` (s3ntry diagram), `Timeline`.
+- `src/scripts/terminal.ts` - terminal engine, `boot(root, fs, opts)`; mounted
+  by QuakeTerminal and by the full-screen `/terminal/` page
+  (`src/layouts/Terminal.astro`). `src/scripts/render.ts` - blog html inside it.
+- `src/content/blog/*.md` - posts (`draft: true` hides one in production).
 
 ## Rules
 
-- The readable site comes first: anything a recruiter needs must be on it,
-  never only in the terminal. The terminal is a bonus, in its own lowercase,
-  more technical voice; `profile.ts` and `fs.ts` are deliberately separate,
-  so update both when a project changes.
-- Anything user-typed goes through `escape()` before hitting innerHTML.
-- Terminal: clickable output uses `<a class="run" data-cmd="...">` (with a
-  real href when one exists) so visitors never *have* to type.
-- Check new output at 390px wide as well as desktop — grid/flex layouts
-  (`.cols`, `.posts`, `.ls`) stack on narrow screens, `<pre>` padding doesn't.
-- Base path: the site is served under `/modul0/` on Pages until a custom
-  domain exists. Always build urls from `import.meta.env.BASE_URL` / `fs.base`,
-  never a hardcoded `/`.
+- Anything user-typed in the terminal goes through `escape()` before innerHTML.
+- Terminal CSS is scoped under `.terminal`; don't add global classes that
+  could collide with the engine's (`entry`, `boot`, `echo`, `response`, `run`).
+- Every page must work without JS (islands render server-side) and at 320px
+  wide with no horizontal scroll. Respect `prefers-reduced-motion`.
+- UI changes need an explicit visual/alignment pass on screenshots (desktop,
+  390px, 320px), not just functional checks.
+- Build urls from `import.meta.env.BASE_URL` / `fs.base`, never a hardcoded `/`.
+- No Claude co-author trailers in commits here.
 - Local build needs node >= 22.12 (system node may be older:
-  `npx -y node@22 node_modules/.bin/astro dev`).
+  `npx -y node@22 node_modules/.bin/astro dev`). If `npm i` downgrades astro
+  to 6.x, reinstall `astro@^7`.

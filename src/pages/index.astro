@@ -1,60 +1,152 @@
 ---
 import Site from '../layouts/Site.astro';
-import { name, intro, lookingFor, projects, achievements, links } from '../data/profile';
+import ProjectExplorer from '../components/ProjectExplorer';
+import Pipeline from '../components/Pipeline.astro';
+import Timeline from '../components/Timeline.astro';
+import {
+  person, links, featured, archive, areas, homelab, experience, education,
+  leadership, awards, hackathons, skills, certifications, interests,
+} from '../data/profile';
 import { getPosts, longDate } from '../data/buildFs';
 
-const posts = (await getPosts()).slice(0, 5);
+const posts = await getPosts();
 const base = import.meta.env.BASE_URL;
+const ft = homelab.failureTest;
+const email = links[0];
 ---
 
-<Site home>
-  <section class="hero">
-    <h1>
-      {name}<a class="caret" href={`${base}terminal/`} title="Open the terminal"><span class="sr-only">Open the terminal version of this site</span></a>
-    </h1>
-    {intro.map((p) => <p class="lede">{p}</p>)}
-    <p class="lede looking">{lookingFor}</p>
+<Site boot>
+  <section id="about" class="hero" aria-labelledby="about-h">
+    <p class="hero-kicker"><span class="prompt-sym" aria-hidden="true">$</span> whoami</p>
+    <h1 id="about-h" class="hero-h">{person.headline}</h1>
+    <div class="hero-body">
+      {person.intro.map((p) => <p>{p}</p>)}
+    </div>
+    <div class="open">
+      <span class="status status-live"><span class="status-dot" aria-hidden="true" />Open to work</span>
+      <p>{person.lookingFor}</p>
+    </div>
+    <div class="cta">
+      <a class="btn btn-primary" href={email.href}>Email me</a>
+      {links.slice(1).map((l) => <a class="btn" href={l.href}>{l.label}</a>)}
+    </div>
+    <dl class="facts">
+      <div><dt>Studying</dt><dd>Computer Science, Year 2<br />King's College London</dd></div>
+      <div><dt>Average</dt><dd>79.6%, predicted First</dd></div>
+      <div><dt>Society</dt><dd>Treasurer, KCL Cyber Security Society</dd></div>
+      <div><dt>Last internship</dt><dd>Infrastructure / Cloud, Elecosoft</dd></div>
+    </dl>
   </section>
 
   <section id="projects" aria-labelledby="projects-h">
-    <h2 id="projects-h">Projects</h2>
-    <ul class="projects">
-      {projects.map((p) => (
-        <li>
-          <h3><a href={p.repo}>{p.name}</a></h3>
-          <p>{p.summary}</p>
-          <p class="meta">
-            <span class="status">{p.status}</span>
-            <span class="stack">Built with {p.stack.join(', ')}</span>
-          </p>
+    <h2 id="projects-h" class="section-h">Projects</h2>
+    <p class="section-lede">Three I'd most like to talk about, then everything else I've built, most recent first.</p>
+    <ProjectExplorer client:load featured={featured} archive={archive} areas={areas} />
+  </section>
+
+  <section id="homelab" aria-labelledby="homelab-h">
+    <h2 id="homelab-h" class="section-h">Homelab</h2>
+    <p class="section-lede">
+      alexandria is where my projects actually run. Every change reaches it through a pipeline I built (s3ntry), and a
+      monitor I wrote tells me when something breaks.
+    </p>
+    <Pipeline />
+    <div class="drill">
+      <h3 class="sub-h">Failure drill</h3>
+      <p>I deliberately killed a live monitored service at random times to see how fast the alerts actually fire.</p>
+      <dl class="readout">
+        <div><dt>Trials</dt><dd>{ft.trials}</dd></div>
+        <div><dt>Outages detected</dt><dd>{ft.transitions}</dd></div>
+        <div><dt>Mean time to alert</dt><dd>{ft.meanAlert}</dd></div>
+        <div><dt>Poll interval</dt><dd>{ft.pollInterval}</dd></div>
+      </dl>
+      <p class="drill-finding">{ft.finding}</p>
+    </div>
+    <ul class="machines">
+      {homelab.machines.map((m) => (
+        <li class="machine">
+          <p class="machine-name">{m.name}<span>{m.role}</span></p>
+          <p>{m.text}</p>
         </li>
       ))}
     </ul>
   </section>
 
-  <section aria-labelledby="writing-h">
-    <h2 id="writing-h">Writing</h2>
+  <section id="experience" aria-labelledby="experience-h">
+    <h2 id="experience-h" class="section-h">Experience</h2>
+    <Timeline roles={experience} />
+  </section>
+
+  <section id="education" aria-labelledby="education-h">
+    <h2 id="education-h" class="section-h">Education</h2>
+    <Timeline roles={education} />
+  </section>
+
+  <section id="leadership" aria-labelledby="leadership-h">
+    <h2 id="leadership-h" class="section-h">Leadership and activities</h2>
+    <Timeline roles={leadership} />
+  </section>
+
+  <section id="awards" aria-labelledby="awards-h">
+    <h2 id="awards-h" class="section-h">Awards and hackathons</h2>
+    <ul class="awards">
+      {awards.map((a) => (
+        <li>
+          <span class="award-when">{a.when}</span>
+          <span class="award-what">{a.what}</span>
+          <span class="award-detail">{a.detail}</span>
+        </li>
+      ))}
+    </ul>
+    <h3 class="sub-h">Hackathons</h3>
+    <ul class="hacks">
+      {hackathons.map((h) => (
+        <li>
+          <span class="hack-name">{h.name}</span>
+          <span class="hack-meta">{h.where}{h.built && `, ${h.built}`}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section id="skills" aria-labelledby="skills-h">
+    <h2 id="skills-h" class="section-h">Skills</h2>
+    <dl class="skills">
+      {skills.map((g) => (
+        <div>
+          <dt>{g.group}</dt>
+          <dd><ul class="stack">{g.items.map((i) => <li>{i}</li>)}</ul></dd>
+        </div>
+      ))}
+      <div>
+        <dt>Certifications</dt>
+        <dd><ul class="stack">{certifications.map((c) => <li>{c}</li>)}</ul></dd>
+      </div>
+    </dl>
+    <h3 class="sub-h">Outside of code</h3>
+    <ul class="interests">
+      {interests.map((i) => <li>{i}</li>)}
+    </ul>
+  </section>
+
+  <section id="writing" aria-labelledby="writing-h">
+    <h2 id="writing-h" class="section-h">Writing</h2>
     {posts.length ? (
-      <ul class="posts">
+      <ul class="post-list">
         {posts.map((p) => (
           <li>
             <a href={`${base}blog/${p.id}/`}>{p.data.title}</a>
             <time datetime={p.data.date.toISOString()}>{longDate(p.data.date)}</time>
+            <p>{p.data.description}</p>
           </li>
         ))}
       </ul>
     ) : <p>Nothing published yet.</p>}
   </section>
 
-  <section aria-labelledby="recognition-h">
-    <h2 id="recognition-h">Recognition</h2>
-    <ul class="plain">
-      {achievements.map((a) => <li>{a}</li>)}
-    </ul>
-  </section>
-
   <section id="contact" aria-labelledby="contact-h">
-    <h2 id="contact-h">Contact</h2>
+    <h2 id="contact-h" class="section-h">Contact</h2>
+    <p class="section-lede">The fastest way to reach me is email.</p>
     <dl class="contact">
       {links.map((l) => <><dt>{l.label}</dt><dd><a href={l.href}>{l.text}</a></dd></>)}
     </dl>

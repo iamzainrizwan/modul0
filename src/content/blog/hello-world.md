@@ -8,8 +8,8 @@ The first version of this site was a fake terminal I hand-wrote in vanilla
 JavaScript over a couple of weekends. It was fun to build and fairly
 miserable to use if you just wanted to know what I'd worked on.
 
-This version is a plain site you can read, with a blog attached. The terminal
-is still here: click the cursor next to my name, or press `` ` `` on any page.
+This version is a site you can actually read, with a blog attached. The terminal
+is still here: press `` ` `` on any page, or use the terminal button in the sidebar.
 
 ## What's in the terminal
 
