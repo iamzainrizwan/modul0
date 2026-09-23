@@ -762,3 +762,37 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 
 /* keyboard hints only where there's a keyboard-ish pointer */
 @media (hover: none) { .kbd-hint { display: none; } }
+
+/* ---------- phones: everything bigger, nav as a full-width grid ---------- */
+@media (max-width: 640px) {
+  html { font-size: 125%; } /* 20px: every rem-based size scales up with it */
+
+  /* small ui text gets a floor so nothing is squint-sized */
+  .status, .year, .stack li, .card-stack, .card-context, .card-tagline, .feature-tagline,
+  .facts dt, .readout dt, .hack-meta, .section-meta, .tl-org, .award-when, .tl-when, .text-btn { font-size: 0.72rem; }
+  .step-text, .loop-text, .details-small li, .card-summary, .award-detail, .drill-finding, .machine p { font-size: 0.95rem; }
+
+  /* nav wraps onto rows of cells that fill the width, instead of scrolling */
+  .tree { overflow: visible; }
+  .tree ul { flex-wrap: wrap; width: 100%; border-top: 1px solid var(--line); }
+  .tree li { flex: 1 1 auto; }
+  .tree li a, .tree li:first-child a {
+    padding: 0.5rem 0.25rem;
+    text-align: center;
+    font-size: 0.66rem;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .tree-slash { display: none; }
+  html { scroll-padding-top: 6.5rem; }
+
+  .boot-screen { font-size: 0.74rem; }
+}
+@media (max-width: 380px) {
+  html { font-size: 118.75%; } /* 19px on the smallest phones */
+  .tree li a, .tree li:first-child a { font-size: 0.6rem; padding-left: 0.15rem; padding-right: 0.15rem; }
+  .boot-screen { font-size: 0.66rem; }
+}
+/* numbers sit on a common line even when a label wraps */
+.readout > div { display: flex; flex-direction: column; }
+.readout dd { margin-top: auto; padding-top: 0.55rem; }

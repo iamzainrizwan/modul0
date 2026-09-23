@@ -47,7 +47,8 @@ export default function SectionNav({ items, base, initial }: { items: Item[]; ba
         {items.map((i) => (
           <li key={i.id}>
             <a href={`${base}#${i.id}`} aria-current={current === i.id ? 'location' : undefined}>
-              {i.label}
+              {i.label.replace(/\/$/, '')}
+              {i.label.endsWith('/') && <span className="tree-slash">/</span>}
             </a>
           </li>
         ))}
