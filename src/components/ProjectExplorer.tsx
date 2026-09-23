@@ -1,6 +1,10 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { motion, AnimatePresence, LayoutGroup } from 'motion/react';
 import type { Area, Project } from '../data/profile';
+import { inline } from '../data/inline';
+
+// content strings may carry [text](url) links
+const html = (s: string) => ({ __html: inline(s) });
 
 // featured projects show everything; the archive is filterable by area and
 // each card expands for its details.
@@ -42,10 +46,10 @@ function Featured({ p }: { p: Project }) {
           <span className="year">{p.year}</span>
         </div>
       </header>
-      <p className="feature-summary">{p.summary}</p>
+      <p className="feature-summary" dangerouslySetInnerHTML={html(p.summary)} />
       <ul className="details" id={listId}>
         {p.details.slice(0, PREVIEW).map((d) => (
-          <li key={d}>{d}</li>
+          <li key={d} dangerouslySetInnerHTML={html(d)} />
         ))}
         <AnimatePresence initial={false}>
           {all &&
@@ -55,9 +59,8 @@ function Featured({ p }: { p: Project }) {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto', transition: { delay: i * 0.03 } }}
                 exit={{ opacity: 0, height: 0 }}
-              >
-                {d}
-              </motion.li>
+                dangerouslySetInnerHTML={html(d)}
+              />
             ))}
         </AnimatePresence>
       </ul>
@@ -85,13 +88,13 @@ function ArchiveCard({ p }: { p: Project }) {
   const id = useId();
   const expandable = p.details.length > 0;
   return (
-    <motion.li layout="position" className="card" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+    <motion.li layout="position" className="card" id={`project-${p.slug}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <div className="card-head">
         <h4 className="card-name">{p.name}</h4>
         <span className="year">{p.year}</span>
       </div>
       <p className="card-tagline">{p.tagline}</p>
-      <p className="card-summary">{p.summary}</p>
+      <p className="card-summary" dangerouslySetInnerHTML={html(p.summary)} />
       <AnimatePresence initial={false}>
         {open && (
           <motion.ul
@@ -102,7 +105,7 @@ function ArchiveCard({ p }: { p: Project }) {
             exit={{ opacity: 0, height: 0 }}
           >
             {p.details.map((d) => (
-              <li key={d}>{d}</li>
+              <li key={d} dangerouslySetInnerHTML={html(d)} />
             ))}
           </motion.ul>
         )}
@@ -133,6 +136,19 @@ export default function ProjectExplorer({ featured, archive, areas }: { featured
   const [area, setArea] = useState<Area | 'All'>('All');
   const shown = area === 'All' ? archive : archive.filter((p) => p.areas.includes(area));
   const count = (a: Area) => archive.filter((p) => p.areas.includes(a)).length;
+
+  // a link to an archived project (#project-sherpa) must find it even if a filter hides it
+  useEffect(() => {
+    const reveal = () => {
+      const slug = location.hash.replace('#project-', '');
+      const target = archive.find((p) => p.slug === slug);
+      if (!target || shown.includes(target)) return;
+      setArea('All');
+      requestAnimationFrame(() => document.getElementById(`project-${slug}`)?.scrollIntoView());
+    };
+    addEventListener('hashchange', reveal);
+    return () => removeEventListener('hashchange', reveal);
+  }, [archive, shown]);
 
   return (
     <div className="explorer">

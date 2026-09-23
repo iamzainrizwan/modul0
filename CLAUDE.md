@@ -21,7 +21,10 @@ those. When sources disagree, ask; don't pick one.
 
 ## Layout
 
-- `src/data/profile.ts` - all site content (projects, homelab, experience,
+- `src/data/profile.ts` - all site content. Strings may contain `[text](url)`
+  links, rendered by `src/data/inline.ts` (Astro: `set:html={inline(x)}`,
+  React: `dangerouslySetInnerHTML`). Link claims to their evidence wherever it
+  exists (a writeup, the source file, a report), and check every URL resolves. (projects, homelab, experience,
   education, leadership, awards, skills...). Edit content here, not in pages.
 - `src/data/fs.ts` - the terminal's files, same facts in a lowercase voice.
   Deliberately separate from profile.ts: update both when facts change.

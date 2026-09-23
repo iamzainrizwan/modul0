@@ -8,6 +8,7 @@ import {
   leadership, awards, hackathons, skills, certifications, interests,
 } from '../data/profile';
 import { getPosts, longDate } from '../data/buildFs';
+import { inline } from '../data/inline';
 
 const posts = await getPosts();
 const base = import.meta.env.BASE_URL;
@@ -20,7 +21,7 @@ const email = links[0];
     <p class="hero-kicker"><span class="prompt-sym" aria-hidden="true">$</span> whoami</p>
     <h1 id="about-h" class="hero-h">{person.headline}</h1>
     <div class="hero-body">
-      {person.intro.map((p) => <p>{p}</p>)}
+      {person.intro.map((p) => <p set:html={inline(p)} />)}
     </div>
     <div class="open">
       <span class="status status-live"><span class="status-dot" aria-hidden="true" />Open to work</span>
@@ -57,22 +58,23 @@ const email = links[0];
       monitor I wrote tells me when something breaks.
     </p>
     <Pipeline />
-    <div class="drill">
+    <div class="drill" id="failure-drill">
       <h3 class="sub-h">Failure drill</h3>
-      <p>I deliberately killed a live monitored service at random times to see how fast the alerts actually fire.</p>
+      <p>I stopped the live 1337 container five times at random points in the poll cycle and timed how long the Discord alert took to arrive, using a <a href={ft.script}>test script</a> and each message's timestamp.</p>
       <dl class="readout">
         <div><dt>Trials</dt><dd>{ft.trials}</dd></div>
-        <div><dt>Outages detected</dt><dd>{ft.transitions}</dd></div>
+        <div><dt>Up/down changes caught</dt><dd>{ft.transitions}</dd></div>
         <div><dt>Mean time to alert</dt><dd>{ft.meanAlert}</dd></div>
         <div><dt>Poll interval</dt><dd>{ft.pollInterval}</dd></div>
       </dl>
       <p class="drill-finding">{ft.finding}</p>
+      <p class="drill-link"><a href={ft.writeup}>Read the full write-up, with raw timings</a></p>
     </div>
     <ul class="machines">
       {homelab.machines.map((m) => (
         <li class="machine">
           <p class="machine-name">{m.name}<span>{m.role}</span></p>
-          <p>{m.text}</p>
+          <p set:html={inline(m.text)} />
         </li>
       ))}
     </ul>
@@ -112,7 +114,7 @@ const email = links[0];
         <li>
           <span class="award-when">{a.when}</span>
           <span class="award-what">{a.what}</span>
-          <span class="award-detail">{a.detail}</span>
+          <span class="award-detail" set:html={inline(a.detail)} />
         </li>
       ))}
     </ul>
@@ -120,8 +122,8 @@ const email = links[0];
     <ul class="hacks">
       {hackathons.map((h) => (
         <li>
-          <span class="hack-name">{h.name}</span>
-          <span class="hack-meta">{h.where}{h.built && `, ${h.built}`}</span>
+          <span class="hack-name" set:html={inline(h.name)} />
+          <span class="hack-meta" set:html={inline(h.where + (h.built ? `, built ${h.built}` : ''))} />
         </li>
       ))}
     </ul>
@@ -141,12 +143,12 @@ const email = links[0];
       ))}
       <div>
         <dt>Certifications</dt>
-        <dd><ul class="stack">{certifications.map((c) => <li>{c}</li>)}</ul></dd>
+        <dd><ul class="stack">{certifications.map((c) => <li set:html={inline(c)} />)}</ul></dd>
       </div>
     </dl>
     <h3 class="sub-h">Outside of code</h3>
     <ul class="interests">
-      {interests.map((i) => <li>{i}</li>)}
+      {interests.map((i) => <li set:html={inline(i)} />)}
     </ul>
   </section>
 

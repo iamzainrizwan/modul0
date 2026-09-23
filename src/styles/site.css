@@ -796,3 +796,7 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 /* numbers sit on a common line even when a label wraps */
 .readout > div { display: flex; flex-direction: column; }
 .readout dd { margin-top: auto; padding-top: 0.55rem; }
+
+/* diagram titles are links to the file behind each stage */
+.step-title, .loop-title { color: inherit; text-decoration-thickness: 1px; }
+.drill .drill-link { margin: 0.6rem 0 0; font-family: var(--mono); font-size: 0.8rem; font-weight: 600; }

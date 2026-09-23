@@ -4,8 +4,13 @@
 // github profile README, a project's own README, or something zain confirmed
 // directly. don't add unsourced claims.
 //
+// sherpa: the shipped project is the team repo (josephmeadowcroft/sherpa),
+// not zain's own abandoned sherpa repo; details come from his commits there.
+//
 // confirmed by zain: degree is stated as "year 2 cs @ kcl" (no bsc/msci);
 // uber = regional finalist (not 2nd); ctf = top 5 in ucl vs kcl + kcl welcome.
+//
+// strings may contain [text](url) links, rendered by src/data/inline.ts.
 //
 // the terminal (src/data/fs.ts) keeps its own lowercase voice - update both
 // when a project changes.
@@ -20,7 +25,7 @@ export const person = {
   headline: "I like breaking things (CTFs) and building things that don't break.",
   intro: [
     "I'm a second-year Computer Science student at King's College London and treasurer of KCL's Cyber Security Society, interested in site reliability, software engineering and security.",
-    'Most of what I build is useful little tools running on my own server, alexandria. I built the pipeline that deploys to it and the monitor that tells me when something on it breaks.',
+    'Most of what I build is useful little tools running on my own server, [alexandria](#homelab). I built the [pipeline that deploys to it](#project-s3ntry) and the monitor that tells me when something on it breaks.',
   ],
   lookingFor:
     "Looking for summer 2027 internships, 2027/28 placements, and anything else that needs fixing (or is bound to). On-site, hybrid or remote, London area.",
@@ -66,11 +71,11 @@ export const featured: Project[] = [
     areas: ['Backend', 'Data'],
     repo: 'https://github.com/iamzainrizwan/ledgr',
     details: [
-      'Double-entry ledger in FastAPI and PostgreSQL that enforces a balanced-entry invariant at write time.',
+      'Double-entry [ledger](https://github.com/iamzainrizwan/ledgr/blob/main/backend/src/backend/ledger.py) in FastAPI and PostgreSQL that enforces a balanced-entry invariant at write time.',
       'Posts are idempotent via an external ID, so re-importing the same statement never duplicates money.',
       'Entries are immutable: corrections are reversals, never updates or deletes.',
       'Hierarchical accounts (Assets:Checking:HSBC, Income:Salary). Balances are always computed by query, never stored.',
-      'Bank-specific parsers for HSBC (PDF) and Revolut (Excel/CSV), each validating itself against the statement’s printed balance before posting anything.',
+      'Bank-specific parsers for [HSBC](https://github.com/iamzainrizwan/ledgr/blob/main/backend/src/backend/ingestion/hsbc.py) (PDF) and [Revolut](https://github.com/iamzainrizwan/ledgr/blob/main/backend/src/backend/ingestion/revolut.py) (Excel/CSV), each validating itself against the statement’s printed balance before posting anything.',
       'Planned: automatic categorisation with a manual correction UI, cross-account stats, spending anomalies, and an anonymised CSV export for use with LLMs.',
     ],
   },
@@ -87,13 +92,13 @@ export const featured: Project[] = [
     areas: ['Infrastructure'],
     repo: 'https://github.com/iamzainrizwan/s3ntry',
     details: [
-      'Self-hosted GitHub Actions runner on alexandria with a CI gate and a rollback path. Push to main deploys with no manual intervention.',
-      'Deploys run as a dedicated non-root user with SSH deploy keys, and that user deliberately has no sudo anywhere in the pipeline.',
-      'Go health daemon (one static binary, one goroutine per service) polls services concurrently and tracks up/down state and latency.',
+      '[Self-hosted GitHub Actions runner](https://github.com/iamzainrizwan/s3ntry/blob/main/docs/setup/runner.md) on alexandria with a [CI gate](https://github.com/iamzainrizwan/s3ntry/blob/main/.github/workflows/deploy.yml) and a [rollback path](https://github.com/iamzainrizwan/s3ntry/blob/main/rollback.md). Push to main deploys with no manual intervention.',
+      'Deploys run as a [dedicated non-root user](https://github.com/iamzainrizwan/s3ntry/blob/main/docs/setup/runner.md) with SSH deploy keys, and that user deliberately has no sudo anywhere in the pipeline.',
+      '[Go health daemon](https://github.com/iamzainrizwan/s3ntry/blob/main/health/main.go) (one static binary, one goroutine per service) polls services concurrently and tracks up/down state and latency.',
       'It also checks the host itself: connectivity, whether a reboot is required, and pending apt updates.',
       'The daemon runs as a systemd user service rather than in Docker, because a container would report its own reboot and update state, not the host’s.',
-      'Slack and Discord webhook alerts on down and recovery, so “is it up?” never needs an SSH session.',
-      'Proved end to end by deploying 1337 to production on alexandria.',
+      '[Slack and Discord webhook alerts](https://github.com/iamzainrizwan/s3ntry/blob/main/health/alert.go) on down and recovery, so “is it up?” never needs an SSH session.',
+      'Proved end to end by deploying [1337](#project-1337) to production on alexandria, then [deliberately breaking it](#failure-drill) to time the alerts.',
     ],
   },
   {
@@ -102,7 +107,7 @@ export const featured: Project[] = [
     year: '2026',
     tagline: 'Spaced repetition for interview prep',
     summary:
-      'A spaced-repetition tracker for the NeetCode 150. It schedules each problem for review after a day, a week and three weeks, paces me toward a deadline, and emails a digest every morning. Mostly built with Claude, and a tool I use daily rather than a portfolio piece.',
+      'A spaced-repetition tracker for the [NeetCode 150](https://neetcode.io/practice). It schedules each problem for review after a day, a week and three weeks, paces me toward a deadline, and emails a digest every morning. Mostly built with Claude, and a tool I use daily rather than a portfolio piece.',
     status: 'live',
     statusText: 'In daily use',
     stack: ['Python', 'Flask', 'React', 'TypeScript', 'SQLite', 'Docker'],
@@ -110,10 +115,10 @@ export const featured: Project[] = [
     repo: 'https://github.com/iamzainrizwan/1337',
     details: [
       'Four-stage review cycle (solve, +1 day, +1 week, +3 weeks). “Struggled” resets a problem to a next-day review instead of advancing it.',
-      'Gaps count from the day a review actually happens, so being late shifts later reviews out instead of piling them up, like Anki.',
+      'Gaps count from the day a review actually happens, so being late shifts later reviews out instead of piling them up, like [Anki](https://apps.ankiweb.net/).',
       'Deadline-based pacing is recomputed on every load and flags the goal as unrealistic past 8 new problems a day.',
       'The daily digest runs in-process, so a single gunicorn worker is deliberate: a second would send duplicate emails.',
-      'Deployed to alexandria by s3ntry’s pipeline, behind nginx.',
+      'Deployed to alexandria by [s3ntry’s pipeline](#project-s3ntry), behind nginx.',
     ],
   },
 ];
@@ -125,14 +130,14 @@ export const archive: Project[] = [
     year: '2026',
     tagline: 'Daily interview-prep emails',
     summary:
-      'Generates a daily set of interview questions with Gemini, stores it in SQLite, and emails the questions at 11:00 and the solutions at 23:00.',
+      'Generates a daily set of interview questions with [Gemini](https://ai.google.dev/), stores it in SQLite, and emails the questions at 11:00 and the solutions at 23:00.',
     status: 'live',
     statusText: 'Runs on alexandria',
     stack: ['Node.js', 'Gemini', 'SQLite', 'Resend', 'pm2'],
     areas: ['Backend', 'AI & ML'],
     details: [
       'Can read my CV (PDF or .tex) and inject it into the prompt to tailor the conceptual question to my background.',
-      'An always-on homelab service, and one more thing s3ntry watches.',
+      'An always-on homelab service, and one more thing [s3ntry](#project-s3ntry) watches.',
     ],
   },
   {
@@ -141,17 +146,18 @@ export const archive: Project[] = [
     year: '2026',
     tagline: 'Google Student AI Hackathon',
     summary:
-      'Built by a team of six at the 2026 Google Student AI Hackathon in London, where 50 students were selected from nearly 1,000 applicants. Sherpa gives students personalised life and career direction based on everything it knows about them.',
+      'Built by a team of six at the 2026 Google Student AI Hackathon in London, where 50 students were selected from nearly 1,000 applicants. Sherpa is an AI career dashboard for students: a Gemini-powered guidance chat, CV scoring with rewrite suggestions, and internship application tracking.',
     status: 'done',
     statusText: 'Hackathon, July 2026',
-    stack: ['Next.js', 'TypeScript', 'Python', 'Gemini', 'Google OAuth'],
+    stack: ['React', 'Vite', 'Tailwind', 'Express', 'Gemini', 'Firebase'],
     areas: ['AI & ML', 'Apps'],
-    repo: 'https://github.com/iamzainrizwan/sherpa',
+    repo: 'https://github.com/josephmeadowcroft/sherpa',
     context: 'Team of 6',
     details: [
-      'I owned auth and AI integration: Google OAuth, Google Calendar fetching, and the Gemini reasoning call.',
-      'Gemini returns structured JSON (ranked priorities with reasoning and effort estimates), not prose.',
-      'A mock-data fallback behind one environment variable, so the live demo survives OAuth or API failures.',
+      'Built the “Generate updated CV” feature, which renders an improved CV from a LaTeX template.',
+      'Redesigned the dashboard around a TrailMap hero, with slide-over peer and chat panels.',
+      'Made Gemini chat replies render as formatted markdown instead of raw text.',
+      'Fixed silent auth and upload failures and added the missing error feedback.',
     ],
   },
   {
@@ -160,7 +166,7 @@ export const archive: Project[] = [
     year: '2025',
     tagline: 'EasyA x Algorand London Hackathon',
     summary:
-      'Instant credential verification for international students, whose visa paperwork can take weeks. Students manage and share verified credentials on the Algorand blockchain. Built in 36 hours at my first in-person hackathon.',
+      'Instant credential verification for international students, whose visa paperwork can take weeks. Students manage and share verified credentials on the [Algorand](https://algorand.co/) blockchain. Built in 36 hours at my first in-person hackathon.',
     status: 'done',
     statusText: 'Hackathon',
     stack: ['Algorand', 'Smart contracts'],
@@ -176,7 +182,7 @@ export const archive: Project[] = [
     name: 'Hedge fund factor analysis',
     year: '2026',
     tagline: 'AAM data science challenge, part 2',
-    summary: 'Multilinear regression of hedge fund returns against 18 systematic risk factors, with a written report.',
+    summary: 'Multilinear regression of hedge fund returns against 18 systematic risk factors, with a [written report](https://github.com/iamzainrizwan/hedge-fund-analysis/blob/main/report/report.pdf).',
     status: 'done',
     statusText: 'Complete',
     stack: ['Python', 'pandas', 'statsmodels', 'matplotlib'],
@@ -239,7 +245,7 @@ export const archive: Project[] = [
     year: '2025',
     tagline: 'DQN vs PPO vs NEAT, from scratch',
     summary:
-      'My A-Level Computer Science project: agents learn a game of tag in Unity using three reinforcement-learning algorithms I implemented without any ML libraries.',
+      'My A-Level Computer Science project ([full write-up](https://github.com/iamzainrizwan/LearningAlgorithmsUnity/blob/main/NEA_Document.pdf)): agents learn a game of tag in Unity using three reinforcement-learning algorithms I implemented without any ML libraries.',
     status: 'done',
     statusText: 'A-Level NEA',
     stack: ['C#', 'Unity'],
@@ -257,7 +263,7 @@ export const archive: Project[] = [
     name: 'Neural network from scratch',
     year: '2024',
     tagline: 'C# and NumSharp only',
-    summary: 'A neural network written and tested from scratch in C#, later expanded and rebuilt for the Unity RL project.',
+    summary: 'A neural network written and tested from scratch in C#, later expanded and rebuilt for the [Unity RL project](#project-rl-unity).',
     status: 'done',
     statusText: 'Complete',
     stack: ['C#', 'NumSharp'],
@@ -284,7 +290,7 @@ export const archive: Project[] = [
     year: '2024',
     tagline: 'Gamified revision app, graded A',
     summary:
-      'Pathway to Bath project: a social learning app that turns revision into quests. Designed in Figma and prototyped as a C# command-line app.',
+      'Pathway to Bath project ([writeup](https://github.com/iamzainrizwan/PTBPrototype/blob/master/StudyQuestWriteup.pdf)): a social learning app that turns revision into quests. Designed in Figma and prototyped as a C# command-line app.',
     status: 'done',
     statusText: 'Grade A',
     stack: ['C#', 'Figma'],
@@ -302,7 +308,7 @@ export const homelab = {
     {
       name: 'alexandria',
       role: 'Homelab server',
-      text: 'Ubuntu Server, named after the library: if you’re going to hoard knowledge, commit to the bit. Runs 1337, s3ntry and re::curse, plus a Dockerised *arr stack (Sonarr, Radarr, Prowlarr) and Jellyfin, behind nginx.',
+      text: 'Ubuntu Server, named after the library: if you’re going to hoard knowledge, commit to the bit. Runs [1337](#project-1337), [s3ntry](#project-s3ntry) and [re::curse](#project-recurse), plus a Dockerised *arr stack ([Sonarr](https://sonarr.tv/), [Radarr](https://radarr.video/), [Prowlarr](https://prowlarr.com/)) and [Jellyfin](https://jellyfin.org/), behind nginx.',
     },
     {
       name: 'valhalla',
@@ -314,18 +320,21 @@ export const homelab = {
   // deliberate failure test against a live monitored service (cv)
   failureTest: {
     trials: 5,
-    transitions: 8,
+    transitions: '8/10',
     meanAlert: '5.7s',
     pollInterval: '10s',
-    finding: 'One outage shorter than the 10-second poll interval went undetected, a real limit of periodic polling.',
+    finding: 'The 2 misses: one recovery and the next failure landed 5.1 seconds apart, inside a single 10-second poll, so neither was ever seen. Periodic polling can’t catch a flap faster than its interval; only event-driven monitoring would.',
+    writeup: 'https://github.com/iamzainrizwan/s3ntry/blob/main/incidents/failure-test-2026-09-20.md',
+    script: 'https://github.com/iamzainrizwan/s3ntry/blob/main/automation/failure-test.sh',
   },
 };
 
-export type Role = { org: string; role: string; place: string; when: string; details: string[] };
+export type Role = { org: string; url?: string; role: string; place: string; when: string; details: string[] };
 
 export const experience: Role[] = [
   {
     org: 'Elecosoft',
+    url: 'https://www.elecosoft.com/',
     role: 'Infrastructure / Cloud Intern',
     place: 'Aylesbury, UK (hybrid)',
     when: 'Jul 2025',
@@ -352,16 +361,18 @@ export const experience: Role[] = [
 export const education: Role[] = [
   {
     org: "King's College London",
+    url: 'https://www.kcl.ac.uk/',
     role: 'Computer Science, Year 2',
     place: 'London, UK',
     when: 'Sep 2025 – present',
     details: [
       '79.6% average, predicted First.',
-      'Societies: Cyber Security Society (treasurer), King’s Tech Crew, KCLTech.',
+      'Societies: Cyber Security Society ([treasurer](#leadership)), King’s Tech Crew, KCLTech.',
     ],
   },
   {
     org: 'Langley Grammar School',
+    url: 'https://www.lgs.slough.sch.uk/',
     role: 'A-Levels and GCSEs',
     place: 'Slough, UK',
     when: '2018 – 2025',
@@ -407,7 +418,7 @@ export const leadership: Role[] = [
     place: 'Slough',
     when: 'Sep 2020 – Jun 2025',
     details: [
-      'Staffed the Apple educator showcase at BETT, advising 200+ international educators on student iPad and AI adoption.',
+      'Staffed the Apple educator showcase at [BETT](https://www.bettshow.com/), advising 200+ international educators on student iPad and AI adoption.',
       'Gave ad-hoc technical support to students and IT staff across hardware, software and network issues.',
       'Mentored the school esports team, growing participation by about 40%.',
     ],
@@ -416,7 +427,7 @@ export const leadership: Role[] = [
 
 export const awards = [
   // ctf dates unconfirmed; both were at kcl, which started sep 2025
-  { when: '2026', what: 'Selected for the Google Student AI Hackathon', detail: '50 chosen from nearly 1,000 applicants' },
+  { when: '2026', what: 'Selected for the Google Student AI Hackathon', detail: '50 chosen from nearly 1,000 applicants. Built [Sherpa](#project-sherpa).' },
   { when: '2025', what: '1st place, KCL Informatics Puzzled', detail: 'District Line team, of 200–300 undergraduates. Submitted 20 seconds before the deadline.' },
   { when: '2025–26', what: 'Top 5, UCL vs KCL CTF', detail: 'Capture the flag' },
   { when: '2025–26', what: 'Top 5, KCL Welcome CTF', detail: 'Capture the flag' },
@@ -424,10 +435,10 @@ export const awards = [
 ];
 
 export const hackathons = [
-  { name: 'Google Student AI Hackathon', where: 'London', built: 'Sherpa' },
-  { name: 'EasyA x Algorand London Hackathon', where: 'London, 36 hours', built: 'EduChain' },
-  { name: 'Encode London', where: 'Encode Hub, Shoreditch', built: '' },
-  { name: 'Uber Global Hackathon', where: 'MENA region', built: 'Regional finalist' },
+  { name: 'Google Student AI Hackathon', where: 'London', built: '[Sherpa](#project-sherpa)' },
+  { name: '[EasyA](https://www.easya.io/) x [Algorand](https://algorand.co/) London Hackathon', where: 'London, 36 hours', built: '[EduChain](#project-educhain)' },
+  { name: '[Encode London](https://www.encode.club/)', where: 'Encode Hub, Shoreditch', built: '' },
+  { name: 'Uber Global Hackathon', where: 'MENA region, regional finalist', built: '' },
 ];
 
 export const skills = [
@@ -438,12 +449,17 @@ export const skills = [
   { group: 'Also', items: ['Unity', 'Figma', 'Arduino', 'Microsoft 365'] },
 ];
 
-export const certifications = ['CS50P (Harvard)', 'CyberFirst Advanced (NCSC)', 'iDEA Gold', 'DofE Bronze'];
+export const certifications = [
+  '[CS50P (Harvard)](https://cs50.harvard.edu/python/)',
+  '[CyberFirst Advanced (NCSC)](https://www.ncsc.gov.uk/cyberfirst)',
+  '[iDEA Gold](https://idea.org.uk/)',
+  '[DofE Bronze](https://www.dofe.org/)',
+];
 
 export const interests = [
   'Hiking',
   'Formula 1',
-  'Modded Minecraft (curating technical packs like Nomifactory)',
+  'Modded Minecraft (curating technical packs like [Nomifactory](https://github.com/Nomifactory/Nomifactory))',
   'Live music and concerts',
   'Astronomy',
   'Mechanical keyboards',

@@ -1,13 +1,15 @@
 ---
 // s3ntry's deploy path and monitoring loop, as a diagram. it's a real
 // sequence, so the steps are numbered. a pulse travels the connectors
-// (css only, stops for reduced motion).
+// (css only, stops for reduced motion). each stage links to the file that
+// implements it.
+const S3 = 'https://github.com/iamzainrizwan/s3ntry/blob/main';
 const steps = [
-  { title: 'git push', text: 'to main on GitHub' },
-  { title: 'Self-hosted runner', text: 'GitHub Actions job runs on alexandria itself' },
-  { title: 'CI gate', text: 'build and checks must pass, or nothing ships' },
-  { title: 'Deploy', text: 'as the non-root s3ntry user, over SSH deploy keys' },
-  { title: 'Running', text: 'services up behind nginx, with a rollback path' },
+  { title: 'git push', text: 'to main on GitHub', href: 'https://github.com/iamzainrizwan/s3ntry' },
+  { title: 'Self-hosted runner', text: 'GitHub Actions job runs on alexandria itself', href: `${S3}/docs/setup/runner.md` },
+  { title: 'CI gate', text: 'build and checks must pass, or nothing ships', href: `${S3}/.github/workflows/deploy.yml` },
+  { title: 'Deploy', text: 'as the non-root s3ntry user, over SSH deploy keys', href: `${S3}/docs/setup/runner.md` },
+  { title: 'Running', text: 'services up behind nginx, with a rollback path', href: `${S3}/rollback.md` },
 ];
 ---
 
@@ -16,19 +18,19 @@ const steps = [
     {steps.map((s, i) => (
       <li class="step" style={`--i:${i}`}>
         <span class="step-n">{i + 1}</span>
-        <span class="step-title">{s.title}</span>
+        <a class="step-title" href={s.href}>{s.title}</a>
         <span class="step-text">{s.text}</span>
       </li>
     ))}
   </ol>
   <div class="loop">
     <div class="loop-node">
-      <span class="loop-title">Health daemon</span>
+      <a class="loop-title" href={`${S3}/health/main.go`}>Health daemon</a>
       <span class="loop-text">Go, one goroutine per service, every 10s, plus host checks</span>
     </div>
     <div class="loop-link" aria-hidden="true"><span></span></div>
     <div class="loop-node">
-      <span class="loop-title">Slack and Discord</span>
+      <a class="loop-title" href={`${S3}/health/alert.go`}>Slack and Discord</a>
       <span class="loop-text">alert on down, and again on recovery</span>
     </div>
   </div>

@@ -1,5 +1,6 @@
 ---
 import type { Role } from '../data/profile';
+import { inline } from '../data/inline';
 interface Props { roles: Role[] }
 const { roles } = Astro.props;
 ---
@@ -10,10 +11,10 @@ const { roles } = Astro.props;
       <div class="tl-when">{r.when}</div>
       <div class="tl-body">
         <h3 class="tl-role">{r.role}</h3>
-        <p class="tl-org">{r.org}<span class="tl-place">{r.place}</span></p>
+        <p class="tl-org">{r.url ? <a href={r.url} rel="noopener">{r.org}</a> : r.org}<span class="tl-place">{r.place}</span></p>
         {r.details.length > 0 && (
           <ul class="details">
-            {r.details.map((d) => <li>{d}</li>)}
+            {r.details.map((d) => <li set:html={inline(d)} />)}
           </ul>
         )}
       </div>

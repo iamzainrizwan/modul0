@@ -54,7 +54,7 @@ export const projects: Record<string, string> = {
   '1337.md':
     "<b>1337</b> - neetcode spaced-repetition tracker. claude and i's - vibecoded, used daily. flask + react, daily digest emails.",
   'recurse.md': '<b>re::curse</b> - daily interview prep emails via gemini. questions at 11, solutions at 23.',
-  'sherpa.md': '<b>sherpa</b> - google student ai hackathon. gemini career dashboard for students. i did oauth + calendar + gemini.',
+  'sherpa.md': '<b>sherpa</b> - google student ai hackathon, team of 6. gemini career dashboard for students. i built the latex cv generator + the dashboard redesign.',
   'educhain.md': '<b>educhain</b> - easya x algorand hackathon. credential verification on algorand. first in-person hackathon.',
   'modul0.md': '<b>modul0</b> - this site. astro + react. you found the terminal.',
 };
