@@ -29,7 +29,7 @@ export const person = {
   ],
   lookingFor:
     "Looking for summer 2027 internships, 2027/28 placements, and anything else that needs fixing (or is bound to). On-site, hybrid or remote, London area.",
-  now: 'ledgr: building the stats view',
+  now: 'ledgr: stats view shipped; categoriser next (stretch)',
 };
 
 export const links = [
@@ -64,9 +64,9 @@ export const featured: Project[] = [
     year: '2026',
     tagline: 'Double-entry personal finance',
     summary:
-      'A personal finance system built the way accounting software is: every transaction becomes balanced, permanent ledger entries. It reads my real bank statements, checks each one against its own printed totals, and stages every transaction for me to categorise before it posts. There’s a [live demo](https://ledgr-demo.fly.dev/).',
-    status: 'building',
-    statusText: 'Live demo, stats view next',
+      'A personal finance system built the way accounting software is: every transaction becomes balanced, permanent ledger entries. It reads my real bank statements, checks each one against its own printed totals, and stages every transaction for me to categorise before it posts, then shows where the money went. There’s a [live demo](https://ledgr-demo.fly.dev/).',
+    status: 'live',
+    statusText: 'Live demo on Fly.io',
     stack: ['Python', 'FastAPI', 'SQLAlchemy', 'SQLite'],
     areas: ['Backend', 'Data'],
     repo: 'https://github.com/iamzainrizwan/ledgr',
@@ -78,7 +78,9 @@ export const featured: Project[] = [
       'Bank-specific parsers for [HSBC](https://github.com/iamzainrizwan/ledgr/blob/main/backend/src/backend/ingestion/hsbc.py) (PDF) and [Revolut](https://github.com/iamzainrizwan/ledgr/blob/main/backend/src/backend/ingestion/revolut.py) (Excel/CSV), each validating itself against the statement’s printed balance before posting anything.',
       'Parsed transactions are staged for review instead of posted straight away: the app suggests a category from ledger history, and I confirm them one at a time or in bulk.',
       '[Deployed to Fly.io](https://ledgr-demo.fly.dev/) on SQLite (Postgres-ready via config): upload a statement, categorise it, see balances.',
-      'Next: a stats view of spend by category and month.',
+      'A stats view shows spend by category and month, the change from last month, and the share of income kept.',
+      'Every posted transaction keeps its statement date, so each month’s totals reflect when money actually moved.',
+      'Next, as a stretch: automatic categorisation.',
     ],
   },
   {
@@ -94,9 +96,9 @@ export const featured: Project[] = [
     areas: ['Infrastructure'],
     repo: 'https://github.com/iamzainrizwan/s3ntry',
     details: [
-      '[Self-hosted GitHub Actions runner](https://github.com/iamzainrizwan/s3ntry/blob/main/docs/setup/runner.md) on alexandria with a [CI gate](https://github.com/iamzainrizwan/s3ntry/blob/main/.github/workflows/deploy.yml) and a [rollback path](https://github.com/iamzainrizwan/s3ntry/blob/main/rollback.md). Push to main deploys with no manual intervention.',
+      '[Self-hosted GitHub Actions runner](https://github.com/iamzainrizwan/s3ntry/blob/main/docs/setup/runner.md) on alexandria with a [CI gate](https://github.com/iamzainrizwan/s3ntry/blob/main/.github/workflows/deploy.yml) (go vet and [unit tests](https://github.com/iamzainrizwan/s3ntry/blob/main/health/health_test.go)) and a [rollback path](https://github.com/iamzainrizwan/s3ntry/blob/main/rollback.md). Push to main deploys with no manual intervention.',
       'Deploys run as a [dedicated non-root user](https://github.com/iamzainrizwan/s3ntry/blob/main/docs/setup/runner.md) with SSH deploy keys, and that user deliberately has no sudo anywhere in the pipeline.',
-      '[Go health daemon](https://github.com/iamzainrizwan/s3ntry/blob/main/health/main.go) (one static binary, one goroutine per service) polls services concurrently and tracks up/down state and latency.',
+      '[Go health daemon](https://github.com/iamzainrizwan/s3ntry/blob/main/health/main.go) (one static binary, one goroutine per service) polls services concurrently and tracks up/down state and latency, shown on a live status page.',
       'It also checks the host itself: connectivity, whether a reboot is required, and pending apt updates.',
       'The daemon runs as a systemd user service rather than in Docker, because a container would report its own reboot and update state, not the host’s.',
       '[Slack and Discord webhook alerts](https://github.com/iamzainrizwan/s3ntry/blob/main/health/alert.go) on down and recovery, so “is it up?” never needs an SSH session.',

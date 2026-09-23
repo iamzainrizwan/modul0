@@ -7,7 +7,7 @@ export const whoami =
   'zain - cs @ kcl (y2) · treasurer @ kcl cybersoc<br>' +
   "i like breaking things (ctfs) and building things that don't break.";
 
-export const status = 'ledgr: categorisation flow live -> stats view';
+export const status = 'ledgr: stats view shipped -> categoriser (stretch)';
 
 export const birth = '2006-11-15';
 
@@ -47,10 +47,10 @@ github    > <a href="https://github.com/iamzainrizwan">github.com/iamzainrizwan<
 export const projects: Record<string, string> = {
   'ledgr.md':
     '<b>ledgr</b> - double-entry personal finance. immutable entries, idempotent posts, ' +
-    'hsbc pdf + revolut parsers that self-check against printed totals, staged review before posting. fastapi + sqlite, live on fly.io. stats view next.',
+    'hsbc pdf + revolut parsers that self-check against printed totals, staged review before posting, stats by category + month. fastapi + sqlite, live on fly.io.',
   's3ntry.md':
     '<b>s3ntry</b> - ci/cd + monitoring for alexandria. self-hosted runner, ci gate, rollback path, ' +
-    'go health daemon (goroutine per service) -> slack/discord alerts. mean alert 5.7s over 5 failure trials.',
+    'go health daemon (goroutine per service) -> slack/discord alerts + live status page. mean alert 5.7s over 5 failure trials.',
   '1337.md':
     "<b>1337</b> - neetcode spaced-repetition tracker. claude and i's - vibecoded, used daily. flask + react, daily digest emails.",
   'recurse.md': '<b>re::curse</b> - daily interview prep emails via gemini. questions at 11, solutions at 23.',
