@@ -2,18 +2,9 @@
 import '../styles/terminal.css';
 import { buildFs } from '../data/buildFs';
 
-interface Props {
-  title?: string;
-  description?: string;
-  // pre-rendered command + output, so post pages work without js and get indexed
-  initial?: { command: string; html: string };
-}
-
-const {
-  title = 'modul0',
-  description = 'zain rizwan - cs @ kcl. a terminal that happens to be a portfolio.',
-  initial,
-} = Astro.props;
+// the easter-egg version of the site. the readable site lives in Site.astro.
+const title = 'modul0';
+const description = 'Zain Rizwan, the terminal version.';
 const fs = await buildFs();
 const base = import.meta.env.BASE_URL;
 ---
@@ -28,27 +19,19 @@ const base = import.meta.env.BASE_URL;
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <link rel="icon" href={`${base}favicon.svg`} type="image/svg+xml" />
-    <link rel="alternate" type="application/rss+xml" title="modul0" href={`${base}rss.xml`} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
   </head>
   <body>
-    <main class="terminal" data-skip-boot={initial ? '' : undefined}>
-      <div id="output" aria-live="polite">
-        {initial && (
-          <div class="entry">
-            <div class="echo"><span class="prompt">zain@modul0:~$</span> {initial.command}</div>
-            <div class="response" set:html={initial.html} />
-          </div>
-        )}
-      </div>
+    <main class="terminal">
+      <div id="output" aria-live="polite"></div>
       <form id="input" hidden>
         <label for="cmd" class="prompt"><span id="prompt-text">zain@modul0:~$</span></label>
         <input id="cmd" type="text" enterkeyhint="send" autocomplete="off" autocapitalize="off" spellcheck="false" />
       </form>
       <noscript>
-        <p>the terminal needs js. posts are still readable: <a href={`${base}blog/`}>blog/</a></p>
+        <p>the terminal needs js. <a href={base}>back to the normal site</a></p>
       </noscript>
     </main>
     <script type="application/json" id="fs" set:html={JSON.stringify(fs).replace(/</g, '\\u003c')} />

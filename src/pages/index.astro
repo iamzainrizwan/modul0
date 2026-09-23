@@ -1,5 +1,62 @@
 ---
-import Terminal from '../layouts/Terminal.astro';
+import Site from '../layouts/Site.astro';
+import { name, intro, lookingFor, projects, achievements, links } from '../data/profile';
+import { getPosts, longDate } from '../data/buildFs';
+
+const posts = (await getPosts()).slice(0, 5);
+const base = import.meta.env.BASE_URL;
 ---
 
-<Terminal />
+<Site home>
+  <section class="hero">
+    <h1>
+      {name}<a class="caret" href={`${base}terminal/`} title="Open the terminal"><span class="sr-only">Open the terminal version of this site</span></a>
+    </h1>
+    {intro.map((p) => <p class="lede">{p}</p>)}
+    <p class="lede looking">{lookingFor}</p>
+  </section>
+
+  <section id="projects" aria-labelledby="projects-h">
+    <h2 id="projects-h">Projects</h2>
+    <ul class="projects">
+      {projects.map((p) => (
+        <li>
+          <h3><a href={p.repo}>{p.name}</a></h3>
+          <p>{p.summary}</p>
+          <p class="meta">
+            <span class="status">{p.status}</span>
+            <span class="stack">Built with {p.stack.join(', ')}</span>
+          </p>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section aria-labelledby="writing-h">
+    <h2 id="writing-h">Writing</h2>
+    {posts.length ? (
+      <ul class="posts">
+        {posts.map((p) => (
+          <li>
+            <a href={`${base}blog/${p.id}/`}>{p.data.title}</a>
+            <time datetime={p.data.date.toISOString()}>{longDate(p.data.date)}</time>
+          </li>
+        ))}
+      </ul>
+    ) : <p>Nothing published yet.</p>}
+  </section>
+
+  <section aria-labelledby="recognition-h">
+    <h2 id="recognition-h">Recognition</h2>
+    <ul class="plain">
+      {achievements.map((a) => <li>{a}</li>)}
+    </ul>
+  </section>
+
+  <section id="contact" aria-labelledby="contact-h">
+    <h2 id="contact-h">Contact</h2>
+    <ul class="plain">
+      {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+    </ul>
+  </section>
+</Site>

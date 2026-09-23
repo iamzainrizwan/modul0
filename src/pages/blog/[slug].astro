@@ -1,7 +1,8 @@
 ---
-import Terminal from '../../layouts/Terminal.astro';
-import { getPosts, isoDate } from '../../data/buildFs';
-import { postView } from '../../scripts/render';
+import Site from '../../layouts/Site.astro';
+import { name } from '../../data/profile';
+import { getPosts, longDate } from '../../data/buildFs';
+import { render } from 'astro:content';
 
 export async function getStaticPaths() {
   const posts = await getPosts();
@@ -9,12 +10,15 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
-const html = postView(`${post.id}.md`, {
-  title: post.data.title,
-  date: isoDate(post.data.date),
-  description: post.data.description,
-  html: post.rendered?.html ?? '',
-}, import.meta.env.BASE_URL);
+const { Content } = await render(post);
 ---
 
-<Terminal title={`${post.data.title} - modul0`} description={post.data.description} initial={{ command: `cat blog/${post.id}.md`, html }} />
+<Site title={`${post.data.title} - ${name}`} description={post.data.description}>
+  <article class="article">
+    <header>
+      <h1>{post.data.title}</h1>
+      <time datetime={post.data.date.toISOString()}>{longDate(post.data.date)}</time>
+    </header>
+    <Content />
+  </article>
+</Site>

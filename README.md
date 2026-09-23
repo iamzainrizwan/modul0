@@ -2,7 +2,7 @@
 
 `shhh...`
 
-a terminal that happens to be a portfolio, plus a blog you read with `cat`.
+portfolio + blog. there's a terminal hiding in it (`/terminal/`, or press `` ` ``).
 
 ```sh
 npm i

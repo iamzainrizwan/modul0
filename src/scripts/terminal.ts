@@ -26,13 +26,14 @@ const COMMANDS: [string, string][] = [
   ['pgrep -a zain', 'recent achievements'],
   ['history', 'commands you\'ve run'],
   ['clear', 'clear screen'],
+  ['exit', 'back to the normal site'],
 ];
 
 const BOOT = [
   'modul0 v0.2',
   'initialising...',
   'loading user zain rizwan...',
-  'type <span class="accent">help</span> for available commands',
+  'type <span class="accent">help</span> for available commands, <span class="accent">exit</span> to leave',
 ];
 
 const escape = (s: string) =>
@@ -202,7 +203,8 @@ export function boot() {
         out = error('zain is not in the sudoers file. this incident will be reported.');
         break;
       case 'exit':
-        out = 'there is no escape';
+        location.href = fs.base;
+        out = 'logout';
         break;
       case 'clear':
         output.replaceChildren();
@@ -287,12 +289,6 @@ export function boot() {
     if (window.matchMedia('(hover: hover)').matches) input.focus({ preventScroll: true });
   }
 
-  if (terminal.hasAttribute('data-skip-boot')) {
-    print(BOOT[BOOT.length - 1]);
-    ready();
-    window.scrollTo(0, 0);
-    return;
-  }
   const delay = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 150;
   BOOT.forEach((line, i) => setTimeout(() => print(line, undefined, '', i === BOOT.length - 1 ? 'entry' : 'entry boot'), i * delay));
   setTimeout(ready, BOOT.length * delay);

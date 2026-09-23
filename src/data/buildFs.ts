@@ -23,3 +23,6 @@ export async function buildFs() {
   }
   return { files, projects, blog, whoami, birth, base: import.meta.env.BASE_URL };
 }
+
+export const longDate = (d: Date) =>
+  d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });

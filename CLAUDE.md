@@ -1,11 +1,22 @@
 # CLAUDE.md
 
-modul0: personal site that is **purely a terminal** — portfolio + blog, no
-conventional nav/pages. Astro 7, fully static, deployed to GitHub Pages by
+modul0: personal portfolio + blog. Two faces:
+
+1. **The readable site** (`/`, `/blog/`, `/blog/<slug>/`) — the default, written
+   for non-technical recruiters. Plain English, fast to scan.
+2. **The terminal** (`/terminal/`) — an easter egg. Reached via the blinking
+   cursor after the name on the home page, the footer link, or pressing `` ` ``
+   on any page; `exit` returns to the site.
+
+Astro 7, fully static, deployed to GitHub Pages by
 `.github/workflows/deploy.yml` on push to `main`.
 
 ## Layout
 
+- `src/data/profile.ts` — content for the readable site (intro, projects,
+  recognition, contact links). Written for non-technical readers.
+- `src/layouts/Site.astro` + `src/styles/site.css` — the readable site's one
+  layout. IBM Plex Sans, light by default, true-black dark mode.
 - `src/data/fs.ts` — the fake filesystem's static files (`about.txt`,
   `projects/*.md`, …) as html strings. Edit content here.
 - `src/content/blog/*.md` — blog posts (schema in `src/content.config.ts`,
@@ -14,18 +25,18 @@ conventional nav/pages. Astro 7, fully static, deployed to GitHub Pages by
   embedded in every page (`<script id="fs">`).
 - `src/scripts/terminal.ts` — the whole client: command parser, path
   resolution (`cd`/`..`/`~`), tab completion, history, boot sequence.
-- `src/scripts/render.ts` — html shared by client *and* build-time pages
-  (blog listing, post view). Keep them in sync through this file only.
-- `src/layouts/Terminal.astro` — the single layout. `initial` prop
-  pre-renders a command + output server-side; that's how `/blog/<slug>/`
-  works without js and gets indexed.
+- `src/scripts/render.ts` — blog listing / post html inside the terminal.
+- `src/layouts/Terminal.astro` — terminal layout (only `/terminal/` uses it).
 
 ## Rules
 
-- Stay terminal-only. New features are new commands or files, not new UI chrome.
+- The readable site comes first: anything a recruiter needs must be on it,
+  never only in the terminal. The terminal is a bonus, in its own lowercase,
+  more technical voice; `profile.ts` and `fs.ts` are deliberately separate,
+  so update both when a project changes.
 - Anything user-typed goes through `escape()` before hitting innerHTML.
-- Clickable output uses `<a class="run" data-cmd="...">` (with a real href
-  when one exists) so mobile/recruiter visitors never *have* to type.
+- Terminal: clickable output uses `<a class="run" data-cmd="...">` (with a
+  real href when one exists) so visitors never *have* to type.
 - Check new output at 390px wide as well as desktop — grid/flex layouts
   (`.cols`, `.posts`, `.ls`) stack on narrow screens, `<pre>` padding doesn't.
 - Base path: the site is served under `/modulo/` on Pages until a custom

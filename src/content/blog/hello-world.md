@@ -1,18 +1,20 @@
 ---
-title: rebooting modul0
+title: Rebooting modul0
 date: 2026-09-23
-description: modul0 is back, this time with a blog bolted on.
+description: My site is back, with a blog attached and the terminal tucked away.
 ---
 
-modul0 v0.1 was a fake terminal i hand-wrote in vanilla js over a couple of
-weekends. it had nine commands and one of them was a joke.
+The first version of this site was a fake terminal I hand-wrote in vanilla
+JavaScript over a couple of weekends. It was fun to build and fairly
+miserable to use if you just wanted to know what I'd worked on.
 
-v0.2 keeps the terminal and adds this: a blog you read by `cat`-ing files.
+This version is a plain site you can read, with a blog attached. The terminal
+is still here: click the cursor next to my name, or press `` ` `` on any page.
 
-## what's here
+## What's in the terminal
 
-- `ls blog/` lists posts
-- `cat blog/<post>.md` reads one
-- every post also has its own url, so you can link straight to it
+- `ls` and `cat` your way around my projects
+- `cat blog/<post>.md` reads any post from here
+- `uptime` counts how long I've been running
 
-more soon.
+More soon.

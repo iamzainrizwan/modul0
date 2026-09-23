@@ -1,9 +1,24 @@
 ---
-import Terminal from '../../layouts/Terminal.astro';
-import { buildFs } from '../../data/buildFs';
-import { listing } from '../../scripts/render';
+import Site from '../../layouts/Site.astro';
+import { name } from '../../data/profile';
+import { getPosts, longDate } from '../../data/buildFs';
 
-const fs = await buildFs();
+const posts = await getPosts();
+const base = import.meta.env.BASE_URL;
 ---
 
-<Terminal title="blog - modul0" description="posts from modul0" initial={{ command: 'ls -l blog/', html: listing(fs.blog, fs.base) }} />
+<Site title={`Writing - ${name}`} description={`Posts by ${name}.`}>
+  <h1 class="page-title">Writing</h1>
+  {posts.length ? (
+    <ul class="posts">
+      {posts.map((p) => (
+        <li>
+          <a href={`${base}blog/${p.id}/`}>{p.data.title}</a>
+          <time datetime={p.data.date.toISOString()}>{longDate(p.data.date)}</time>
+          <p>{p.data.description}</p>
+        </li>
+      ))}
+    </ul>
+  ) : <p>Nothing published yet.</p>}
+  <p class="aside"><a href={`${base}rss.xml`}>Subscribe with RSS</a></p>
+</Site>

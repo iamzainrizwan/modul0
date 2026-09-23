@@ -1,5 +1,5 @@
-// html shared between the client terminal and build-time pre-rendered pages,
-// so a post looks the same whether it was cat'd or loaded from its url.
+// html for blog output inside the terminal. links point at the readable
+// post pages (/blog/<slug>/).
 
 type Post = { title: string; date: string; description: string; html: string };
 
@@ -18,7 +18,7 @@ export function listing(blog: Record<string, Post>, base: string, prefix = 'blog
 export function postView(name: string, post: Post, base: string) {
   const url = `${base}blog/${slugOf(name)}/`;
   return `<article class="post">
-<header><h1>${post.title}</h1><p class="dim">${post.date} · <a href="${url}">permalink</a></p></header>
+<header><h1>${post.title}</h1><p class="dim">${post.date}, <a href="${url}">read on the normal site</a></p></header>
 ${post.html}
 </article>`;
 }

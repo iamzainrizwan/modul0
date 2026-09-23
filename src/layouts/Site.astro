@@ -1,0 +1,59 @@
+---
+import '../styles/site.css';
+import { name } from '../data/profile';
+
+interface Props {
+  title?: string;
+  description?: string;
+  // the home page carries the name in its hero, so the header stays minimal there
+  home?: boolean;
+}
+
+const {
+  title = name,
+  description = `${name}, Computer Science student at King's College London. Projects and writing on reliability, security and backend engineering.`,
+  home = false,
+} = Astro.props;
+const base = import.meta.env.BASE_URL;
+---
+
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <link rel="icon" href={`${base}favicon.svg`} type="image/svg+xml" />
+    <link rel="alternate" type="application/rss+xml" title={name} href={`${base}rss.xml`} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      {home ? <span /> : <a class="home-link" href={base}>{name}</a>}
+      <nav aria-label="Main">
+        <a href={`${base}#projects`}>Projects</a>
+        <a href={`${base}blog/`}>Writing</a>
+        <a href={`${base}#contact`}>Contact</a>
+      </nav>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <p>There's also a <a href={`${base}terminal/`}>terminal version</a> of this site. Press <kbd>`</kbd> to open it from any page.</p>
+    </footer>
+    <script is:inline define:vars={{ terminal: `${base}terminal/` }}>
+      document.addEventListener('keydown', (e) => {
+        if (e.key !== '`' || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (e.target.closest('input, textarea, [contenteditable]')) return;
+        location.href = terminal;
+      });
+    </script>
+  </body>
+</html>
