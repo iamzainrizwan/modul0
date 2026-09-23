@@ -22,7 +22,7 @@ Astro 7, fully static, deployed to GitHub Pages by
 - `src/content/blog/*.md` — blog posts (schema in `src/content.config.ts`,
   `draft: true` hides a post from production builds).
 - `src/data/buildFs.ts` — assembles fs + rendered posts into the JSON blob
-  embedded in every page (`<script id="fs">`).
+  embedded in the terminal page (`<script id="fs">`).
 - `src/scripts/terminal.ts` — the whole client: command parser, path
   resolution (`cd`/`..`/`~`), tab completion, history, boot sequence.
 - `src/scripts/render.ts` — blog listing / post html inside the terminal.
