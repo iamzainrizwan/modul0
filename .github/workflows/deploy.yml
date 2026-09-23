@@ -24,11 +24,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # project page lives under /modulo/ until a custom domain is set up
+      # project page lives under /modul0/ until a custom domain is set up
       - run: npm run build
         env:
           SITE: https://iamzainrizwan.github.io
-          BASE: /modulo/
+          BASE: /modul0/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

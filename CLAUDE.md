@@ -39,7 +39,7 @@ Astro 7, fully static, deployed to GitHub Pages by
   real href when one exists) so visitors never *have* to type.
 - Check new output at 390px wide as well as desktop — grid/flex layouts
   (`.cols`, `.posts`, `.ls`) stack on narrow screens, `<pre>` padding doesn't.
-- Base path: the site is served under `/modulo/` on Pages until a custom
+- Base path: the site is served under `/modul0/` on Pages until a custom
   domain exists. Always build urls from `import.meta.env.BASE_URL` / `fs.base`,
   never a hardcoded `/`.
 - Local build needs node >= 22.12 (system node may be older:
