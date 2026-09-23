@@ -1,0 +1,17 @@
+{
+  "name": "modul0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/rss": "^4.0.19",
+    "astro": "^6.0.5"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

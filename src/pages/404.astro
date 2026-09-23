@@ -1,0 +1,7 @@
+---
+import Terminal from '../layouts/Terminal.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<Terminal title="404 - modul0" initial={{ command: 'cat ./this-page', html: `<span class="error">cat: ./this-page: no such file or directory</span><br>try <a href="${base}">cd ~</a>` }} />

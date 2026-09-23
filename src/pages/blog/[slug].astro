@@ -1,0 +1,20 @@
+---
+import Terminal from '../../layouts/Terminal.astro';
+import { getPosts, isoDate } from '../../data/buildFs';
+import { postView } from '../../scripts/render';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const html = postView(`${post.id}.md`, {
+  title: post.data.title,
+  date: isoDate(post.data.date),
+  description: post.data.description,
+  html: post.rendered?.html ?? '',
+}, import.meta.env.BASE_URL);
+---
+
+<Terminal title={`${post.data.title} - modul0`} description={post.data.description} initial={{ command: `cat blog/${post.id}.md`, html }} />

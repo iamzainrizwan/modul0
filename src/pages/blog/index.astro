@@ -1,0 +1,9 @@
+---
+import Terminal from '../../layouts/Terminal.astro';
+import { buildFs } from '../../data/buildFs';
+import { listing } from '../../scripts/render';
+
+const fs = await buildFs();
+---
+
+<Terminal title="blog - modul0" description="posts from modul0" initial={{ command: 'ls -l blog/', html: listing(fs.blog, fs.base) }} />
