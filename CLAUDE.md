@@ -22,13 +22,17 @@ those. When sources disagree, ask; don't pick one.
 
 ## Layout
 
-- `src/data/profile.ts` - all site content. Strings may contain `[text](url)`
-  links, rendered by `src/data/inline.ts` (Astro: `set:html={inline(x)}`,
-  React: `dangerouslySetInnerHTML`). Link claims to their evidence wherever it
-  exists (a writeup, the source file, a report), and check every URL resolves. (projects, homelab, experience,
+- `src/data/profile.ts` - all site content (projects, homelab, experience,
   education, leadership, awards, skills...). Edit content here, not in pages.
+  Strings may contain `[text](url)` links, rendered by `src/data/inline.ts`
+  (Astro: `set:html={inline(x)}`, React: `dangerouslySetInnerHTML`). Link
+  claims to their evidence wherever it exists (a writeup, the source file, a
+  report), and check every URL resolves.
 - `src/data/fs.ts` - the terminal's files, same facts in a lowercase voice.
   Deliberately separate from profile.ts: update both when facts change.
+- `src/data/buildFs.ts` - `getPosts()` (drafts shown in dev only) and
+  `buildFs()`, which serialises fs.ts + rendered posts into each page for the
+  client-side terminal.
 - `src/layouts/Site.astro` - the one site layout: sticky rail (file-tree nav,
   now/uptime, links, terminal button) + content. `boot` prop plays the boot
   animation (home only); `section` highlights a nav item on non-home pages.
@@ -44,7 +48,16 @@ those. When sources disagree, ask; don't pick one.
 - `src/scripts/terminal.ts` - terminal engine, `boot(root, fs, opts)`; mounted
   by QuakeTerminal and by the full-screen `/terminal/` page
   (`src/layouts/Terminal.astro`). `src/scripts/render.ts` - blog html inside it.
-- `src/content/blog/*.md` - posts (`draft: true` hides one in production).
+- `src/content/blog/*.md` - posts; frontmatter `title`, `date`,
+  `description`, optional `draft: true` (hides it in production). Schema in
+  `src/content.config.ts`. Also `src/pages/rss.xml.js` and `404.astro`.
+
+## Commands
+
+`npm run dev` / `npm run build` / `npm run preview`. No tests or linter: the
+checks are `npm run build` passing plus the screenshot pass below.
+`astro.config.mjs` reads `SITE`/`BASE` env vars (defaults: modul0.dev, `/`)
+and uses `trailingSlash: 'always'`, so internal links end in `/`.
 
 ## Rules
 
