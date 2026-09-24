@@ -1,5 +1,5 @@
-import { useEffect, useId, useState } from 'react';
-import { motion, AnimatePresence, LayoutGroup } from 'motion/react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import type { Area, Project } from '../data/profile';
 import { inline } from '../data/inline';
 
@@ -7,7 +7,9 @@ import { inline } from '../data/inline';
 const html = (s: string) => ({ __html: inline(s) });
 
 // featured projects show everything; the archive is filterable by area and
-// each card expands for its details.
+// each card expands for its details. switching filters snaps the grid to the
+// new set and wipes the cards in (css, .card-in), and holds the scroll still
+// so the filter bar stays under the pointer.
 
 const PREVIEW = 3;
 
@@ -83,12 +85,12 @@ function Featured({ p }: { p: Project }) {
   );
 }
 
-function ArchiveCard({ p }: { p: Project }) {
+function ArchiveCard({ p, i, wipe }: { p: Project; i: number; wipe: boolean }) {
   const [open, setOpen] = useState(false);
   const id = useId();
   const expandable = p.details.length > 0;
   return (
-    <motion.li layout="position" className="card" id={`project-${p.slug}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+    <li className={wipe ? 'card card-in' : 'card'} id={`project-${p.slug}`} style={{ '--i': i } as CSSProperties}>
       <div className="card-head">
         <h4 className="card-name">{p.name}</h4>
         <span className="year">{p.year}</span>
@@ -128,12 +130,35 @@ function ArchiveCard({ p }: { p: Project }) {
           </span>
         )}
       </div>
-    </motion.li>
+    </li>
   );
 }
 
 export default function ProjectExplorer({ featured, archive, areas }: { featured: Project[]; archive: Project[]; areas: Area[] }) {
   const [area, setArea] = useState<Area | 'All'>('All');
+  // bumped on every filter change: remounts the cards so the wipe replays
+  const [round, setRound] = useState(0);
+  const saved = useRef<number | null>(null);
+  const spacer = useRef<HTMLDivElement>(null);
+  const pick = (a: Area | 'All') => {
+    if (a === area) return;
+    saved.current = scrollY;
+    setArea(a);
+    setRound((r) => r + 1);
+  };
+
+  // a shorter list would pull the page up under the pointer. before paint, pad
+  // the bottom just enough to keep the old scroll position, then restore it.
+  useLayoutEffect(() => {
+    const y = saved.current;
+    const pad = spacer.current;
+    if (y === null || !pad) return;
+    saved.current = null;
+    pad.style.height = '0px';
+    const short = y + innerHeight - document.documentElement.scrollHeight;
+    pad.style.height = `${Math.max(0, short)}px`;
+    scrollTo({ top: y, behavior: 'instant' });
+  }, [round]);
   const shown = area === 'All' ? archive : archive.filter((p) => p.areas.includes(area));
   const count = (a: Area) => archive.filter((p) => p.areas.includes(a)).length;
 
@@ -143,7 +168,7 @@ export default function ProjectExplorer({ featured, archive, areas }: { featured
       const slug = location.hash.replace('#project-', '');
       const target = archive.find((p) => p.slug === slug);
       if (!target || shown.includes(target)) return;
-      setArea('All');
+      pick('All');
       requestAnimationFrame(() => document.getElementById(`project-${slug}`)?.scrollIntoView());
     };
     addEventListener('hashchange', reveal);
@@ -166,22 +191,19 @@ export default function ProjectExplorer({ featured, archive, areas }: { featured
               const n = a === 'All' ? archive.length : count(a);
               if (!n) return null;
               return (
-                <button key={a} type="button" className="chip" aria-pressed={area === a} onClick={() => setArea(a)}>
+                <button key={a} type="button" className="chip" aria-pressed={area === a} onClick={() => pick(a)}>
                   {a} <span className="chip-n">{n}</span>
                 </button>
               );
             })}
           </div>
         </div>
-        <LayoutGroup>
-          <motion.ul layout className="cards">
-            <AnimatePresence mode="popLayout" initial={false}>
-              {shown.map((p) => (
-                <ArchiveCard key={p.slug} p={p} />
-              ))}
-            </AnimatePresence>
-          </motion.ul>
-        </LayoutGroup>
+        <ul className="cards">
+          {shown.map((p, i) => (
+            <ArchiveCard key={`${round}-${p.slug}`} p={p} i={i} wipe={round > 0} />
+          ))}
+        </ul>
+        <div ref={spacer} aria-hidden="true" />
       </div>
     </div>
   );
