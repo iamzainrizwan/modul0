@@ -408,7 +408,7 @@ export const leadership: Role[] = [
     role: 'Lighting operator',
     place: 'London',
     when: 'Nov 2025',
-    details: ['Ran about 120 lighting cues across 3 shows.', 'Rigged and troubleshot the lighting rig and hazer.'],
+    details: ['Ran about 120 lighting cues across 3 shows of [Carrie](#productions) at the Greenwood Theatre.', 'Rigged and troubleshot the lighting rig and hazer.'],
   },
   {
     org: 'Langley Grammar School',
@@ -436,12 +436,12 @@ export const leadership: Role[] = [
 
 // titles, years and types from zain's old theatre site
 // (iamzainrizwan/zain-codes-the-stage, src/pages/Theatre.tsx), not its prose;
-// carrie from zain 2026-09-24. the lgs list is the named ones: smaller events
+// carrie from zain 2026-09-24 (the same run as the king's tech crew role). the lgs list is the named ones: smaller events
 // make up the rest of the "about 14" (zain). role at lgs is the cv's.
 export type Production = { title: string; when: string; org: string; kind?: string; role: string; venue?: string };
 
 export const productions: Production[] = [
-  { title: 'Carrie', when: 'Nov 2025', org: 'King’s Tech Crew', role: 'Lighting operator', venue: 'Greenwood Theatre' },
+  { title: 'Carrie', when: 'Nov 2025', org: 'King’s Tech Crew', kind: '3 shows, about 120 cues', role: 'Lighting operator', venue: 'Greenwood Theatre' },
   { title: 'Greased Lightning', when: '2025', org: 'Langley Grammar School', kind: 'Whole-school production', role: 'Lighting and sound' },
   { title: 'High School Musical', when: '2024', org: 'Langley Grammar School', kind: 'Whole-school production', role: 'Lighting and sound' },
   { title: 'Senior House Variety', when: '2024', org: 'Langley Grammar School', role: 'Lighting and sound' },

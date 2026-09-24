@@ -30,13 +30,13 @@ security   > ctf tooling, wireshark, educated guessing.</pre>`,
 > finalist - uber global hackathon, mena (2023)</pre>`,
   'experience.log': `<pre>
 2026-05  treasurer, kcl cybersoc. pwn others and dont pwn yourself.
-2025-11  lighting operator, king's tech crew. ~120 cues, 3 shows.
+2025-11  lighting operator, king's tech crew. carrie: ~120 cues, 3 shows.
 2025-07  infra/cloud intern, elecosoft. azure vnets + dns via cli, m365 mock tenancy.
 2024-07  work experience, shell.
 2021-12  lead technician, langley grammar. ~14 productions.
 2020-09  digital leader, langley grammar. bett apple showcase.</pre>`,
   'productions.log': `<pre>
-2025-11  carrie - king's tech crew, greenwood theatre. lighting op.
+2025-11  carrie - king's tech crew, greenwood theatre. lighting op, ~120 cues x 3 shows.
 2025     greased lightning - lgs, whole school
 2024     high school musical - lgs, whole school
 2024     senior house variety - lgs
