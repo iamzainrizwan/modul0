@@ -1,0 +1,69 @@
+---
+// test site only (PUBLIC_TEST=1): switch how the site moves, per browser.
+// one reveal style (radios) plus independent extras (checkboxes); saved in
+// localStorage, read before paint by the head script in Site.astro.
+import { styles, extras, defaults } from '../data/motion';
+const base = import.meta.env.BASE_URL;
+---
+
+<details class="mpanel" data-base={base} data-defaults={JSON.stringify(defaults)}>
+  <summary>motion</summary>
+  <form>
+    <fieldset>
+      <legend>style</legend>
+      {styles.map((s) => (
+        <label><input type="radio" name="style" value={s.id} /> {s.label}</label>
+      ))}
+    </fieldset>
+    <fieldset>
+      <legend>extras</legend>
+      {extras.map((x) => (
+        <label><input type="checkbox" name={x.id} /> {x.label}</label>
+      ))}
+    </fieldset>
+    <div class="mpanel-actions">
+      <button type="button" data-boot>replay boot</button>
+      <button type="button" data-reset>reset</button>
+    </div>
+  </form>
+</details>
+
+<script>
+  const KEY = 'modul0-motion';
+  const panel = document.querySelector<HTMLDetailsElement>('.mpanel')!;
+  const form = panel.querySelector('form')!;
+  const defaults = JSON.parse(panel.dataset.defaults!);
+  const html = document.documentElement;
+
+  const load = () => {
+    try { return { ...defaults, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') }; } catch { return { ...defaults }; }
+  };
+  const save = (m: Record<string, unknown>) => { try { localStorage.setItem(KEY, JSON.stringify(m)); } catch {} };
+
+  // css-driven motion changes straight away; the page draw and scroll reveal
+  // are set up at load, so they show from the next page on
+  const apply = (m: Record<string, unknown>) => {
+    html.dataset.motion = String(m.style);
+    for (const k of Object.keys(defaults)) if (k !== 'style') html.toggleAttribute(`data-mx-${k}`, !!m[k]);
+  };
+  const fill = (m: Record<string, unknown>) => {
+    for (const el of form.querySelectorAll<HTMLInputElement>('input')) el.checked = el.type === 'radio' ? el.value === m.style : !!m[el.name];
+  };
+
+  fill(load());
+  try { panel.open = localStorage.getItem(`${KEY}-open`) !== '0'; } catch { panel.open = true; }
+  panel.addEventListener('toggle', () => { try { localStorage.setItem(`${KEY}-open`, panel.open ? '1' : '0'); } catch {} });
+
+  form.addEventListener('change', () => {
+    const m: Record<string, unknown> = { style: (form.elements.namedItem('style') as RadioNodeList).value };
+    for (const el of form.querySelectorAll<HTMLInputElement>('input[type=checkbox]')) m[el.name] = el.checked;
+    save(m);
+    apply(m);
+  });
+  panel.querySelector('[data-boot]')!.addEventListener('click', () => location.assign(panel.dataset.base!));
+  panel.querySelector('[data-reset]')!.addEventListener('click', () => {
+    try { localStorage.removeItem(KEY); } catch {}
+    fill(defaults);
+    apply(defaults);
+  });
+</script>

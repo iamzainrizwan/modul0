@@ -31,6 +31,8 @@ jobs:
       - run: npm run build
         env:
           SITE: https://modul0-test.modul0.workers.dev
+          # shows the motion panel and replays the boot on every load (src/data/motion.ts)
+          PUBLIC_TEST: '1'
       # keep the test site out of search results
       - run: |
           printf '/*\n  X-Robots-Tag: noindex\n' > dist/_headers

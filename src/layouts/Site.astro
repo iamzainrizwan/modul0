@@ -10,6 +10,8 @@ import SectionNav from '../components/SectionNav';
 import Uptime from '../components/Uptime';
 import ModMark from '../components/ModMark.astro';
 import { api } from '../data/api';
+import { defaults as motion, testSite } from '../data/motion';
+import MotionPanel from '../components/MotionPanel.astro';
 
 interface Props {
   title?: string;
@@ -77,12 +79,29 @@ const sections = [
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300..800;1,6..72,300..800&display=swap" rel="stylesheet" />
-    <script is:inline define:vars={{ boot }}>
-      // decide before first paint whether the boot animation runs, so the page
-      // never flashes underneath it. fails open after 5s if react never loads.
+    <script is:inline define:vars={{ boot, motion, testSite }}>
+      // before first paint: how the site moves (data-motion, data-mx-*; the
+      // test site's panel overrides the defaults per browser), and whether the
+      // boot animation runs, so the page never flashes underneath either.
+      // both fail open after a few seconds if the scripts never load.
+      var root = document.documentElement;
+      var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var m = Object.assign({}, motion);
       try {
-        if (boot && !sessionStorage.getItem('modul0-booted') && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          var root = document.documentElement;
+        if (testSite) Object.assign(m, JSON.parse(localStorage.getItem('modul0-motion') || '{}'));
+      } catch (e) {}
+      root.dataset.motion = m.style;
+      ['pages', 'reveal', 'cursor', 'decode'].forEach(function (x) {
+        if (m[x]) root.setAttribute('data-mx-' + x, '');
+      });
+      // print draws each page block by block, so hold the blocks back until it starts
+      if (m.style === 'print' && m.pages && !reduced) {
+        root.classList.add('px-draw');
+        setTimeout(function () { root.classList.remove('px-draw'); }, 3000);
+      }
+      try {
+        // the test site replays the boot on every load
+        if (boot && (testSite || !sessionStorage.getItem('modul0-booted')) && !reduced) {
           root.dataset.boot = 'pending';
           setTimeout(function () {
             if (root.dataset.boot === 'pending') delete root.dataset.boot;
@@ -135,6 +154,7 @@ const sections = [
     </div>
 
     <QuakeTerminal client:idle fs={fs} />
+    {testSite && <MotionPanel />}
     <script is:inline define:vars={{ api }}>
       // the view counter: one visit per browser session, shown in the rail and footer
       if (api) {
@@ -152,32 +172,8 @@ const sections = [
       }
     </script>
     <script>
-      // pixel reveal: headings and cards below the fold dither in the first
-      // time they scroll into view (.px / .px-in in site.css). anything on
-      // screen at load is left alone: the page transition already covers it.
-      // the hiding class goes on here, so without js nothing is ever hidden.
-      if (!matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
-        const io = new IntersectionObserver(
-          (entries) => {
-            for (const e of entries) {
-              if (!e.isIntersecting) continue;
-              e.target.classList.add('px-in');
-              io.unobserve(e.target);
-            }
-          },
-          { rootMargin: '0px 0px -8% 0px' },
-        );
-        for (const el of document.querySelectorAll<HTMLElement>('.section-h, .page-title, .sub-h, .teaser, .readout > div, .glance > li, .machine')) {
-          // react owns what's inside its islands; changing it would break hydration
-          if (el.closest('astro-island') || el.getBoundingClientRect().top < innerHeight) continue;
-          // siblings go one after another
-          const item = el.closest('li') ?? el;
-          el.style.setProperty('--i', String(Math.min([...(item.parentElement?.children ?? [])].indexOf(item), 4)));
-          el.classList.add('px');
-          io.observe(el);
-        }
-        document.documentElement.classList.add('px-ready');
-      }
+      import { initMotion } from '../scripts/motion';
+      initMotion();
 
       // terminal links open the drop-down once it's hydrated, else fall back to /terminal/
       document.addEventListener('click', (e) => {

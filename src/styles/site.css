@@ -405,8 +405,8 @@ section.hero { margin-top: 0; border-top: none; }
   border-bottom: 1px solid var(--line-strong);
   background: var(--void);
 }
-/* filter change: each card dithers in, one after another (px-in, pixel motion below) */
-.card-in { animation: px-in 0.24s steps(1, end) both; animation-delay: calc(var(--i) * 50ms); }
+/* filter change: each card reveals in the current motion style, one after another (pixel motion below) */
+.card-in { animation: var(--rv-in) var(--rv-dur) var(--rv-ease) both; animation-delay: calc(var(--i) * var(--rv-stagger)); }
 @media (prefers-reduced-motion: reduce) { .card-in { animation: none; } }
 .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; }
 .card-name { margin: 0; font-family: var(--serif); font-size: 1.25rem; font-weight: 800; line-height: 1.05; letter-spacing: -0.025em; }
@@ -846,8 +846,8 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 }
 .boot-skip { position: absolute; right: 1.25rem; bottom: 1rem; font-size: 0.74rem; color: var(--muted); }
 .boot-wipe { position: absolute; inset: 0; background: var(--purple); }
-.boot-wipe-in { animation: px-in 0.24s steps(1, end) both; }
-.boot-wipe-out { animation: px-out 0.32s steps(1, end) both; }
+.boot-wipe-in { animation: var(--rv-in) var(--rv-dur) var(--rv-ease) both; }
+.boot-wipe-out { animation: var(--rv-out) calc(var(--rv-dur) * 1.3) var(--rv-ease) both; }
 
 /* ---------- quake terminal ---------- */
 
@@ -893,7 +893,7 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 }
 .quake-close:hover { background: var(--void); color: var(--purple); }
 .quake-scroll { flex: 1; overflow-y: auto; }
-.quake-scrim { position: fixed; inset: 0; z-index: 899; background: conic-gradient(#0000 0 25%, var(--void) 0) 0 0 / 4px 4px; animation: px-in 0.16s steps(1, end) both; }
+.quake-scrim { position: fixed; inset: 0; z-index: 899; background: conic-gradient(#0000 0 25%, var(--void) 0) 0 0 / 4px 4px; animation: var(--rv-in) var(--rv-dur) var(--rv-ease) both; }
 @media (prefers-reduced-motion: reduce) { .quake-scrim { animation: none; } }
 @media (max-width: 560px) { .quake-hint { display: none; } .quake-close { margin-left: auto; } .quake { height: 75vh; } }
 
@@ -997,9 +997,22 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 .drill .drill-link { margin: 0.6rem 0 0; font-family: var(--mono); font-size: 0.8rem; font-weight: 600; }
 
 /* ---------- pixel motion ----------
-   nothing glides: motion is a few hard frames (steps), and things appear by
-   pixel dither, a 4px checker mask stepping through 25/50/75/100% coverage.
-   everything here switches off for reduced motion. */
+   terminal-esque: nothing glides. one reveal style drives every "something
+   appears" moment (page changes, the boot wipe, scroll reveal, the project
+   filter, the terminal scrim) through --rv-* on <html data-motion>:
+     dither   a 4px checker mask through 25/50/75/100% coverage
+     redraw   the screen repaints top to bottom in chunky bands
+     print    blocks just appear, one after another, like `cat`
+     instant  a hard cut
+   extras stack on top (data-mx-*): page transitions, scroll reveal, the
+   block-cursor hover, decoded labels. on the test site a panel switches all
+   of it (MotionPanel.astro); elsewhere the defaults in src/data/motion.ts.
+   everything is off for reduced motion. */
+
+:root, html[data-motion='dither'] { --rv-in: px-in; --rv-out: px-out; --rv-ease: steps(1, end); --rv-dur: 0.24s; --rv-stagger: 60ms; }
+html[data-motion='redraw'] { --rv-in: rd-in; --rv-out: rd-out; --rv-ease: steps(6, end); --rv-dur: 0.2s; --rv-stagger: 60ms; }
+html[data-motion='print'] { --rv-in: print; --rv-out: print-out; --rv-ease: step-end; --rv-dur: 0.06s; --rv-stagger: 35ms; }
+html[data-motion='instant'] { --rv-in: cut; --rv-out: cut; --rv-ease: linear; --rv-dur: 0.06s; --rv-stagger: 0ms; }
 
 @keyframes px-in {
   0% { mask: linear-gradient(#0000, #0000); }
@@ -1015,29 +1028,76 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
   75% { mask: conic-gradient(#000 0 25%, #0000 0) 0 0 / 8px 8px; }
   100% { mask: linear-gradient(#0000, #0000); }
 }
-/* terminal output: a line just appears */
+@keyframes rd-in { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes rd-out { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(100% 0 0 0); } }
 @keyframes print { from { opacity: 0; } to { opacity: 1; } }
+@keyframes print-out { from { opacity: 1; } to { opacity: 0; } }
+/* visible for its duration, then gone with whatever removes it */
+@keyframes cut { from { opacity: 1; } to { opacity: 1; } }
 
-/* page to page: the rail stays put and snaps to its new state; the rest of
-   the page dithers in over the old one */
+/* page to page (dither, redraw): the rail stays put and snaps to its new
+   state; the old page clears, then the new one draws. never both at once.
+   print and instant skip the transition (script in Site.astro): print draws
+   the new page block by block instead, instant just swaps. */
 @view-transition { navigation: auto; }
 .rail { view-transition-name: rail; }
 ::view-transition-group(rail) { animation: none; }
 ::view-transition-old(rail) { display: none; }
-::view-transition-new(rail) { animation: none; }
-::view-transition-old(root) { animation: none; }
-::view-transition-new(root) { animation: px-in 0.24s steps(1, end) both; }
+::view-transition-new(rail), ::view-transition-group(mpanel), ::view-transition-new(mpanel) { animation: none; }
+::view-transition-old(mpanel) { display: none; }
+::view-transition-old(root) { animation: var(--rv-out) 0.12s var(--rv-ease) both; }
+::view-transition-new(root) { animation: var(--rv-in) var(--rv-dur) var(--rv-ease) 0.12s both; }
 
-/* headings and cards dither in the first time they scroll into view
+/* scroll reveal, and print's block-by-block page draw: .px hides until .px-in
    (a script in Site.astro adds .px-ready, so without js nothing is hidden) */
 .px-ready .px:not(.px-in) { visibility: hidden; }
-.px-in { animation: px-in 0.24s steps(1, end) both; animation-delay: calc(var(--i, 0) * 60ms); }
+.px-in { animation: var(--rv-in) var(--rv-dur) var(--rv-ease) both; animation-delay: calc(var(--i, 0) * var(--rv-stagger)); }
+
+/* print: the head script holds main's blocks back until motion.ts starts drawing */
+.px-draw main > :not(section), .px-draw main > section > * { visibility: hidden; }
 
 /* lines of detail print one after another, like terminal output */
 .print { animation: print 1ms step-end both; animation-delay: calc(var(--i, 0) * 45ms); }
+html[data-motion='instant'] .print { animation: none; }
+
+/* block-cursor hover: a solid block runs across the link a character at a
+   time, then the text inverts (--n, the character count, is set on hover) */
+@keyframes cursor-sweep { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
+@keyframes cursor-ink { to { color: var(--void); text-decoration-color: var(--void); } }
+@media (hover: hover) {
+  html[data-mx-cursor] a:not(.btn, .teaser, .glance-row, .head-link):hover,
+  html[data-mx-cursor] .tree li a:hover {
+    background: linear-gradient(var(--sweep, var(--purple)), var(--sweep, var(--purple))) no-repeat 0 0 / 0% 100%;
+    color: var(--text);
+    animation:
+      cursor-sweep calc(var(--n, 12) * 14ms) steps(var(--n, 12), end) forwards,
+      cursor-ink 1ms step-end calc(var(--n, 12) * 14ms) forwards;
+  }
+  html[data-mx-cursor] .tree li a:hover { --sweep: var(--white); }
+  html[data-mx-cursor] .tree li a:hover::before { color: inherit; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
   .px-ready .px:not(.px-in) { visibility: visible; }
-  .px-in, .print { animation: none; }
+  .px-in, .print, .card-in, .quake-scrim { animation: none; }
+  html[data-mx-cursor] a:hover { animation: none; background-size: 100% 100%; color: var(--void); }
 }
+html[data-motion='instant'] .quake, html[data-motion='instant'] .quake.is-open { transition: none; }
+
+/* ---------- motion panel (test site only) ---------- */
+.mpanel { view-transition-name: mpanel; position: fixed; right: 12px; bottom: 12px; z-index: 950; font-family: var(--mono); font-size: 0.72rem; color: var(--text); background: var(--void); border: var(--rule); box-shadow: 4px 4px 0 var(--purple); }
+.mpanel summary { padding: 0.35rem 0.6rem; cursor: pointer; list-style: none; font-weight: 700; background: var(--purple); color: var(--void); }
+.mpanel summary::-webkit-details-marker { display: none; }
+.mpanel[open] summary::after { content: ' [-]'; }
+.mpanel:not([open]) summary::after { content: ' [+]'; }
+.mpanel form { display: grid; gap: 0.7rem; padding: 0.7rem 0.75rem 0.75rem; width: 15rem; }
+.mpanel fieldset { margin: 0; padding: 0; border: none; display: grid; gap: 0.2rem; }
+.mpanel legend { padding: 0; margin-bottom: 0.3rem; color: var(--muted); }
+.mpanel label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+.mpanel input { appearance: none; width: 0.85rem; height: 0.85rem; margin: 0; border: 2px solid var(--text); background: var(--void); flex-shrink: 0; }
+.mpanel input:checked { background: var(--purple); border-color: var(--purple); }
+.mpanel input[type='radio']:checked { box-shadow: inset 0 0 0 2px var(--void); }
+.mpanel .mpanel-actions { display: flex; gap: 1rem; }
+.mpanel button { padding: 0; border: none; background: none; color: var(--purple); font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; }
+@media (max-width: 640px) { .mpanel { right: 8px; bottom: 8px; } .mpanel form { width: 13rem; } }

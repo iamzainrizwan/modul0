@@ -101,20 +101,26 @@ those. When sources disagree, ask; don't pick one.
 
 ## Motion
 
-Terminal-esque on purpose: nothing glides. Motion is a few hard frames
-(`steps()`), and things appear by pixel dither (`px-in` / `px-out` in
-site.css, a 4px checker mask through 25/50/75/100%). Page to page is a
-cross-document view transition: the rail stays put, the page dithers in;
-links are prefetched (astro.config `prefetch`, the rail on viewport). Below-
-fold headings and cards dither in once on scroll (`.px`, script in
-Site.astro; never inside React islands, never hidden without js). Detail
-lists print line by line (`.print`). Everything is off for reduced motion.
+Terminal-esque on purpose: nothing glides. One reveal style drives every
+"something appears" moment (page changes, boot wipe, scroll reveal, project
+filter, terminal scrim) via `--rv-*` on `html[data-motion]`: dither (4px
+checker mask), redraw (top-down bands), print (blocks appear in order, like
+`cat`), instant. Extras stack via `data-mx-*`: pages, reveal, cursor (block
+cursor sweeps hovered links), decode (mono labels resolve from glyphs).
+Defaults in `src/data/motion.ts`; the head script in Site.astro sets the
+attributes before paint; `src/scripts/motion.ts` does the js half (skips the
+view transition for print/instant, print's page draw, reveal, decode). Page
+changes are cross-document view transitions (old clears, then new draws; the
+rail stays put) with prefetch. Never touch DOM inside React islands, never
+hide anything without js, everything off for reduced motion.
 
 ## Test site
 
 Any branch except main deploys to https://modul0-test.modul0.workers.dev
 (`.github/workflows/test.yml`, `deploy/test/wrangler.toml`: a Worker serving
-`dist` as static files, noindex, guestbook offline). Last push wins.
+`dist` as static files, noindex, guestbook offline). Last push wins. Built
+with `PUBLIC_TEST=1`: a motion panel (`MotionPanel.astro`, per-browser
+settings in localStorage) and the boot replays on every load.
 
 ## Commands
 
