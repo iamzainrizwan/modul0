@@ -8,7 +8,7 @@ export type Motion = {
   pages: boolean; // page-to-page transitions
   reveal: boolean; // headings and cards reveal on first scroll into view
   cursor: boolean; // block-cursor hover on links
-  decode: boolean; // mono labels resolve from random glyphs
+  decode: boolean; // two characters of each heading flicker through glyphs
 };
 
 export const styles: { id: MotionStyle; label: string }[] = [
@@ -21,7 +21,7 @@ export const extras: { id: Exclude<keyof Motion, 'style'>; label: string }[] = [
   { id: 'pages', label: 'page transitions' },
   { id: 'reveal', label: 'scroll reveal' },
   { id: 'cursor', label: 'block-cursor hover' },
-  { id: 'decode', label: 'decode labels' },
+  { id: 'decode', label: 'decode headings' },
 ];
 
 export const defaults: Motion = { style: 'dither', pages: true, reveal: true, cursor: false, decode: false };

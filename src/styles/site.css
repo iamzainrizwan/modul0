@@ -1000,7 +1000,7 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
    terminal-esque: nothing glides. one reveal style drives every "something
    appears" moment (page changes, the boot wipe, scroll reveal, the project
    filter, the terminal scrim) through --rv-* on <html data-motion>:
-     dither   an 8px checker mask through 25/50/75/100% coverage
+     dither   8px pixels dissolve in, in a scattered order (25/50/75/100%)
      redraw   the screen repaints top to bottom in chunky bands
      print    blocks just appear, one after another, like `cat`
      instant  a hard cut
@@ -1014,18 +1014,22 @@ html[data-motion='redraw'] { --rv-in: rd-in; --rv-out: rd-out; --rv-ease: steps(
 html[data-motion='print'] { --rv-in: print; --rv-out: print-out; --rv-ease: step-end; --rv-dur: 0.06s; --rv-stagger: 35ms; }
 html[data-motion='instant'] { --rv-in: cut-in; --rv-out: cut-out; --rv-ease: linear; --rv-dur: 0.06s; --rv-stagger: 0ms; }
 
+/* the dissolve: an 8x8 cell of 8px pixels (a 64px tile) filling in a
+   blue-noise order (best-candidate sampling: each pixel lands far from the
+   ones before it), 16 pixels a stage, picked for the fewest diagonal runs.
+   a regular pattern, a checkerboard especially, reads as stripes on screen. */
 @keyframes px-in {
   0% { mask: linear-gradient(#0000, #0000); }
-  25% { mask: conic-gradient(#000 0 25%, #0000 0) 0 0 / 16px 16px; }
-  50% { mask: repeating-conic-gradient(#000 0 25%, #0000 0 50%) 0 0 / 16px 16px; }
-  75% { mask: conic-gradient(#0000 0 25%, #000 0) 0 0 / 16px 16px; }
+  25% { mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' shape-rendering='crispEdges'%3E%3Cpath d='M24 24h8v8h-8zM0 0h8v8h-8zM48 24h8v8h-8zM48 48h8v8h-8zM16 56h8v8h-8zM8 32h8v8h-8zM8 16h8v8h-8zM0 48h8v8h-8zM24 0h8v8h-8zM40 0h8v8h-8zM24 8h8v8h-8zM40 32h8v8h-8zM24 40h8v8h-8zM56 8h8v8h-8zM32 48h8v8h-8zM0 24h8v8h-8z'/%3E%3C/svg%3E") 0 0 / 64px 64px; }
+  50% { mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' shape-rendering='crispEdges'%3E%3Cpath d='M24 24h8v8h-8zM0 0h8v8h-8zM48 24h8v8h-8zM48 48h8v8h-8zM16 56h8v8h-8zM8 32h8v8h-8zM8 16h8v8h-8zM0 48h8v8h-8zM24 0h8v8h-8zM40 0h8v8h-8zM24 8h8v8h-8zM40 32h8v8h-8zM24 40h8v8h-8zM56 8h8v8h-8zM32 48h8v8h-8zM0 24h8v8h-8zM0 56h8v8h-8zM16 0h8v8h-8zM16 48h8v8h-8zM32 16h8v8h-8zM56 32h8v8h-8zM24 48h8v8h-8zM24 32h8v8h-8zM56 24h8v8h-8zM48 8h8v8h-8zM56 40h8v8h-8zM24 16h8v8h-8zM40 56h8v8h-8zM32 56h8v8h-8zM56 48h8v8h-8zM8 40h8v8h-8zM48 32h8v8h-8z'/%3E%3C/svg%3E") 0 0 / 64px 64px; }
+  75% { mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' shape-rendering='crispEdges'%3E%3Cpath d='M24 24h8v8h-8zM0 0h8v8h-8zM48 24h8v8h-8zM48 48h8v8h-8zM16 56h8v8h-8zM8 32h8v8h-8zM8 16h8v8h-8zM0 48h8v8h-8zM24 0h8v8h-8zM40 0h8v8h-8zM24 8h8v8h-8zM40 32h8v8h-8zM24 40h8v8h-8zM56 8h8v8h-8zM32 48h8v8h-8zM0 24h8v8h-8zM0 56h8v8h-8zM16 0h8v8h-8zM16 48h8v8h-8zM32 16h8v8h-8zM56 32h8v8h-8zM24 48h8v8h-8zM24 32h8v8h-8zM56 24h8v8h-8zM48 8h8v8h-8zM56 40h8v8h-8zM24 16h8v8h-8zM40 56h8v8h-8zM32 56h8v8h-8zM56 48h8v8h-8zM8 40h8v8h-8zM48 32h8v8h-8zM56 56h8v8h-8zM8 48h8v8h-8zM16 24h8v8h-8zM40 24h8v8h-8zM16 16h8v8h-8zM32 8h8v8h-8zM8 24h8v8h-8zM40 16h8v8h-8zM56 16h8v8h-8zM32 32h8v8h-8zM40 40h8v8h-8zM32 0h8v8h-8zM0 16h8v8h-8zM40 8h8v8h-8zM32 40h8v8h-8zM56 0h8v8h-8z'/%3E%3C/svg%3E") 0 0 / 64px 64px; }
   100% { mask: none; }
 }
 @keyframes px-out {
   0% { mask: none; }
-  25% { mask: conic-gradient(#0000 0 25%, #000 0) 0 0 / 16px 16px; }
-  50% { mask: repeating-conic-gradient(#000 0 25%, #0000 0 50%) 0 0 / 16px 16px; }
-  75% { mask: conic-gradient(#000 0 25%, #0000 0) 0 0 / 16px 16px; }
+  25% { mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' shape-rendering='crispEdges'%3E%3Cpath d='M24 24h8v8h-8zM0 0h8v8h-8zM48 24h8v8h-8zM48 48h8v8h-8zM16 56h8v8h-8zM8 32h8v8h-8zM8 16h8v8h-8zM0 48h8v8h-8zM24 0h8v8h-8zM40 0h8v8h-8zM24 8h8v8h-8zM40 32h8v8h-8zM24 40h8v8h-8zM56 8h8v8h-8zM32 48h8v8h-8zM0 24h8v8h-8zM0 56h8v8h-8zM16 0h8v8h-8zM16 48h8v8h-8zM32 16h8v8h-8zM56 32h8v8h-8zM24 48h8v8h-8zM24 32h8v8h-8zM56 24h8v8h-8zM48 8h8v8h-8zM56 40h8v8h-8zM24 16h8v8h-8zM40 56h8v8h-8zM32 56h8v8h-8zM56 48h8v8h-8zM8 40h8v8h-8zM48 32h8v8h-8zM56 56h8v8h-8zM8 48h8v8h-8zM16 24h8v8h-8zM40 24h8v8h-8zM16 16h8v8h-8zM32 8h8v8h-8zM8 24h8v8h-8zM40 16h8v8h-8zM56 16h8v8h-8zM32 32h8v8h-8zM40 40h8v8h-8zM32 0h8v8h-8zM0 16h8v8h-8zM40 8h8v8h-8zM32 40h8v8h-8zM56 0h8v8h-8z'/%3E%3C/svg%3E") 0 0 / 64px 64px; }
+  50% { mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' shape-rendering='crispEdges'%3E%3Cpath d='M24 24h8v8h-8zM0 0h8v8h-8zM48 24h8v8h-8zM48 48h8v8h-8zM16 56h8v8h-8zM8 32h8v8h-8zM8 16h8v8h-8zM0 48h8v8h-8zM24 0h8v8h-8zM40 0h8v8h-8zM24 8h8v8h-8zM40 32h8v8h-8zM24 40h8v8h-8zM56 8h8v8h-8zM32 48h8v8h-8zM0 24h8v8h-8zM0 56h8v8h-8zM16 0h8v8h-8zM16 48h8v8h-8zM32 16h8v8h-8zM56 32h8v8h-8zM24 48h8v8h-8zM24 32h8v8h-8zM56 24h8v8h-8zM48 8h8v8h-8zM56 40h8v8h-8zM24 16h8v8h-8zM40 56h8v8h-8zM32 56h8v8h-8zM56 48h8v8h-8zM8 40h8v8h-8zM48 32h8v8h-8z'/%3E%3C/svg%3E") 0 0 / 64px 64px; }
+  75% { mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' shape-rendering='crispEdges'%3E%3Cpath d='M24 24h8v8h-8zM0 0h8v8h-8zM48 24h8v8h-8zM48 48h8v8h-8zM16 56h8v8h-8zM8 32h8v8h-8zM8 16h8v8h-8zM0 48h8v8h-8zM24 0h8v8h-8zM40 0h8v8h-8zM24 8h8v8h-8zM40 32h8v8h-8zM24 40h8v8h-8zM56 8h8v8h-8zM32 48h8v8h-8zM0 24h8v8h-8z'/%3E%3C/svg%3E") 0 0 / 64px 64px; }
   100% { mask: linear-gradient(#0000, #0000); }
 }
 @keyframes rd-in { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
@@ -1050,6 +1054,9 @@ html[data-motion='instant'] { --rv-in: cut-in; --rv-out: cut-out; --rv-ease: lin
 /* lines of detail print one after another, like terminal output */
 .print { animation: print 1ms step-end both; animation-delay: calc(var(--i, 0) * 45ms); }
 html[data-motion='instant'] .print { animation: none; }
+
+/* decode: a heading character mid-flicker (motion.ts locks its width) */
+.dc { display: inline-block; text-align: center; color: var(--purple); }
 
 /* block-cursor hover: a solid block runs across the link a character at a
    time, then the text inverts (--n, the character count, is set on hover) */

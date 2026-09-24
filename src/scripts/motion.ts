@@ -20,8 +20,8 @@ const index = (el: Element) => {
 
 // what reveals on first scroll into view
 const REVEAL = '.section-h, .page-title, .sub-h, .teaser, .readout > div, .glance > li, .machine';
-// mono labels that decode (leaf text only)
-const LABELS = '.section-meta, .glance-k, .teaser-tagline, .award-when, .tl-when, .facts dt, .readout dt, .also-h, .page-head .section-meta';
+// headings that decode: two of their characters flicker through glyphs
+const HEADINGS = '.hero-h, .page-title, .section-h, .sub-h, .article h1';
 
 // the page as blocks, top to bottom: main's children, with sections opened up
 function blocks(): HTMLElement[] {
@@ -36,24 +36,57 @@ function blocks(): HTMLElement[] {
   return out.filter((el) => el.tagName !== 'ASTRO-ISLAND' && el.offsetHeight > 0);
 }
 
-const GLYPHS = '#%&*+=/<>?01';
-function decode(el: HTMLElement, delay = 0) {
-  if (el.dataset.decoded || el.children.length) return;
-  el.dataset.decoded = '1';
-  const final = el.textContent ?? '';
-  const chars = [...final];
-  let t = 0;
-  const tick = () => {
-    t++;
-    const done = Math.floor(t * 1.6);
-    el.textContent = chars.map((c, i) => (i < done || c === ' ' ? c : GLYPHS[(Math.random() * GLYPHS.length) | 0])).join('');
-    if (done >= chars.length) {
-      el.textContent = final;
-      return;
-    }
-    setTimeout(tick, 32);
-  };
-  setTimeout(tick, delay);
+const GLYPHS = '#%&*?/<>01';
+// two characters of a heading (one if it's only two long) flicker through
+// glyphs in purple, then settle one after the other. each is wrapped in a
+// span locked to its own width, so the heading never reflows, and the
+// heading keeps its real text as its accessible name while it plays.
+function decode(h: HTMLElement, delay = 0) {
+  if (h.dataset.decoded) return;
+  h.dataset.decoded = '1';
+  const spots: { node: Text; at: number }[] = [];
+  const walk = document.createTreeWalker(h, NodeFilter.SHOW_TEXT);
+  for (let n = walk.nextNode() as Text | null; n; n = walk.nextNode() as Text | null) {
+    [...n.data].forEach((c, at) => /[\p{L}\p{N}]/u.test(c) && spots.push({ node: n, at }));
+  }
+  if (!spots.length) return;
+  // one from each half, so the two aren't bunched together
+  const half = Math.ceil(spots.length / 2);
+  const pick = (from: number, to: number) => spots[from + Math.floor(Math.random() * (to - from))];
+  const chosen = spots.length <= 2 ? [pick(0, spots.length)] : [pick(0, half), pick(half, spots.length)];
+
+  setTimeout(() => {
+    h.setAttribute('aria-label', h.textContent ?? '');
+    // wrap from the end of each text node backwards so earlier offsets hold
+    const spans = chosen
+      .sort((x, y) => (x.node === y.node ? y.at - x.at : 0))
+      .map(({ node, at }) => {
+        const offset = [...node.data].slice(0, at).join('').length;
+        const ch = node.splitText(offset);
+        ch.splitText(ch.data.codePointAt(0)! > 0xffff ? 2 : 1);
+        const span = document.createElement('span');
+        span.className = 'dc';
+        ch.replaceWith(span);
+        span.textContent = ch.data;
+        span.style.width = `${span.getBoundingClientRect().width}px`;
+        return span;
+      })
+      .reverse();
+    spans.forEach((span, i) => {
+      const final = span.textContent ?? '';
+      const flicker = setInterval(() => {
+        span.textContent = GLYPHS[(Math.random() * GLYPHS.length) | 0];
+      }, 70);
+      setTimeout(() => {
+        clearInterval(flicker);
+        span.replaceWith(final);
+        if (i === spans.length - 1) {
+          h.normalize();
+          h.removeAttribute('aria-label');
+        }
+      }, 650 + i * 300);
+    });
+  }, delay);
 }
 
 export function initMotion() {
@@ -66,7 +99,7 @@ export function initMotion() {
   if (reduced()) return;
 
   const reveal = has('reveal') && style() !== 'instant';
-  const labels = has('decode') ? [...document.querySelectorAll<HTMLElement>(LABELS)].filter(ours) : [];
+  const labels = has('decode') ? [...document.querySelectorAll<HTMLElement>(HEADINGS)].filter(ours) : [];
 
   // below the fold: reveal (and decode) the first time each thing scrolls in
   const io = new IntersectionObserver(
@@ -105,7 +138,7 @@ export function initMotion() {
         });
     }
     html.classList.remove('px-draw');
-    labels.filter(onScreen).forEach((el, i) => decode(el, i * 40));
+    labels.filter(onScreen).forEach((el, i) => decode(el, 150 + i * 120));
   };
   if (html.dataset.boot) {
     const mo = new MutationObserver(() => {

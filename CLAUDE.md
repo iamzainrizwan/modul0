@@ -104,10 +104,10 @@ those. When sources disagree, ask; don't pick one.
 Terminal-esque on purpose: nothing glides. One reveal style drives every
 "something appears" moment (a page drawing in on arrival, boot wipe, scroll
 reveal, project filter, terminal scrim) via `--rv-*` on `html[data-motion]`:
-dither (8px checker mask; 4px read as diagonal lines on real screens),
+dither (8px pixels in a blue-noise order: any regular pattern, a checkerboard especially, reads as diagonal stripes),
 redraw (top-down bands), print (blocks appear in order, like `cat`),
 instant. Extras stack via `data-mx-*`: pages, reveal, cursor (block cursor
-sweeps hovered links), decode (mono labels resolve from glyphs). Defaults in
+sweeps hovered links), decode (two characters per heading flicker through glyphs, width-locked). Defaults in
 `src/data/motion.ts`; the head script in Site.astro sets the attributes (and
 `.px-draw`, holding main's blocks back) before paint; `src/scripts/motion.ts`
 does the js half (the page draw, reveal, decode). Page changes are plain
