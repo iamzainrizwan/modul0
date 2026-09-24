@@ -100,6 +100,18 @@ export default function BootSequence() {
     };
   }, []);
 
+  // failsafe: the wipe advances on animationend, so if that never fires
+  // (a style whose animation can't run), move on anyway rather than leave
+  // the purple panel up
+  useEffect(() => {
+    if (phase !== 'wipe' && phase !== 'reveal') return;
+    const t = window.setTimeout(() => {
+      document.documentElement.removeAttribute('data-boot');
+      setPhase(phase === 'wipe' ? 'reveal' : 'done');
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [phase]);
+
   if (!active || phase === 'done') return null;
 
   const filled = Math.round((resolved / LINES.length) * BAR);

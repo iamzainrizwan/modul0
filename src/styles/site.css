@@ -1012,7 +1012,7 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 :root, html[data-motion='dither'] { --rv-in: px-in; --rv-out: px-out; --rv-ease: steps(1, end); --rv-dur: 0.24s; --rv-stagger: 60ms; }
 html[data-motion='redraw'] { --rv-in: rd-in; --rv-out: rd-out; --rv-ease: steps(6, end); --rv-dur: 0.2s; --rv-stagger: 60ms; }
 html[data-motion='print'] { --rv-in: print; --rv-out: print-out; --rv-ease: step-end; --rv-dur: 0.06s; --rv-stagger: 35ms; }
-html[data-motion='instant'] { --rv-in: cut; --rv-out: cut; --rv-ease: linear; --rv-dur: 0.06s; --rv-stagger: 0ms; }
+html[data-motion='instant'] { --rv-in: cut-in; --rv-out: cut-out; --rv-ease: linear; --rv-dur: 0.06s; --rv-stagger: 0ms; }
 
 @keyframes px-in {
   0% { mask: linear-gradient(#0000, #0000); }
@@ -1032,8 +1032,11 @@ html[data-motion='instant'] { --rv-in: cut; --rv-out: cut; --rv-ease: linear; --
 @keyframes rd-out { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(100% 0 0 0); } }
 @keyframes print { from { opacity: 0; } to { opacity: 1; } }
 @keyframes print-out { from { opacity: 1; } to { opacity: 0; } }
-/* visible for its duration, then gone with whatever removes it */
-@keyframes cut { from { opacity: 1; } to { opacity: 1; } }
+/* instant: shown for one frame's worth, then gone. in and out must be
+   different keyframes, or switching between them never restarts the
+   animation (and nothing waiting on animationend ever hears back) */
+@keyframes cut-in { from { opacity: 1; } to { opacity: 1; } }
+@keyframes cut-out { from { opacity: 1; } 99% { opacity: 1; } to { opacity: 0; } }
 
 /* page to page (dither, redraw): the rail stays put and snaps to its new
    state; the old page clears, then the new one draws. never both at once.
