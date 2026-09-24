@@ -1,0 +1,10 @@
+# the test site: any branch but main builds to https://modul0-test.modul0.workers.dev
+# (.github/workflows/test.yml), so changes can be tried live before they reach
+# modul0.dev. static files only; the guestbook api isn't wired up here.
+name = "modul0-test"
+compatibility_date = "2026-09-01"
+
+[assets]
+directory = "../../dist"
+not_found_handling = "404-page"
+html_handling = "auto-trailing-slash"

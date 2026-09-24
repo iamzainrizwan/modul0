@@ -1,5 +1,4 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import type { Area, Project } from '../data/profile';
 import { inline } from '../data/inline';
 
@@ -53,18 +52,11 @@ function Featured({ p }: { p: Project }) {
         {p.details.slice(0, PREVIEW).map((d) => (
           <li key={d} dangerouslySetInnerHTML={html(d)} />
         ))}
-        <AnimatePresence initial={false}>
-          {all &&
-            p.details.slice(PREVIEW).map((d, i) => (
-              <motion.li
-                key={d}
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto', transition: { delay: i * 0.03 } }}
-                exit={{ opacity: 0, height: 0 }}
-                dangerouslySetInnerHTML={html(d)}
-              />
-            ))}
-        </AnimatePresence>
+        {/* the extra lines print one after another; collapsing is instant */}
+        {all &&
+          p.details.slice(PREVIEW).map((d, i) => (
+            <li key={d} className="print" style={{ '--i': i } as CSSProperties} dangerouslySetInnerHTML={html(d)} />
+          ))}
       </ul>
       <footer className="feature-foot">
         <Stack items={p.stack} />
@@ -97,21 +89,13 @@ function ArchiveCard({ p, i, wipe }: { p: Project; i: number; wipe: boolean }) {
       </div>
       <p className="card-tagline">{p.tagline}</p>
       <p className="card-summary" dangerouslySetInnerHTML={html(p.summary)} />
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.ul
-            id={id}
-            className="details details-small"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-          >
-            {p.details.map((d) => (
-              <li key={d} dangerouslySetInnerHTML={html(d)} />
-            ))}
-          </motion.ul>
-        )}
-      </AnimatePresence>
+      {open && (
+        <ul id={id} className="details details-small">
+          {p.details.map((d, i) => (
+            <li key={d} className="print" style={{ '--i': i } as CSSProperties} dangerouslySetInnerHTML={html(d)} />
+          ))}
+        </ul>
+      )}
       <div className="card-foot">
         <span className="card-stack">{p.stack.join(', ')}</span>
         {(expandable || p.repo || p.context) && (

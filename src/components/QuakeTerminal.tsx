@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { boot, type Fs } from '../scripts/terminal';
 
 // drop-down terminal available on every page: ` toggles it, esc or `exit`
@@ -46,19 +45,16 @@ export default function QuakeTerminal({ fs }: { fs: Fs }) {
   }, [open]);
 
   return (
-    <AnimatePresence>
-      {/* kept mounted so the session survives closing; hidden via motion */}
-      <motion.div
-        key="quake"
-        className="quake"
+    <>
+      {/* kept mounted so the session survives closing. it drops in a few hard
+          frames (css steps, .quake.is-open) rather than sliding */}
+      <div
+        className={open ? 'quake is-open' : 'quake'}
         role="dialog"
         aria-modal="true"
         aria-label="Terminal"
         aria-hidden={!open}
         inert={!open}
-        initial={false}
-        animate={open ? { y: 0, visibility: 'visible' } : { y: '-110%', transitionEnd: { visibility: 'hidden' } }}
-        transition={{ type: 'spring', stiffness: 380, damping: 38 }}
       >
         <div className="quake-bar">
           <span className="quake-title">zain@modul0: ~</span>
@@ -81,17 +77,8 @@ export default function QuakeTerminal({ fs }: { fs: Fs }) {
             </form>
           </div>
         </div>
-      </motion.div>
-      {open && (
-        <motion.div
-          key="scrim"
-          className="quake-scrim"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => setOpen(false)}
-        />
-      )}
-    </AnimatePresence>
+      </div>
+      {open && <div className="quake-scrim" onClick={() => setOpen(false)} />}
+    </>
   );
 }

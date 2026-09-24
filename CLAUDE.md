@@ -99,6 +99,23 @@ those. When sources disagree, ask; don't pick one.
   `description`, optional `draft: true` (hides it in production). Schema in
   `src/content.config.ts`. Also `src/pages/rss.xml.js` and `404.astro`.
 
+## Motion
+
+Terminal-esque on purpose: nothing glides. Motion is a few hard frames
+(`steps()`), and things appear by pixel dither (`px-in` / `px-out` in
+site.css, a 4px checker mask through 25/50/75/100%). Page to page is a
+cross-document view transition: the rail stays put, the page dithers in;
+links are prefetched (astro.config `prefetch`, the rail on viewport). Below-
+fold headings and cards dither in once on scroll (`.px`, script in
+Site.astro; never inside React islands, never hidden without js). Detail
+lists print line by line (`.print`). Everything is off for reduced motion.
+
+## Test site
+
+Any branch except main deploys to https://modul0-test.modul0.workers.dev
+(`.github/workflows/test.yml`, `deploy/test/wrangler.toml`: a Worker serving
+`dist` as static files, noindex, guestbook offline). Last push wins.
+
 ## Commands
 
 `npm run dev` / `npm run build` / `npm run preview`. No tests or linter: the

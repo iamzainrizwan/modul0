@@ -152,6 +152,33 @@ const sections = [
       }
     </script>
     <script>
+      // pixel reveal: headings and cards below the fold dither in the first
+      // time they scroll into view (.px / .px-in in site.css). anything on
+      // screen at load is left alone: the page transition already covers it.
+      // the hiding class goes on here, so without js nothing is ever hidden.
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) {
+              if (!e.isIntersecting) continue;
+              e.target.classList.add('px-in');
+              io.unobserve(e.target);
+            }
+          },
+          { rootMargin: '0px 0px -8% 0px' },
+        );
+        for (const el of document.querySelectorAll<HTMLElement>('.section-h, .page-title, .sub-h, .teaser, .readout > div, .glance > li, .machine')) {
+          // react owns what's inside its islands; changing it would break hydration
+          if (el.closest('astro-island') || el.getBoundingClientRect().top < innerHeight) continue;
+          // siblings go one after another
+          const item = el.closest('li') ?? el;
+          el.style.setProperty('--i', String(Math.min([...(item.parentElement?.children ?? [])].indexOf(item), 4)));
+          el.classList.add('px');
+          io.observe(el);
+        }
+        document.documentElement.classList.add('px-ready');
+      }
+
       // terminal links open the drop-down once it's hydrated, else fall back to /terminal/
       document.addEventListener('click', (e) => {
         const a = (e.target as HTMLElement).closest('[data-open-terminal]');

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'motion/react';
 
 // first-visit boot animation. the page is fully rendered underneath. an inline
 // script in Site.astro sets html[data-boot=pending] before first paint, which
@@ -8,8 +7,8 @@ import { motion } from 'motion/react';
 //
 // sequence: log lines resolve [ .... ] -> [  r0  ] while a square progress
 // bar fills, the name types itself (typo included, then fixed), and a solid
-// purple panel wipes up and away to reveal the site. any key/tap skips
-// straight to the wipe.
+// purple panel dithers in over it, then dithers away to reveal the site
+// (css px-in / px-out). any key/tap skips straight to the wipe.
 
 // `short` is shown on narrow screens so each line stays on one row. statuses
 // read as remainders: r0 = done, nothing left over; r1 = something still left
@@ -145,12 +144,9 @@ export default function BootSequence() {
         </div>
       )}
       {(phase === 'wipe' || phase === 'reveal') && (
-        <motion.div
-          className="boot-wipe"
-          initial={{ y: '100%' }}
-          animate={phase === 'wipe' ? { y: '0%' } : { y: '-100%' }}
-          transition={phase === 'wipe' ? { duration: 0.28, ease: [0.7, 0, 0.84, 0] } : { duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
-          onAnimationComplete={() => {
+        <div
+          className={phase === 'wipe' ? 'boot-wipe boot-wipe-in' : 'boot-wipe boot-wipe-out'}
+          onAnimationEnd={() => {
             if (phase === 'wipe') {
               // page shows through as soon as the black screen is gone
               document.documentElement.removeAttribute('data-boot');

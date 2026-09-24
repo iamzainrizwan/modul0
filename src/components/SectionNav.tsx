@@ -16,7 +16,7 @@ export default function SectionNav({ items, base, initial }: { items: Item[]; ba
     const link = [...(el?.querySelectorAll<HTMLElement>('[aria-current], .tree-proxy') ?? [])].find((a) => a.offsetParent);
     if (!el || !link || el.scrollWidth <= el.clientWidth) return;
     const left = link.offsetLeft - el.clientWidth / 2 + link.offsetWidth / 2;
-    el.scrollTo({ left, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    el.scrollTo({ left });
   }, [current]);
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function SectionNav({ items, base, initial }: { items: Item[]; ba
   const here = (i: Item) => (current === i.id ? (i.id === initial ? 'page' : 'location') : undefined);
   const link = (i: Item, proxy = false) => (
     <li key={i.id}>
-      <a href={i.href ?? `${base}#${i.id}`} aria-current={here(i)} className={proxy ? 'tree-proxy' : undefined}>
+      <a href={i.href ?? `${base}#${i.id}`} aria-current={here(i)} className={proxy ? 'tree-proxy' : undefined} data-astro-prefetch="viewport">
         {label(i.label)}
       </a>
     </li>
@@ -66,7 +66,7 @@ export default function SectionNav({ items, base, initial }: { items: Item[]; ba
         {items.map((i) =>
           i.children ? (
             <li key={i.id} className={`tree-group${current === i.id || i.children.some((c) => c.id === current) ? ' is-open' : ''}`}>
-              <a className="tree-dir" href={i.href ?? `${base}#${i.children[0].id}`} aria-current={here(i)}>
+              <a className="tree-dir" href={i.href ?? `${base}#${i.children[0].id}`} aria-current={here(i)} data-astro-prefetch="viewport">
                 {label(i.label)}
               </a>
               {/* while the folder itself is current, its first child stands in for it where the folder is hidden */}

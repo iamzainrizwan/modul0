@@ -1,0 +1,42 @@
+name: test
+
+# every branch except main builds to the test site,
+# https://modul0-test.modul0.workers.dev (deploy/test/wrangler.toml).
+# the last push wins, whichever branch it came from.
+on:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-site
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            api/package-lock.json
+      - run: npm ci
+      - run: npm run build
+        env:
+          SITE: https://modul0-test.modul0.workers.dev
+      # keep the test site out of search results
+      - run: printf '/*\n  X-Robots-Tag: noindex\n' > dist/_headers
+      # wrangler is pinned in api/package.json
+      - run: npm ci
+        working-directory: api
+      - run: api/node_modules/.bin/wrangler deploy --config deploy/test/wrangler.toml
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
