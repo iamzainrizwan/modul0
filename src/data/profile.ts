@@ -96,7 +96,7 @@ export const featured: Project[] = [
     areas: ['Infrastructure'],
     repo: 'https://github.com/iamzainrizwan/s3ntry',
     details: [
-      '[Self-hosted GitHub Actions runner](https://github.com/iamzainrizwan/s3ntry/blob/main/docs/setup/runner.md) on alexandria with a [CI gate](https://github.com/iamzainrizwan/s3ntry/blob/main/.github/workflows/deploy.yml) (go vet and [unit tests](https://github.com/iamzainrizwan/s3ntry/blob/main/health/health_test.go)) and a [rollback path](https://github.com/iamzainrizwan/s3ntry/blob/main/rollback.md). Push to main deploys with no manual intervention.',
+      '[Self-hosted GitHub Actions runner](https://github.com/iamzainrizwan/s3ntry/blob/main/docs/setup/runner.md) on alexandria with a [CI gate](https://github.com/iamzainrizwan/s3ntry/blob/main/.github/workflows/deploy.yml) (go vet and [unit tests](https://github.com/iamzainrizwan/s3ntry/blob/main/health/health_test.go)) and a [rollback path](https://github.com/iamzainrizwan/s3ntry/blob/main/docs/rollback.md). Push to main deploys with no manual intervention.',
       'Deploys run as a [dedicated non-root user](https://github.com/iamzainrizwan/s3ntry/blob/main/docs/setup/runner.md) with SSH deploy keys, and that user deliberately has no sudo anywhere in the pipeline.',
       '[Go health daemon](https://github.com/iamzainrizwan/s3ntry/blob/main/health/main.go) (one static binary, one goroutine per service) polls services concurrently and tracks up/down state and latency, shown on a live status page.',
       'It also checks the host itself: connectivity, whether a reboot is required, and pending apt updates.',
