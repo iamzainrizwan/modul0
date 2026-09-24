@@ -79,8 +79,14 @@ const sections = [
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300..800;1,6..72,300..800&display=swap" rel="stylesheet" />
+  </head>
+  <body>
     <script is:inline define:vars={{ boot, motion, testSite }}>
-      // before first paint: how the site moves (data-motion, data-mx-*; the
+      // at the very top of body, not in head: here it runs after the head's
+      // stylesheets have loaded. in head it ran first, and firefox, asked
+      // for matchMedia before the css arrived, painted one frame of the page
+      // unstyled (a screen-wide % slash). still before any content paints:
+      // how the site moves (data-motion, data-mx-*; the
       // test site's panel overrides the defaults per browser), and whether the
       // boot animation runs, so the page never flashes underneath either.
       // both fail open after a few seconds if the scripts never load.
@@ -104,8 +110,6 @@ const sections = [
         }
       } catch (e) {}
     </script>
-  </head>
-  <body>
     <a class="skip" href="#main">Skip to content</a>
     {boot && <div class="boot-cover" aria-hidden="true" />}
     {boot && <BootSequence client:load />}

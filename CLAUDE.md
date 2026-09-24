@@ -136,6 +136,11 @@ and uses `trailingSlash: 'always'`, so internal links end in `/`.
 ## Rules
 
 - Anything user-typed in the terminal goes through `escape()` before innerHTML.
+- The pre-paint script (motion attributes, boot decision) lives at the top of
+  `<body>`, not in `<head>`: Astro puts the site stylesheet last in head, and
+  a head script calling `matchMedia` made Firefox paint one unstyled frame
+  (a screen-wide `%` slash). Keep head scripts out, and keep intrinsic
+  `width`/`height` on inline SVGs.
 - React islands are wrapped in `<astro-island>`, so `.parent > *` selectors
   don't reach them (the rail uses `display: contents` on the wrapper).
 - Terminal CSS is scoped under `.terminal`; don't add global classes that
