@@ -1000,7 +1000,7 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
    terminal-esque: nothing glides. one reveal style drives every "something
    appears" moment (page changes, the boot wipe, scroll reveal, the project
    filter, the terminal scrim) through --rv-* on <html data-motion>:
-     dither   a 4px checker mask through 25/50/75/100% coverage
+     dither   an 8px checker mask through 25/50/75/100% coverage
      redraw   the screen repaints top to bottom in chunky bands
      print    blocks just appear, one after another, like `cat`
      instant  a hard cut
@@ -1016,16 +1016,16 @@ html[data-motion='instant'] { --rv-in: cut-in; --rv-out: cut-out; --rv-ease: lin
 
 @keyframes px-in {
   0% { mask: linear-gradient(#0000, #0000); }
-  25% { mask: conic-gradient(#000 0 25%, #0000 0) 0 0 / 8px 8px; }
-  50% { mask: repeating-conic-gradient(#000 0 25%, #0000 0 50%) 0 0 / 8px 8px; }
-  75% { mask: conic-gradient(#0000 0 25%, #000 0) 0 0 / 8px 8px; }
+  25% { mask: conic-gradient(#000 0 25%, #0000 0) 0 0 / 16px 16px; }
+  50% { mask: repeating-conic-gradient(#000 0 25%, #0000 0 50%) 0 0 / 16px 16px; }
+  75% { mask: conic-gradient(#0000 0 25%, #000 0) 0 0 / 16px 16px; }
   100% { mask: none; }
 }
 @keyframes px-out {
   0% { mask: none; }
-  25% { mask: conic-gradient(#0000 0 25%, #000 0) 0 0 / 8px 8px; }
-  50% { mask: repeating-conic-gradient(#000 0 25%, #0000 0 50%) 0 0 / 8px 8px; }
-  75% { mask: conic-gradient(#000 0 25%, #0000 0) 0 0 / 8px 8px; }
+  25% { mask: conic-gradient(#0000 0 25%, #000 0) 0 0 / 16px 16px; }
+  50% { mask: repeating-conic-gradient(#000 0 25%, #0000 0 50%) 0 0 / 16px 16px; }
+  75% { mask: conic-gradient(#000 0 25%, #0000 0) 0 0 / 16px 16px; }
   100% { mask: linear-gradient(#0000, #0000); }
 }
 @keyframes rd-in { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
@@ -1038,25 +1038,13 @@ html[data-motion='instant'] { --rv-in: cut-in; --rv-out: cut-out; --rv-ease: lin
 @keyframes cut-in { from { opacity: 1; } to { opacity: 1; } }
 @keyframes cut-out { from { opacity: 1; } 99% { opacity: 1; } to { opacity: 0; } }
 
-/* page to page (dither, redraw): the rail stays put and snaps to its new
-   state; the old page clears, then the new one draws. never both at once.
-   print and instant skip the transition (script in Site.astro): print draws
-   the new page block by block instead, instant just swaps. */
-@view-transition { navigation: auto; }
-.rail { view-transition-name: rail; }
-::view-transition-group(rail) { animation: none; }
-::view-transition-old(rail) { display: none; }
-::view-transition-new(rail), ::view-transition-group(mpanel), ::view-transition-new(mpanel) { animation: none; }
-::view-transition-old(mpanel) { display: none; }
-::view-transition-old(root) { animation: var(--rv-out) 0.12s var(--rv-ease) both; }
-::view-transition-new(root) { animation: var(--rv-in) var(--rv-dur) var(--rv-ease) 0.12s both; }
-
-/* scroll reveal, and print's block-by-block page draw: .px hides until .px-in
+/* page arrival and scroll reveal: .px hides until .px-in
    (a script in Site.astro adds .px-ready, so without js nothing is hidden) */
 .px-ready .px:not(.px-in) { visibility: hidden; }
 .px-in { animation: var(--rv-in) var(--rv-dur) var(--rv-ease) both; animation-delay: calc(var(--i, 0) * var(--rv-stagger)); }
+.px-arrive { animation-delay: calc(var(--i, 0) * 30ms); }
 
-/* print: the head script holds main's blocks back until motion.ts starts drawing */
+/* page arrival: the head script holds main's blocks back until motion.ts draws them */
 .px-draw main > :not(section), .px-draw main > section > * { visibility: hidden; }
 
 /* lines of detail print one after another, like terminal output */
@@ -1081,7 +1069,6 @@ html[data-motion='instant'] .print { animation: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
   .px-ready .px:not(.px-in) { visibility: visible; }
   .px-in, .print, .card-in, .quake-scrim { animation: none; }
   html[data-mx-cursor] a:hover { animation: none; background-size: 100% 100%; color: var(--void); }
@@ -1089,7 +1076,7 @@ html[data-motion='instant'] .print { animation: none; }
 html[data-motion='instant'] .quake, html[data-motion='instant'] .quake.is-open { transition: none; }
 
 /* ---------- motion panel (test site only) ---------- */
-.mpanel { view-transition-name: mpanel; position: fixed; right: 12px; bottom: 12px; z-index: 950; font-family: var(--mono); font-size: 0.72rem; color: var(--text); background: var(--void); border: var(--rule); box-shadow: 4px 4px 0 var(--purple); }
+.mpanel { position: fixed; right: 12px; bottom: 12px; z-index: 950; font-family: var(--mono); font-size: 0.72rem; color: var(--text); background: var(--void); border: var(--rule); box-shadow: 4px 4px 0 var(--purple); }
 .mpanel summary { padding: 0.35rem 0.6rem; cursor: pointer; list-style: none; font-weight: 700; background: var(--purple); color: var(--void); }
 .mpanel summary::-webkit-details-marker { display: none; }
 .mpanel[open] summary::after { content: ' [-]'; }

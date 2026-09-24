@@ -102,17 +102,20 @@ those. When sources disagree, ask; don't pick one.
 ## Motion
 
 Terminal-esque on purpose: nothing glides. One reveal style drives every
-"something appears" moment (page changes, boot wipe, scroll reveal, project
-filter, terminal scrim) via `--rv-*` on `html[data-motion]`: dither (4px
-checker mask), redraw (top-down bands), print (blocks appear in order, like
-`cat`), instant. Extras stack via `data-mx-*`: pages, reveal, cursor (block
-cursor sweeps hovered links), decode (mono labels resolve from glyphs).
-Defaults in `src/data/motion.ts`; the head script in Site.astro sets the
-attributes before paint; `src/scripts/motion.ts` does the js half (skips the
-view transition for print/instant, print's page draw, reveal, decode). Page
-changes are cross-document view transitions (old clears, then new draws; the
-rail stays put) with prefetch. Never touch DOM inside React islands, never
-hide anything without js, everything off for reduced motion.
+"something appears" moment (a page drawing in on arrival, boot wipe, scroll
+reveal, project filter, terminal scrim) via `--rv-*` on `html[data-motion]`:
+dither (8px checker mask; 4px read as diagonal lines on real screens),
+redraw (top-down bands), print (blocks appear in order, like `cat`),
+instant. Extras stack via `data-mx-*`: pages, reveal, cursor (block cursor
+sweeps hovered links), decode (mono labels resolve from glyphs). Defaults in
+`src/data/motion.ts`; the head script in Site.astro sets the attributes (and
+`.px-draw`, holding main's blocks back) before paint; `src/scripts/motion.ts`
+does the js half (the page draw, reveal, decode). Page changes are plain
+prefetched loads that then draw block by block: cross-document view
+transitions were tried and dropped (snapshots + a blank frame flashed).
+Animations that hand off on animationend need distinct keyframes for each
+step. Never touch DOM inside React islands, never hide anything without js,
+everything off for reduced motion.
 
 ## Test site
 

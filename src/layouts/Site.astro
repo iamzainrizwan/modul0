@@ -94,8 +94,8 @@ const sections = [
       ['pages', 'reveal', 'cursor', 'decode'].forEach(function (x) {
         if (m[x]) root.setAttribute('data-mx-' + x, '');
       });
-      // print draws each page block by block, so hold the blocks back until it starts
-      if (m.style === 'print' && m.pages && !reduced) {
+      // each page draws itself in on arrival, so hold its blocks back until that starts
+      if (m.pages && m.style !== 'instant' && !reduced) {
         root.classList.add('px-draw');
         setTimeout(function () { root.classList.remove('px-draw'); }, 3000);
       }

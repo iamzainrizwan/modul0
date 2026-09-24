@@ -1,7 +1,8 @@
 // the js half of the site's motion (the css half is "pixel motion" in
 // site.css). settings live on <html>: data-motion is the reveal style,
 // data-mx-* the extras, set before first paint by the head script in
-// Site.astro. nothing here runs for reduced motion, and nothing is hidden
+// Site.astro (which also sets .px-draw to hold main's blocks back until the
+// arrival draw starts). nothing here runs for reduced motion, and nothing is hidden
 // unless this runs (.px-ready), so the site is whole without js.
 
 const html = document.documentElement;
@@ -56,12 +57,6 @@ function decode(el: HTMLElement, delay = 0) {
 }
 
 export function initMotion() {
-  // page to page: dither and redraw use the view transition; print draws the
-  // new page itself, instant just swaps
-  addEventListener('pageswap', (e: any) => {
-    if (reduced() || !has('pages') || style() === 'print' || style() === 'instant') e.viewTransition?.skipTransition();
-  });
-
   // the block cursor needs the link's length in characters
   document.addEventListener('pointerover', (e) => {
     const a = (e.target as Element).closest?.('a');
@@ -97,15 +92,16 @@ export function initMotion() {
   for (const el of labels) if (!onScreen(el)) io.observe(el);
   html.classList.add('px-ready');
 
-  // on screen at load: print draws the page block by block; labels decode.
-  // behind the boot sequence, wait for it to finish first.
+  // on arrival the page draws itself block by block, top to bottom, in the
+  // current style (links are prefetched, so this is all a page change is).
+  // labels on screen decode. behind the boot sequence, wait for it first.
   const now = () => {
-    if (style() === 'print' && has('pages')) {
+    if (has('pages') && style() !== 'instant') {
       blocks()
         .filter(onScreen)
         .forEach((el, i) => {
-          el.style.setProperty('--i', String(Math.min(i, 18)));
-          el.classList.add('px', 'px-in');
+          el.style.setProperty('--i', String(Math.min(i, 14)));
+          el.classList.add('px', 'px-in', 'px-arrive');
         });
     }
     html.classList.remove('px-draw');
