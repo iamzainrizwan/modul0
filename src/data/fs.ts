@@ -56,5 +56,5 @@ export const projects: Record<string, string> = {
   'recurse.md': '<b>re::curse</b> - daily interview prep emails via gemini. questions at 11, solutions at 23.',
   'sherpa.md': '<b>sherpa</b> - google student ai hackathon, team of 6. gemini career dashboard for students. i built the latex cv generator + the dashboard redesign.',
   'educhain.md': '<b>educhain</b> - easya x algorand hackathon. credential verification on algorand. first in-person hackathon.',
-  'modul0.md': '<b>modul0</b> - this site. astro + react. you found the terminal.',
+  'modul0.md': '<b>modul0</b> - this site. astro + react. you found the terminal. named after the % operator: <a class="run" href="#" data-cmd="man modul0">man modul0</a>.',
 };

@@ -26,11 +26,25 @@
 .terminal .accent { color: var(--purple); }
 .terminal .error { color: var(--red); }
 .terminal .dim { color: var(--muted); }
+.terminal .man { max-width: 72ch; }
+.terminal .man p { margin: 0 0 0.75em 4ch; }
+.terminal .man > p:first-child { margin-left: 0; }
+.terminal .man > .cols { margin-left: 4ch; }
+.terminal .op { padding: 0 0.25em; background: var(--purple); color: var(--void); font-weight: 700; }
 
 .terminal a { color: var(--purple); text-decoration: underline; text-underline-offset: 3px; }
 .terminal a.run { text-decoration: none; color: var(--text); }
-.terminal a.run:hover, .terminal a.run:focus-visible { color: var(--purple); text-decoration: underline; }
 .terminal a.run.dir { color: var(--purple); }
+/* one hover for every terminal link, in the quake overlay (where site.css's
+   global a:hover also applies) and on /terminal/ alike: a solid block, never
+   purple text on the purple fill */
+.terminal a:hover, .terminal a:focus-visible, .terminal a:active,
+.terminal a.run:hover, .terminal a.run:focus-visible, .terminal a.run:active {
+  background: var(--purple);
+  color: var(--void);
+  text-decoration-color: var(--void);
+}
+.terminal a:hover .op, .terminal a:focus-visible .op, .terminal a:active .op { background: var(--void); color: var(--purple); }
 
 .terminal .t-input { display: flex; gap: 0.6em; align-items: baseline; }
 .terminal .t-input[hidden] { display: none; }
@@ -52,6 +66,7 @@
 .terminal .posts { display: grid; grid-template-columns: max-content max-content 1fr; column-gap: 2ch; }
 
 @media (max-width: 600px) {
+  .terminal .man p, .terminal .man > .cols { margin-left: 2ch; }
   .terminal .cols { grid-template-columns: 1fr; }
   .terminal .cols > .dim { padding-left: 2ch; margin-bottom: 0.3em; }
   .terminal .posts { grid-template-columns: max-content 1fr; }

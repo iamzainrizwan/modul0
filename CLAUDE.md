@@ -48,6 +48,20 @@ those. When sources disagree, ask; don't pick one.
 - `src/scripts/terminal.ts` - terminal engine, `boot(root, fs, opts)`; mounted
   by QuakeTerminal and by the full-screen `/terminal/` page
   (`src/layouts/Terminal.astro`). `src/scripts/render.ts` - blog html inside it.
+  Beyond the fs commands it has `expr` (bigint `+ - * / %`, also bare `17 % 5`),
+  `man modul0` (why the name: Zain's own words, keep them) and `uptime -v`.
+- `src/scripts/uptime.ts` - the uptime maths, shared by the rail's `Uptime`
+  island (a `<details>` that opens into the remainders) and the terminal.
+- The % motif: `ModMark.astro` (two squares + slash; squares use `--mark-sq`,
+  slash `currentColor`) in the rail name and footer, same shape as
+  `public/favicon.svg`. A `%` meant to be noticed gets `.op` (black on a solid
+  purple block), in both site.css and terminal.css.
+- `src/pages/404.astro` - the missing path "leaves a remainder"; its `%` is a
+  button that reveals `snake.svg` (Platane/snk, eating Zain's contribution
+  grid). The svg is generated in `deploy.yml` (pinned by sha, `rx`/`ry`
+  stripped for square corners, rebuilt daily by cron), never committed, so
+  locally the page shows its "snake's asleep" fallback. The boot log's
+  statuses are remainders too: `r0` done, `r1` still in progress.
 - `src/content/blog/*.md` - posts; frontmatter `title`, `date`,
   `description`, optional `draft: true` (hides it in production). Schema in
   `src/content.config.ts`. Also `src/pages/rss.xml.js` and `404.astro`.

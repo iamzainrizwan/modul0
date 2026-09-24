@@ -5,5 +5,56 @@ const base = import.meta.env.BASE_URL;
 
 <Site title="Page not found" section="">
   <h1 class="page-title">Page not found</h1>
+  <!-- the path doesn't divide into the site, so it leaves a remainder. the %
+       is also a button (once js runs) that lets the snake out -->
+  <div class="nf">
+    <p class="nf-expr"><span class="prompt-sym">$</span>expr <span class="nf-path">/this/path</span> <span class="op nf-op">%</span> modul0.dev</p>
+    <p class="nf-rem">remainder 1: that path doesn't divide into this site.</p>
+  </div>
   <p>This page doesn't exist or has moved. Go to the <a href={base}>home page</a> or see all <a href={`${base}blog/`}>writing</a>.</p>
+  <figure class="snake" id="snake" hidden data-src={`${base}snake.svg`}>
+    <div class="snake-head"><span>snake.svg</span><span>eats my commits</span></div>
+    <div class="snake-body"></div>
+    <figcaption>My GitHub contributions over the past year, regenerated every day by <a href="https://github.com/Platane/snk">Platane/snk</a>.</figcaption>
+  </figure>
 </Site>
+
+<script>
+  const path = document.querySelector<HTMLElement>('.nf-path');
+  if (path) path.textContent = decodeURI(location.pathname);
+
+  // easter egg: the % becomes a button that lets the snake out
+  const span = document.querySelector<HTMLElement>('.nf-op');
+  const fig = document.querySelector<HTMLElement>('#snake');
+  if (span && fig) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'op nf-op';
+    btn.textContent = '%';
+    btn.setAttribute('aria-controls', 'snake');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-label', 'percent. something is hiding here');
+    span.replaceWith(btn);
+
+    let loaded = false;
+    btn.addEventListener('click', async () => {
+      const open = fig.hidden;
+      fig.hidden = !open;
+      btn.setAttribute('aria-expanded', String(open));
+      if (!open || loaded) return;
+      loaded = true;
+      const body = fig.querySelector<HTMLElement>('.snake-body')!;
+      try {
+        const res = await fetch(fig.dataset.src!);
+        if (!res.ok) throw new Error(String(res.status));
+        // our own build artifact (generated in ci), so it's safe to inline
+        body.innerHTML = await res.text();
+        body.querySelector('svg')?.setAttribute('aria-hidden', 'true');
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) body.classList.add('still');
+      } catch {
+        body.textContent = "the snake's asleep: this build has no snake.svg.";
+        body.classList.add('asleep');
+      }
+    });
+  }
+</script>

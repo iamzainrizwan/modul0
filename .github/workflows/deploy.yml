@@ -3,6 +3,9 @@ name: deploy
 on:
   push:
     branches: [main]
+  # daily, so the 404 page's snake keeps up with new commits
+  schedule:
+    - cron: '17 4 * * *'
   workflow_dispatch:
 
 permissions:
@@ -28,6 +31,14 @@ jobs:
       - run: npm run build
         env:
           SITE: https://modul0.dev
+      # easter egg on the 404 page: a snake eating the contribution grid.
+      # third-party action, so pinned to v3.5.0's commit
+      - uses: Platane/snk/svg-only@d8f6715049803e982ee5ff501b6b9b7d5deeb09b
+        with:
+          github_user_name: iamzainrizwan
+          outputs: dist/snake.svg?color_snake=#ffffff&color_dots=#161616,#3b2466,#5c3a9e,#7c4ddb,#a769ff
+      # square corners only
+      - run: sed -i -E 's/ r[xy]="[^"]*"//g' dist/snake.svg
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

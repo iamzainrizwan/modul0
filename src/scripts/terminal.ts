@@ -1,4 +1,5 @@
 import { listing, postView } from './render';
+import { uptimeRows, uptimeText } from './uptime';
 
 type Post = { title: string; date: string; description: string; html: string };
 export type Fs = {
@@ -13,7 +14,8 @@ export type Fs = {
 const DIRS = ['projects', 'blog'] as const;
 type Dir = '' | (typeof DIRS)[number];
 
-const COMMANDS: [string, string][] = [
+// [label, description, what clicking it in `help` runs (default: the label)]
+const COMMANDS: [string, string, string?][] = [
   ['help', 'list of available commands'],
   ['whoami', 'who i am'],
   ['ls [dir]', 'list files'],
@@ -21,7 +23,9 @@ const COMMANDS: [string, string][] = [
   ['cat [file]', 'output file contents'],
   ['open [post]', 'go to a post\'s own page'],
   ['blog', 'list blog posts'],
-  ['uptime', 'time since i was born'],
+  ['uptime [-v]', 'time since i was born (-v shows the maths)', 'uptime -v'],
+  ['expr a % b', 'the remainder of a / b', 'expr 17 % 5'],
+  ['man modul0', "why it's called that"],
   ['tail -f status.log', "what i'm working on right now"],
   ['pgrep -a zain', 'recent achievements'],
   ['history', 'commands you\'ve run'],
@@ -39,6 +43,40 @@ const BOOT = [
 const escape = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 const error = (msg: string) => `<span class="error">${msg}</span>`;
+// every % the terminal prints is meant to be seen
+const op = (s: string) => s.replace(/%/g, '<span class="op">%</span>');
+
+// integer arithmetic, like expr(1): bigints so nothing loses precision, and %
+// keeps the dividend's sign
+const ARITH = /^\s*(-?\d+)\s*([-+*/%])\s*(-?\d+)\s*$/;
+function expr(src: string) {
+  const m = ARITH.exec(src);
+  if (!m) return error('expr: try something like <span class="accent">expr 17 % 5</span>');
+  const a = BigInt(m[1]), b = BigInt(m[3]), o = m[2];
+  if ((o === '/' || o === '%') && b === 0n) return error('expr: division by zero');
+  const r = o === '+' ? a + b : o === '-' ? a - b : o === '*' ? a * b : o === '/' ? a / b : a % b;
+  const line = `${m[1]} ${op(o)} ${m[3]} = <b>${r}</b>`;
+  return o === '%' && r === 0n ? `${line}<br><span class="dim">remainder 0: divides clean, nothing left over.</span>` : line;
+}
+
+// prose in paragraphs, not a hand-wrapped <pre>, so it reflows on phones
+const MAN_MODUL0 = `<div class="man">
+<p>MODUL0(1)</p>
+<b>name</b>
+<p>modul0 - zain's site, named after the ${op('%')} operator</p>
+<b>synopsis</b>
+<p>a ${op('%')} b</p>
+<b>description</b>
+<p>a ${op('%')} b is what's left of a once you've taken out as many b's as fit. the quotient gets thrown away; only the remainder stays.</p>
+<p>most programmers meet it early: fizzbuzz is i ${op('%')} 3 == 0 and i ${op('%')} 5 == 0. the 0 on the end is a l33t shoutout to that.</p>
+<p>if there's symbolism, it's this: discard the useless info (the quotient), keep only what you want (the remainder).</p>
+<b>examples</b>
+<div class="cols">
+<a class="run" href="#" data-cmd="expr 17 % 5">expr 17 ${op('%')} 5</a><span class="dim">2</span>
+<a class="run" href="#" data-cmd="expr 15 % 5">expr 15 ${op('%')} 5</a><span class="dim">0</span>
+<a class="run" href="#" data-cmd="uptime -v">uptime -v</a><span class="dim">zain's age, built out of remainders</span>
+</div>
+</div>`;
 
 type Options = {
   // called by `exit`; defaults to leaving for the readable site
@@ -130,13 +168,7 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
   }
 
   function uptime() {
-    const fmt = () => {
-      const day = 864e5, year = day * 365.25;
-      const diff = Date.now() - new Date(fs.birth).valueOf();
-      const y = Math.floor(diff / year), d = Math.floor((diff % year) / day);
-      const h = Math.floor((diff % day) / 36e5), m = Math.floor((diff % 36e5) / 6e4), s = Math.floor((diff % 6e4) / 1e3);
-      return `${y}y ${d}d ${h}h ${m}m ${s}s`;
-    };
+    const fmt = () => uptimeText(fs.birth);
     // only the most recent uptime ticks
     clearInterval(uptimeTimer);
     terminal.querySelectorAll('.uptime').forEach((el) => el.classList.remove('uptime'));
@@ -145,6 +177,12 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
       if (el) el.textContent = fmt();
     }, 1000);
     return `<span class="uptime">${fmt()}</span>`;
+  }
+
+  // every unit is a remainder of the one above it
+  function uptimeMaths() {
+    const rows = uptimeRows(fs.birth).map(([u, e, v]) => `  ${u} = ${op(e.padEnd(12))} ${v.padStart(3)}`);
+    return `<pre>t = now - ${fs.birth}\n\n${rows.join('\n')}\n\n<span class="dim">each unit is what's left once the bigger ones are taken out.</span></pre>`;
   }
 
   function run(raw: string) {
@@ -158,7 +196,7 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
       case '':
         break;
       case 'help':
-        out = `<div class="cols">${COMMANDS.map(([c, d]) => `<a class="run" href="#" data-cmd="${c.split(' [')[0]}">${c}</a><span class="dim">${d}</span>`).join('')}</div>`;
+        out = `<div class="cols">${COMMANDS.map(([c, d, r]) => `<a class="run" href="#" data-cmd="${r ?? c.split(' [')[0]}">${op(c)}</a><span class="dim">${d}</span>`).join('')}</div>`;
         break;
       case 'whoami':
         out = fs.whoami;
@@ -196,7 +234,15 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
         out = cat('~/achievements.txt');
         break;
       case 'uptime':
-        out = uptime();
+        out = args.includes('-v') ? uptimeMaths() : uptime();
+        break;
+      case 'expr':
+        out = expr(args.join(' '));
+        break;
+      case 'man':
+        if (!args[0]) out = "what manual page do you want?<br>try <a class=\"run\" href=\"#\" data-cmd=\"man modul0\">man modul0</a>";
+        else if (args[0] === 'modul0') out = MAN_MODUL0;
+        else out = error(`no manual entry for ${escape(args[0])}`);
         break;
       case 'history':
         out = `<pre>${history.map((h, i) => `${String(i + 1).padStart(4)}  ${escape(h)}`).join('\n')}</pre>`;
@@ -223,6 +269,11 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
         output.replaceChildren();
         return;
       default:
+        // bare arithmetic works too: `17 % 5`
+        if (ARITH.test(line)) {
+          out = expr(line);
+          break;
+        }
         out = error(`${escape(command)}: command not found. whatever you typed was stupid lol`);
     }
     print(out, raw, promptAt);

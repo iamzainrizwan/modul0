@@ -8,6 +8,7 @@ import BootSequence from '../components/BootSequence';
 import QuakeTerminal from '../components/QuakeTerminal';
 import SectionNav from '../components/SectionNav';
 import Uptime from '../components/Uptime';
+import ModMark from '../components/ModMark.astro';
 
 interface Props {
   title?: string;
@@ -84,7 +85,7 @@ const sections = [
 
     <div class="shell">
       <aside class="rail">
-        <a class="rail-name" href={base}>{person.name.toLowerCase()}<span class="caret" aria-hidden="true" /></a>
+        <a class="rail-name" href={base}>{person.name.toLowerCase()}<ModMark /></a>
         <p class="rail-study">{person.study}</p>
         <SectionNav client:load items={sections} base={base} initial={section} />
         <dl class="rail-facts">
@@ -111,6 +112,7 @@ const sections = [
           <p>
             Built with Astro and React, deployed by GitHub Actions. There's a terminal hidden in here: <span class="kbd-hint">press <kbd>`</kbd>&nbsp;on any page, or </span><a href={`${base}terminal/`} data-open-terminal>open it</a>. The <a href="https://github.com/iamzainrizwan/modul0/releases/tag/v0-handwritten">first version</a> of this site was hand-written.
           </p>
+          <p class="footer-sign"><ModMark /> modul0.dev</p>
         </footer>
       </main>
     </div>

@@ -6,12 +6,13 @@ import { motion } from 'motion/react';
 // shows a static black cover (no flash of the page); this component swaps it
 // for the animated overlay and removes the attribute when done.
 //
-// sequence: log lines resolve [ .... ] -> [  ok  ] while a square progress
+// sequence: log lines resolve [ .... ] -> [  r0  ] while a square progress
 // bar fills, the name types itself (typo included, then fixed), and a solid
 // purple panel wipes up and away to reveal the site. any key/tap skips
 // straight to the wipe.
 
-// `short` is shown on narrow screens so each line stays on one row
+// `short` is shown on narrow screens so each line stays on one row. statuses
+// read as remainders: r0 = done, nothing left over; r1 = something still left
 type Line = { text: string; short: string; status: 'ok' | 'wait' };
 
 const LINES: Line[] = [
@@ -122,7 +123,7 @@ export default function BootSequence() {
                     <span className="boot-short">{l.short}</span>
                   </span>
                   <span className={`boot-status ${done ? l.status : 'pending'}`}>
-                    {done ? (l.status === 'ok' ? '[  ok  ]' : '[ wait ]') : '[ .... ]'}
+                    {done ? (l.status === 'ok' ? '[  r0  ]' : '[  r1  ]') : '[ .... ]'}
                   </span>
                 </div>
               );
