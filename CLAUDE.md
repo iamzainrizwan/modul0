@@ -126,6 +126,16 @@ Any branch except main deploys to https://modul0-test.modul0.workers.dev
 with `PUBLIC_TEST=1`: a motion panel (`MotionPanel.astro`, per-browser
 settings in localStorage) and the boot replays on every load.
 
+## SEO
+
+Every page gets a canonical URL and og tags from Site.astro (`noindex` pages,
+the guestbook admin and 404, get no canonical). `src/pages/sitemap.xml.ts`
+and `robots.txt.ts` are generated at build (add new top-level pages to
+`PAGES` in the sitemap; posts are picked up automatically).
+`src/data/seo.ts` builds the schema.org JSON-LD (Person, ProfilePage and
+WebSite on home, BlogPosting on posts) from profile.ts, so it follows the
+accuracy rule: don't add facts there that profile.ts doesn't have.
+
 ## Commands
 
 `npm run dev` / `npm run build` / `npm run preview`. No tests or linter: the

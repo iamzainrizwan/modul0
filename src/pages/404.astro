@@ -3,7 +3,7 @@ import Site from '../layouts/Site.astro';
 const base = import.meta.env.BASE_URL;
 ---
 
-<Site title="Page not found" section="">
+<Site title="Page not found" section="" noindex>
   <h1 class="page-title">Page not found</h1>
   <!-- the path doesn't divide into the site, so it leaves a remainder. the %
        is also a button (once js runs) that lets the snake out -->

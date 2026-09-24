@@ -4,6 +4,7 @@ import { person } from '../../data/profile';
 const name = person.name;
 import { getPosts, longDate } from '../../data/buildFs';
 import { render } from 'astro:content';
+import { postLd } from '../../data/seo';
 
 export async function getStaticPaths() {
   const posts = await getPosts();
@@ -14,7 +15,13 @@ const { post } = Astro.props;
 const { Content } = await render(post);
 ---
 
-<Site section="writing" title={`${post.data.title} - ${name}`} description={post.data.description}>
+<Site
+  section="writing"
+  title={`${post.data.title} - ${name}`}
+  description={post.data.description}
+  published={post.data.date}
+  jsonld={postLd(Astro.site!, new URL(Astro.url.pathname, Astro.site).toString(), { ...post.data })}
+>
   <article class="article">
     <header>
       <h1>{post.data.title}</h1>

@@ -8,6 +8,7 @@ import GuestbookTeaser from '../components/GuestbookTeaser.astro';
 import { person, links, featured, archive, homelab, productions } from '../data/profile';
 import { getPosts, longDate } from '../data/buildFs';
 import { inline } from '../data/inline';
+import { homeLd } from '../data/seo';
 
 // home is the skim: every section is a teaser with the strongest bits, and
 // a link to its full page. the full content lives on those pages.
@@ -17,7 +18,7 @@ const ft = homelab.failureTest;
 const email = links[0];
 ---
 
-<Site boot>
+<Site boot jsonld={homeLd(Astro.site!, `${person.name} | SRE, software and security`)}>
   <section id="about" class="hero" aria-labelledby="about-h">
     <p class="hero-kicker"><span class="prompt-sym" aria-hidden="true">$</span> whoami</p>
     <h1 id="about-h" class="hero-h">{person.headline}</h1>
