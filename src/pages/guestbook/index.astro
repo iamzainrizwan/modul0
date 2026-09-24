@@ -44,74 +44,82 @@ import { api } from '../../data/api';
 <script>
   import { renderMessages, type Message } from '../../scripts/guestbook';
 
-  const form = document.querySelector<HTMLFormElement>('.gb-form')!;
-  const api = form.dataset.api;
-  const list = document.querySelector<HTMLOListElement>('[data-gb-list]')!;
-  const meta = document.querySelector<HTMLElement>('[data-gb-meta]')!;
-  const live = form.querySelector<HTMLElement>('.gb-live')!;
-  const textarea = form.querySelector('textarea')!;
-  const count = form.querySelector<HTMLElement>('.gb-count')!;
-  let messages: Message[] = [];
+  // the router swaps pages in without reloading, so this runs for every page
+  // it lands on (and once straight away); the marker stops a double setup
+  function setupGuestbook() {
+    const form = document.querySelector<HTMLFormElement>('.gb-form:not(.gb-token)');
+    if (!form || form.dataset.ready) return;
+    form.dataset.ready = '1';
+    const api = form.dataset.api;
+    const list = document.querySelector<HTMLOListElement>('[data-gb-list]')!;
+    const meta = document.querySelector<HTMLElement>('[data-gb-meta]')!;
+    const live = form.querySelector<HTMLElement>('.gb-live')!;
+    const textarea = form.querySelector('textarea')!;
+    const count = form.querySelector<HTMLElement>('.gb-count')!;
+    let messages: Message[] = [];
 
-  const show = () => {
-    renderMessages(list, messages);
-    meta.textContent = `${messages.length} ${messages.length === 1 ? 'message' : 'messages'}`;
-  };
+    const show = () => {
+      renderMessages(list, messages);
+      meta.textContent = `${messages.length} ${messages.length === 1 ? 'message' : 'messages'}`;
+    };
 
-  const errors: Record<string, string> = {
-    empty: 'Write something first.',
-    'too-long': 'That’s over 500 characters.',
-    'slow-down': 'One message a minute, please. Try again shortly.',
-    duplicate: 'That exact message is already up.',
-    'reserved-name': 'That name’s taken. Pick another.',
-    links: 'Two links at most, please.',
-  };
+    const errors: Record<string, string> = {
+      empty: 'Write something first.',
+      'too-long': 'That’s over 500 characters.',
+      'slow-down': 'One message a minute, please. Try again shortly.',
+      duplicate: 'That exact message is already up.',
+      'reserved-name': 'That name’s taken. Pick another.',
+      links: 'Two links at most, please.',
+    };
 
-  textarea.addEventListener('input', () => {
-    count.textContent = `${[...textarea.value].length}/500`;
-  });
-
-  if (api) {
-    fetch(`${api}/messages`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then((d) => {
-        messages = d.messages;
-        show();
-      })
-      .catch(() => {
-        list.innerHTML = '';
-        meta.textContent = 'offline';
-        const p = document.createElement('li');
-        p.className = 'gb-empty';
-        p.textContent = 'Couldn’t load the messages right now.';
-        list.append(p);
-      });
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const button = form.querySelector('button')!;
-      button.disabled = true;
-      live.classList.remove('gb-err');
-      live.textContent = 'Signing…';
-      try {
-        const res = await fetch(`${api}/messages`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(Object.fromEntries(new FormData(form))),
-        });
-        const d = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(errors[d.error] ?? 'Couldn’t post that. Try again in a bit.');
-        if (d.message) messages = [d.message, ...messages];
-        show();
-        form.reset();
-        count.textContent = '500 max';
-        live.textContent = 'Signed. Thanks!';
-      } catch (err) {
-        live.classList.add('gb-err');
-        live.textContent = err instanceof Error && !(err instanceof TypeError) ? err.message : 'Couldn’t reach the guestbook. Try again in a bit.';
-      } finally {
-        button.disabled = false;
-      }
+    textarea.addEventListener('input', () => {
+      count.textContent = `${[...textarea.value].length}/500`;
     });
+
+    if (api) {
+      fetch(`${api}/messages`)
+        .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+        .then((d) => {
+          messages = d.messages;
+          show();
+        })
+        .catch(() => {
+          list.innerHTML = '';
+          meta.textContent = 'offline';
+          const p = document.createElement('li');
+          p.className = 'gb-empty';
+          p.textContent = 'Couldn’t load the messages right now.';
+          list.append(p);
+        });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const button = form.querySelector('button')!;
+        button.disabled = true;
+        live.classList.remove('gb-err');
+        live.textContent = 'Signing…';
+        try {
+          const res = await fetch(`${api}/messages`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(Object.fromEntries(new FormData(form))),
+          });
+          const d = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(errors[d.error] ?? 'Couldn’t post that. Try again in a bit.');
+          if (d.message) messages = [d.message, ...messages];
+          show();
+          form.reset();
+          count.textContent = '500 max';
+          live.textContent = 'Signed. Thanks!';
+        } catch (err) {
+          live.classList.add('gb-err');
+          live.textContent = err instanceof Error && !(err instanceof TypeError) ? err.message : 'Couldn’t reach the guestbook. Try again in a bit.';
+        } finally {
+          button.disabled = false;
+        }
+      });
+    }
   }
+  setupGuestbook();
+  document.addEventListener('astro:page-load', setupGuestbook);
 </script>

@@ -6,7 +6,7 @@ import { styles, extras, defaults } from '../data/motion';
 const base = import.meta.env.BASE_URL;
 ---
 
-<details class="mpanel" data-base={base} data-defaults={JSON.stringify(defaults)}>
+<details class="mpanel" data-base={base} data-defaults={JSON.stringify(defaults)} transition:persist="mpanel">
   <summary>motion</summary>
   <form>
     <fieldset>

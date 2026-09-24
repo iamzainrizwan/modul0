@@ -17,17 +17,25 @@ const base = import.meta.env.BASE_URL;
 <script>
   import { renderMessages } from '../scripts/guestbook';
 
-  const root = document.querySelector<HTMLElement>('.gb-teaser');
-  const api = root?.dataset.api;
-  const list = root?.querySelector<HTMLElement>('[data-gb-list]');
-  const meta = document.querySelector<HTMLElement>('[data-gb-meta]');
-  if (root && api && list) {
-    fetch(`${api}/messages`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then(({ messages }) => {
-        renderMessages(list, messages.slice(0, 3));
-        if (meta) meta.textContent = `${messages.length} ${messages.length === 1 ? 'message' : 'messages'}`;
-      })
-      .catch(() => list.remove());
-  } else list?.remove();
+  // the router swaps pages in without reloading, so this runs for every page
+  // it lands on (and once straight away); the marker stops a double setup
+  function setupTeaser() {
+    const root = document.querySelector<HTMLElement>('.gb-teaser');
+    if (!root || root.dataset.ready) return;
+    root.dataset.ready = '1';
+    const api = root?.dataset.api;
+    const list = root?.querySelector<HTMLElement>('[data-gb-list]');
+    const meta = document.querySelector<HTMLElement>('[data-gb-meta]');
+    if (root && api && list) {
+      fetch(`${api}/messages`)
+        .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+        .then(({ messages }) => {
+          renderMessages(list, messages.slice(0, 3));
+          if (meta) meta.textContent = `${messages.length} ${messages.length === 1 ? 'message' : 'messages'}`;
+        })
+        .catch(() => list.remove());
+    } else list?.remove();
+  }
+  setupTeaser();
+  document.addEventListener('astro:page-load', setupTeaser);
 </script>

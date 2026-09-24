@@ -20,41 +20,50 @@ const base = import.meta.env.BASE_URL;
 </Site>
 
 <script>
-  const path = document.querySelector<HTMLElement>('.nf-path');
-  if (path) path.textContent = decodeURI(location.pathname);
+  // runs for every page the router swaps in (and once straight away); the
+  // marker stops a double setup
+  function setupNotFound() {
+    const nf = document.querySelector<HTMLElement>('.nf');
+    if (!nf || nf.dataset.ready) return;
+    nf.dataset.ready = '1';
+    const path = document.querySelector<HTMLElement>('.nf-path');
+    if (path) path.textContent = decodeURI(location.pathname);
 
-  // easter egg: the % becomes a button that lets the snake out
-  const span = document.querySelector<HTMLElement>('.nf-op');
-  const fig = document.querySelector<HTMLElement>('#snake');
-  if (span && fig) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'op nf-op';
-    btn.textContent = '%';
-    btn.setAttribute('aria-controls', 'snake');
-    btn.setAttribute('aria-expanded', 'false');
-    btn.setAttribute('aria-label', 'percent. something is hiding here');
-    span.replaceWith(btn);
+    // easter egg: the % becomes a button that lets the snake out
+    const span = document.querySelector<HTMLElement>('.nf-op');
+    const fig = document.querySelector<HTMLElement>('#snake');
+    if (span && fig) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'op nf-op';
+      btn.textContent = '%';
+      btn.setAttribute('aria-controls', 'snake');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.setAttribute('aria-label', 'percent. something is hiding here');
+      span.replaceWith(btn);
 
-    let loaded = false;
-    btn.addEventListener('click', async () => {
-      const open = fig.hidden;
-      fig.hidden = !open;
-      btn.setAttribute('aria-expanded', String(open));
-      if (!open || loaded) return;
-      loaded = true;
-      const body = fig.querySelector<HTMLElement>('.snake-body')!;
-      try {
-        const res = await fetch(fig.dataset.src!);
-        if (!res.ok) throw new Error(String(res.status));
-        // our own build artifact (generated in ci), so it's safe to inline
-        body.innerHTML = await res.text();
-        body.querySelector('svg')?.setAttribute('aria-hidden', 'true');
-        if (matchMedia('(prefers-reduced-motion: reduce)').matches) body.classList.add('still');
-      } catch {
-        body.textContent = "the snake's asleep: this build has no snake.svg.";
-        body.classList.add('asleep');
-      }
-    });
+      let loaded = false;
+      btn.addEventListener('click', async () => {
+        const open = fig.hidden;
+        fig.hidden = !open;
+        btn.setAttribute('aria-expanded', String(open));
+        if (!open || loaded) return;
+        loaded = true;
+        const body = fig.querySelector<HTMLElement>('.snake-body')!;
+        try {
+          const res = await fetch(fig.dataset.src!);
+          if (!res.ok) throw new Error(String(res.status));
+          // our own build artifact (generated in ci), so it's safe to inline
+          body.innerHTML = await res.text();
+          body.querySelector('svg')?.setAttribute('aria-hidden', 'true');
+          if (matchMedia('(prefers-reduced-motion: reduce)').matches) body.classList.add('still');
+        } catch {
+          body.textContent = "the snake's asleep: this build has no snake.svg.";
+          body.classList.add('asleep');
+        }
+      });
+    }
   }
+  setupNotFound();
+  document.addEventListener('astro:page-load', setupNotFound);
 </script>

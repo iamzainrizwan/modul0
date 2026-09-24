@@ -3,11 +3,40 @@ import { useEffect, useRef, useState } from 'react';
 // file-tree style nav for the home page; highlights the section in view.
 // an item with children is a folder: on desktop it only opens while one of its
 // sections is current. an item with href is a page, not a home section.
+// it lives in the rail, which the router keeps across page changes, so after
+// each swap (astro:page-load) it works out the new page from the url.
 type Item = { id: string; label: string; href?: string; children?: Item[] };
 
 export default function SectionNav({ items, base, initial }: { items: Item[]; base: string; initial?: string }) {
   const [current, setCurrent] = useState(initial ?? items[0]?.id);
+  // which page we're on (undefined on home), and a count of swaps
+  const [page, setPage] = useState(initial);
+  const [swaps, setSwaps] = useState(0);
   const nav = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    // the page whose href the path starts with, longest first; home has none
+    const pageOf = () => {
+      const path = location.pathname;
+      if (path === base) return undefined;
+      let best: { id: string; len: number } | undefined;
+      for (const i of items) {
+        if (!i.href || i.href.includes('#')) continue;
+        const h = new URL(i.href, location.origin).pathname;
+        if (path.startsWith(h) && h.length > (best?.len ?? 0)) best = { id: i.id, len: h.length };
+      }
+      return best?.id ?? '';
+    };
+    // on the first load this lands where the server render already was
+    const onLoad = () => {
+      const id = pageOf();
+      setPage(id);
+      setCurrent(id ?? items[0]?.id);
+      setSwaps((n) => n + 1);
+    };
+    document.addEventListener('astro:page-load', onLoad);
+    return () => document.removeEventListener('astro:page-load', onLoad);
+  }, [items, base]);
 
   // on narrow screens the nav scrolls sideways; keep the active item in view
   useEffect(() => {
@@ -42,7 +71,7 @@ export default function SectionNav({ items, base, initial }: { items: Item[]; ba
       io.disconnect();
       removeEventListener('scroll', onScroll);
     };
-  }, [items]);
+  }, [items, swaps]);
 
   const label = (l: string) => (
     <>
@@ -50,7 +79,7 @@ export default function SectionNav({ items, base, initial }: { items: Item[]; ba
       {l.endsWith('/') && <span className="tree-slash">/</span>}
     </>
   );
-  const here = (i: Item) => (current === i.id ? (i.id === initial ? 'page' : 'location') : undefined);
+  const here = (i: Item) => (current === i.id ? (i.id === page ? 'page' : 'location') : undefined);
   const link = (i: Item, proxy = false) => (
     <li key={i.id}>
       <a href={i.href ?? `${base}#${i.id}`} aria-current={here(i)} className={proxy ? 'tree-proxy' : undefined} data-astro-prefetch="viewport">

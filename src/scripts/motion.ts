@@ -75,40 +75,53 @@ function decode(h: HTMLElement, delay = 0) {
   }, delay);
 }
 
+// set up once: the page's own work (reveal, decode) runs for every page the
+// router swaps in (astro:page-load), and for the first one straight away
 export function initMotion() {
   // the block cursor needs the link's length in characters
   document.addEventListener('pointerover', (e) => {
     const a = (e.target as Element).closest?.('a');
     if (a && !a.style.getPropertyValue('--n')) a.style.setProperty('--n', String(Math.max(4, Math.min((a.textContent ?? '').trim().length, 40))));
   });
+  page();
+  document.addEventListener('astro:page-load', page);
+}
 
+let io: IntersectionObserver | null = null;
+
+function page() {
+  // each swap brings a new <body>: mark it so a page is only set up once
+  if (document.body.dataset.motion) return;
+  document.body.dataset.motion = '1';
+  io?.disconnect();
   if (reduced()) return;
 
   const reveal = has('reveal') && style() !== 'instant';
   const labels = has('decode') ? [...document.querySelectorAll<HTMLElement>(HEADINGS)].filter(ours) : [];
 
   // below the fold: reveal (and decode) the first time each thing scrolls in
-  const io = new IntersectionObserver(
+  const seen = new IntersectionObserver(
     (entries) => {
       for (const e of entries) {
         if (!e.isIntersecting) continue;
         const el = e.target as HTMLElement;
         if (el.classList.contains('px')) el.classList.add('px-in');
         if (labels.includes(el)) decode(el);
-        io.unobserve(el);
+        seen.unobserve(el);
       }
     },
     { rootMargin: '0px 0px -8% 0px' },
   );
+  io = seen;
   if (reveal) {
     for (const el of document.querySelectorAll<HTMLElement>(REVEAL)) {
       if (!ours(el) || onScreen(el)) continue;
       el.style.setProperty('--i', String(index(el)));
       el.classList.add('px');
-      io.observe(el);
+      seen.observe(el);
     }
   }
-  for (const el of labels) if (!onScreen(el)) io.observe(el);
+  for (const el of labels) if (!onScreen(el)) seen.observe(el);
   html.classList.add('px-ready');
 
   // headings on screen at load decode; behind the boot sequence, wait for it first

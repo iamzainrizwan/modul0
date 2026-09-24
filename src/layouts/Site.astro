@@ -12,6 +12,7 @@ import ModMark from '../components/ModMark.astro';
 import { api } from '../data/api';
 import { defaults as motion, testSite } from '../data/motion';
 import MotionPanel from '../components/MotionPanel.astro';
+import { ClientRouter } from 'astro:transitions';
 
 interface Props {
   title?: string;
@@ -57,7 +58,7 @@ const sections = [
 ---
 
 <!doctype html>
-<html lang="en-GB">
+<html lang="en-GB" transition:animate="none">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
@@ -78,6 +79,10 @@ const sections = [
     <link rel="alternate" type="application/rss+xml" title={person.name} href={`${base}rss.xml`} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- page changes swap the content in place: the rail, the terminal (and its
+         session) and the motion panel stay alive, nothing reloads. no
+         animation (transition:animate on <html>) -->
+    <ClientRouter />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300..800;1,6..72,300..800&display=swap" rel="stylesheet" />
   </head>
   <body>
@@ -101,8 +106,9 @@ const sections = [
         if (m[x]) root.setAttribute('data-mx-' + x, '');
       });
       try {
-        // the test site replays the boot on every load
-        if (boot && (testSite || !sessionStorage.getItem('modul0-booted')) && !reduced) {
+        // the test site replays the boot on every load (a real load: not when
+        // the router swaps home in, which sets __modul0Nav)
+        if (boot && !window.__modul0Nav && (testSite || !sessionStorage.getItem('modul0-booted')) && !reduced) {
           root.dataset.boot = 'pending';
           setTimeout(function () {
             if (root.dataset.boot === 'pending') delete root.dataset.boot;
@@ -115,7 +121,7 @@ const sections = [
     {boot && <BootSequence client:load />}
 
     <div class="shell">
-      <aside class="rail">
+      <aside class="rail" transition:persist="rail">
         <a class="rail-name" href={base}>{person.name.toLowerCase()}<ModMark /></a>
         <p class="rail-study">{person.study}</p>
         <SectionNav client:load items={sections} base={base} initial={section} />
@@ -136,7 +142,7 @@ const sections = [
         <ul class="rail-links">
           {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
         </ul>
-        <a class="rail-terminal" href={`${base}terminal/`} data-open-terminal>
+        <a class="rail-terminal" href={`${base}terminal/`} data-open-terminal data-astro-reload>
           <span aria-hidden="true">&gt;_</span> Open the terminal <kbd>`</kbd>
         </a>
       </aside>
@@ -145,14 +151,14 @@ const sections = [
         <slot />
         <footer class="site-footer">
           <p>
-            Built with Astro and React, deployed by GitHub Actions. There's a terminal hidden in here: <span class="kbd-hint">press <kbd>`</kbd>&nbsp;on any page, or </span><a href={`${base}terminal/`} data-open-terminal>open it</a>. The <a href="https://github.com/iamzainrizwan/modul0/releases/tag/v0-handwritten">first version</a> of this site was hand-written.
+            Built with Astro and React, deployed by GitHub Actions. There's a terminal hidden in here: <span class="kbd-hint">press <kbd>`</kbd>&nbsp;on any page, or </span><a href={`${base}terminal/`} data-open-terminal data-astro-reload>open it</a>. The <a href="https://github.com/iamzainrizwan/modul0/releases/tag/v0-handwritten">first version</a> of this site was hand-written.
           </p>
           <p class="footer-sign"><ModMark /> modul0.dev<span data-views hidden> · <span data-views-n></span> visits</span></p>
         </footer>
       </main>
     </div>
 
-    <QuakeTerminal client:idle fs={fs} />
+    <QuakeTerminal client:idle fs={fs} transition:persist="quake" />
     {testSite && <MotionPanel />}
     <script is:inline define:vars={{ api }}>
       // the view counter: one visit per browser session, shown in the rail and footer
@@ -173,6 +179,17 @@ const sections = [
     <script>
       import { initMotion } from '../scripts/motion';
       initMotion();
+
+      // the router swaps in each new page's <html> attributes, which don't have
+      // the motion settings (the pre-paint script sets those at runtime): carry
+      // them over, and mark the swap so that script skips the boot
+      document.addEventListener('astro:before-preparation', () => ((window as any).__modul0Nav = true));
+      document.addEventListener('astro:before-swap', (e: any) => {
+        const next = e.newDocument.documentElement as HTMLElement;
+        for (const a of [...document.documentElement.attributes]) {
+          if (a.name === 'data-motion' || a.name.startsWith('data-mx-')) next.setAttribute(a.name, a.value);
+        }
+      });
 
       // terminal links open the drop-down once it's hydrated, else fall back to /terminal/
       document.addEventListener('click', (e) => {

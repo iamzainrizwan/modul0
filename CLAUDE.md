@@ -135,6 +135,17 @@ and uses `trailingSlash: 'always'`, so internal links end in `/`.
 
 ## Rules
 
+- Page changes use Astro's `<ClientRouter />` (Site.astro, no animation):
+  the router swaps the page in without a reload, and the rail, the quake
+  terminal (session included) and the motion panel persist
+  (`transition:persist`). So a page's `<script>` runs once per session, not
+  per page: wrap its setup in a function, call it, and also run it on
+  `astro:page-load`, with a marker on the page's root element so it never
+  wires the same page twice (see guestbook/index.astro). SectionNav works out
+  the current page from the url on each `astro:page-load`. Links that must
+  do a real navigation (the terminal links, which the click handler turns
+  into opening the drop-down) carry `data-astro-reload`. `/terminal/` uses
+  its own layout without the router, so it's a full load.
 - Anything user-typed in the terminal goes through `escape()` before innerHTML.
 - The pre-paint script (motion attributes, boot decision) lives at the top of
   `<body>`, not in `<head>`: Astro puts the site stylesheet last in head, and
