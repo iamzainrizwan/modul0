@@ -9,6 +9,10 @@
 //
 // confirmed by zain: degree is stated as "year 2 cs @ kcl" (no bsc/msci);
 // uber = regional finalist (not 2nd); ctf = top 5 in ucl vs kcl + kcl welcome.
+// kcl average (79.6%) is credit-weighted from zain's year 1 transcript:
+// programming practice and applications counts 2x, introduction to
+// professional practice is excluded (0 credits, capped at 70). confirmed by
+// zain 2026-09-24. module marks below are from the same transcript.
 //
 // strings may contain [text](url) links, rendered by src/data/inline.ts.
 //
@@ -371,6 +375,7 @@ export const education: Role[] = [
     when: 'Sep 2025 – present',
     details: [
       '79.6% average, predicted First.',
+      'Year 1 highlights: Data Structures\u00a097, Introduction to Software Engineering\u00a088, Elementary Logic With Applications\u00a084, Computer Systems\u00a081, Database Systems\u00a081.',
       'Societies: Cyber Security Society ([treasurer](#leadership)), King’s Tech Crew, KCLTech.',
     ],
   },
