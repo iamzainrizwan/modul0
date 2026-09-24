@@ -32,7 +32,8 @@ jobs:
         env:
           SITE: https://modul0-test.modul0.workers.dev
       # keep the test site out of search results
-      - run: printf '/*\n  X-Robots-Tag: noindex\n' > dist/_headers
+      - run: |
+          printf '/*\n  X-Robots-Tag: noindex\n' > dist/_headers
       # wrangler is pinned in api/package.json
       - run: npm ci
         working-directory: api
