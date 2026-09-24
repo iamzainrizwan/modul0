@@ -91,7 +91,8 @@ those. When sources disagree, ask; don't pick one.
   `src/scripts/guestbook.ts` renders messages with textContent only. Messages
   go live straight away (Zain's call), so the worker caps every abuse path
   (listed in `api/README.md`); admin can delete one message or everything
-  from one poster. Schema changes: re-run `schema.sql` remotely (it's all
+  from one poster; each new message pings Discord (`DISCORD_WEBHOOK` worker
+  secret, never in the repo). Schema changes: re-run `schema.sql` remotely (it's all
   IF NOT EXISTS) before pushing worker code that needs them. Don't write
   `\u` escapes through tool calls: they arrive as raw characters, and a raw
   U+2028 breaks a JS regex.

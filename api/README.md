@@ -14,6 +14,7 @@ npx wrangler d1 create modul0            # copy the database_id into wrangler.to
 npx wrangler d1 execute modul0 --remote --file=schema.sql   # safe to re-run
 npx wrangler secret put ADMIN_TOKEN      # a long random string: `openssl rand -hex 32`
 npx wrangler secret put IP_SALT          # another one
+npx wrangler secret put DISCORD_WEBHOOK  # optional: a discord webhook url, pinged on each new message
 npx wrangler deploy                      # prints https://modul0-api.<you>.workers.dev
 ```
 
@@ -43,6 +44,14 @@ Messages go live straight away, so the worker caps everything
 
 If spam still gets through, the next step is Cloudflare Turnstile (a free,
 mostly invisible captcha), at the cost of posting without JavaScript.
+
+## Notifications
+
+With the `DISCORD_WEBHOOK` secret set, every new message posts to Discord:
+the name, the text in a code block (no markdown, links or mentions render),
+its id and poster tag, and a link to the admin page. Honeypot hits and
+rejected posts don't ping. A failed ping is logged (`npx wrangler tail`) and
+never fails the post.
 
 ## Moderating
 

@@ -9,7 +9,8 @@
 //   GET    /views                  the count
 //   POST   /views                  count this visit (once per visitor per day)
 //
-// messages go live straight away, so everything that can be abused is capped:
+// each new message pings discord (notify). messages go live straight away,
+// so everything that can be abused is capped:
 // - writes only from the site's own origins (a page elsewhere can't post or
 //   pump the counter through its visitors' browsers)
 // - per-ip rate limits on every endpoint (workers rate limiting bindings)
@@ -31,12 +32,12 @@ const LINKS_MAX = 2;
 const RESERVED = ['zain', 'zainrizwan', 'iamzainrizwan', 'admin', 'modul0', 'moderator'];
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const cors = corsHeaders(request, env);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
 
     try {
-      const res = await route(request, env, new URL(request.url));
+      const res = await route(request, env, new URL(request.url), ctx);
       for (const [k, v] of Object.entries(cors)) res.headers.set(k, v);
       res.headers.set('x-content-type-options', 'nosniff');
       return res;
@@ -47,7 +48,7 @@ export default {
   },
 };
 
-async function route(request, env, url) {
+async function route(request, env, url, ctx) {
   const { pathname } = url;
   const method = request.method;
   const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
@@ -66,7 +67,7 @@ async function route(request, env, url) {
   if (pathname === '/messages' && method === 'POST') {
     const isForm = !(request.headers.get('content-type') ?? '').includes('application/json');
     if (!(await allow(env.WRITE_LIMIT, ip))) return reply(isForm, env, { error: 'slow-down' }, 429);
-    return post(request, env, ip, isForm);
+    return post(request, env, ip, isForm, ctx);
   }
 
   if (pathname === '/views') {
@@ -101,7 +102,7 @@ async function route(request, env, url) {
   return json({ error: 'not found' }, 404);
 }
 
-async function post(request, env, ip, isForm) {
+async function post(request, env, ip, isForm, ctx) {
   if (Number(request.headers.get('content-length') ?? 0) > BODY_MAX) return reply(isForm, env, { error: 'too-long' }, 413);
   const raw = await request.text();
   if (raw.length > BODY_MAX) return reply(isForm, env, { error: 'too-long' }, 413);
@@ -139,7 +140,43 @@ async function post(request, env, ip, isForm) {
   const row = await env.DB.prepare(
     'INSERT INTO messages (name, message, ip_hash) VALUES (?, ?, ?) RETURNING id, name, message, created',
   ).bind(name, message, hash).first();
+  // tell zain, without holding up the reply (a failed ping never fails the post)
+  ctx?.waitUntil(notify(env, row, hash));
   return reply(isForm, env, { ok: true, message: row }, 201);
+}
+
+// a discord ping for each new message (DISCORD_WEBHOOK secret; skipped if
+// unset). the text goes in a code block so it shows exactly as written, with
+// no markdown or links rendered, and allowed_mentions is empty so a message
+// can never ping @everyone or anyone else.
+async function notify(env, row, hash) {
+  if (!env.DISCORD_WEBHOOK) return;
+  const plain = (s, max) => [...String(s).replace(/`/g, "'")].slice(0, max).join('');
+  const admin = new URL('admin/', env.RETURN_URL).toString();
+  try {
+    const res = await fetch(env.DISCORD_WEBHOOK, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        username: 'modul0 guestbook',
+        allowed_mentions: { parse: [] },
+        embeds: [
+          {
+            title: `New message from ${plain(row.name, 60)}`,
+            url: admin,
+            description: `\`\`\`\n${plain(row.message, 1000)}\n\`\`\``,
+            color: 0xa769ff,
+            fields: [{ name: 'Moderate', value: `[open the admin page](${admin})`, inline: true }],
+            footer: { text: `#${row.id} · poster ${hash.slice(0, 8)}` },
+            timestamp: new Date(row.created).toISOString(),
+          },
+        ],
+      }),
+    });
+    if (!res.ok) console.error('discord ping rejected', res.status, await res.text());
+  } catch (err) {
+    console.error('discord ping failed', err);
+  }
 }
 
 // trims and drops control characters, invisible characters (zero-width,
