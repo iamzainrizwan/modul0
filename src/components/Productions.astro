@@ -1,0 +1,23 @@
+---
+// a list of productions, in the awards list's shape: year, show, what i did
+import type { Production } from '../data/profile';
+
+interface Props {
+  items: Production[];
+  // off when the list is already grouped by org
+  org?: boolean;
+}
+const { items, org = true } = Astro.props;
+const detail = (p: Production) =>
+  [[org && p.org, p.venue].filter(Boolean).join(', '), p.kind, p.role].filter(Boolean).join('. ') + '.';
+---
+
+<ul class="awards productions">
+  {items.map((p) => (
+    <li>
+      <span class="award-when">{p.when}</span>
+      <span class="award-what">{p.title}</span>
+      <span class="award-detail">{detail(p)}</span>
+    </li>
+  ))}
+</ul>

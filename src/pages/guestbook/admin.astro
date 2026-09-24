@@ -1,0 +1,91 @@
+---
+import Site from '../../layouts/Site.astro';
+import { api } from '../../data/api';
+const base = import.meta.env.BASE_URL;
+---
+
+<Site section="guestbook" title="Guestbook admin" description="Guestbook moderation." noindex>
+  <h1 class="page-title">Guestbook admin</h1>
+  <p class="section-lede">Delete messages. The token is the worker's <code>ADMIN_TOKEN</code> secret, and it's only kept in this browser.</p>
+  <form class="gb-form gb-token" data-api={api}>
+    <fieldset disabled={!api}>
+      <label class="gb-field">
+        <span>admin token</span>
+        <input name="token" type="password" autocomplete="current-password" required />
+      </label>
+      <button class="btn btn-primary" type="submit">Save token</button>
+      <button class="btn" type="button" data-forget>Forget token</button>
+    </fieldset>
+    <p class="gb-note gb-live" role="status" aria-live="polite">{api ? '' : "The guestbook's offline in this build."}</p>
+  </form>
+  <ol class="gb-list gb-admin" data-gb-list></ol>
+  <noscript><p>This page needs JavaScript.</p></noscript>
+  <p class="back"><a href={`${base}guestbook/`}>Back to the guestbook</a></p>
+</Site>
+
+<script>
+  import { renderMessages, type Message } from '../../scripts/guestbook';
+
+  const KEY = 'modul0-admin';
+  const form = document.querySelector<HTMLFormElement>('.gb-token')!;
+  const api = form.dataset.api;
+  const input = form.querySelector<HTMLInputElement>('input[name=token]')!;
+  const list = document.querySelector<HTMLOListElement>('[data-gb-list]')!;
+  const live = form.querySelector<HTMLElement>('.gb-live')!;
+  let messages: Message[] = [];
+
+  const store = {
+    get: () => { try { return localStorage.getItem(KEY) ?? ''; } catch { return ''; } },
+    set: (v: string) => { try { localStorage.setItem(KEY, v); } catch {} },
+    clear: () => { try { localStorage.removeItem(KEY); } catch {} },
+  };
+
+  const say = (text: string, err = false) => {
+    live.textContent = text;
+    live.classList.toggle('gb-err', err);
+  };
+
+  const show = () =>
+    renderMessages(list, messages, (m, li) => {
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'text-btn gb-del';
+      del.textContent = `delete #${m.id}`;
+      del.addEventListener('click', () => remove(m));
+      li.append(del);
+    });
+
+  async function load() {
+    const res = await fetch(`${api}/messages`);
+    if (!res.ok) throw new Error();
+    messages = (await res.json()).messages;
+    show();
+  }
+
+  async function remove(m: Message) {
+    const token = input.value || store.get();
+    if (!token) return say('Enter the token first.', true);
+    if (!confirm(`Delete #${m.id} from ${m.name}?\n\n${m.message}`)) return;
+    const res = await fetch(`${api}/messages/${m.id}`, { method: 'DELETE', headers: { authorization: `Bearer ${token}` } });
+    if (res.status === 401) return say('Wrong token.', true);
+    if (!res.ok) return say('Delete failed. Try again.', true);
+    messages = messages.filter((x) => x.id !== m.id);
+    show();
+    say(`Deleted #${m.id}.`);
+  }
+
+  if (api) {
+    input.value = store.get();
+    load().catch(() => say('Couldn’t load the messages.', true));
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      store.set(input.value);
+      say('Token saved in this browser. Delete buttons will use it.');
+    });
+    form.querySelector('[data-forget]')!.addEventListener('click', () => {
+      store.clear();
+      input.value = '';
+      say('Token forgotten.');
+    });
+  }
+</script>

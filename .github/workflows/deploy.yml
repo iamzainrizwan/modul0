@@ -31,6 +31,9 @@ jobs:
       - run: npm run build
         env:
           SITE: https://modul0.dev
+          # the guestbook + view counter worker (api/). a repo variable, not a
+          # secret: it's a public url. unset, the guestbook shows as offline.
+          PUBLIC_API: ${{ vars.PUBLIC_API }}
       # easter egg on the 404 page: a snake eating the contribution grid.
       # third-party action, so pinned to v3.5.0's commit
       - uses: Platane/snk/svg-only@d8f6715049803e982ee5ff501b6b9b7d5deeb09b

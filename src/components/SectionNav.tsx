@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 
 // file-tree style nav for the home page; highlights the section in view.
-type Item = { id: string; label: string };
+// an item with children is a folder: on desktop it only opens while one of its
+// sections is current. an item with href is a page, not a home section.
+type Item = { id: string; label: string; href?: string; children?: Item[] };
 
 export default function SectionNav({ items, base, initial }: { items: Item[]; base: string; initial?: string }) {
   const [current, setCurrent] = useState(initial ?? items[0]?.id);
@@ -17,7 +19,7 @@ export default function SectionNav({ items, base, initial }: { items: Item[]; ba
   }, [current]);
 
   useEffect(() => {
-    const sections = items.map((i) => document.getElementById(i.id)).filter(Boolean) as HTMLElement[];
+    const sections = items.flatMap((i) => i.children ?? [i]).map((i) => document.getElementById(i.id)).filter(Boolean) as HTMLElement[];
     if (!sections.length) return;
     const atBottom = () => innerHeight + scrollY >= document.documentElement.scrollHeight - 4;
     const io = new IntersectionObserver(
@@ -40,18 +42,36 @@ export default function SectionNav({ items, base, initial }: { items: Item[]; ba
     };
   }, [items]);
 
+  const label = (l: string) => (
+    <>
+      {l.replace(/\/$/, '')}
+      {l.endsWith('/') && <span className="tree-slash">/</span>}
+    </>
+  );
+  const link = (i: Item) => (
+    <li key={i.id}>
+      <a href={i.href ?? `${base}#${i.id}`} aria-current={current === i.id ? (i.href ? 'page' : 'location') : undefined}>
+        {label(i.label)}
+      </a>
+    </li>
+  );
+
   return (
     <nav className="tree" aria-label="Sections" ref={nav}>
       <span className="tree-root">~/</span>
       <ul>
-        {items.map((i) => (
-          <li key={i.id}>
-            <a href={`${base}#${i.id}`} aria-current={current === i.id ? 'location' : undefined}>
-              {i.label.replace(/\/$/, '')}
-              {i.label.endsWith('/') && <span className="tree-slash">/</span>}
-            </a>
-          </li>
-        ))}
+        {items.map((i) =>
+          i.children ? (
+            <li key={i.id} className={`tree-group${i.children.some((c) => c.id === current) ? ' is-open' : ''}`}>
+              <a className="tree-dir" href={`${base}#${i.children[0].id}`}>
+                {label(i.label)}
+              </a>
+              <ul>{i.children.map(link)}</ul>
+            </li>
+          ) : (
+            link(i)
+          ),
+        )}
       </ul>
     </nav>
   );

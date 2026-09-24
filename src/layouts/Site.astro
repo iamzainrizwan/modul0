@@ -9,6 +9,7 @@ import QuakeTerminal from '../components/QuakeTerminal';
 import SectionNav from '../components/SectionNav';
 import Uptime from '../components/Uptime';
 import ModMark from '../components/ModMark.astro';
+import { api } from '../data/api';
 
 interface Props {
   title?: string;
@@ -17,6 +18,8 @@ interface Props {
   boot?: boolean;
   // nav item to highlight on pages without the home sections
   section?: string;
+  // keep the page out of search results (the guestbook admin)
+  noindex?: boolean;
 }
 
 const {
@@ -24,21 +27,32 @@ const {
   description = `${person.name}: ${person.study}. Projects, homelab, experience and writing.`,
   boot = false,
   section,
+  noindex = false,
 } = Astro.props;
 const base = import.meta.env.BASE_URL;
 const fs = await buildFs();
 
+// cv/ is a folder on desktop: its children only show while you're inside it.
+// on narrow screens the folder flattens away and they sit in the grid as before.
 const sections = [
   { id: 'about', label: 'about' },
   { id: 'projects', label: 'projects/' },
   { id: 'homelab', label: 'homelab/' },
-  { id: 'experience', label: 'experience' },
-  { id: 'education', label: 'education' },
-  { id: 'leadership', label: 'leadership' },
-  { id: 'awards', label: 'awards' },
-  { id: 'skills', label: 'skills' },
+  {
+    id: 'cv',
+    label: 'cv/',
+    children: [
+      { id: 'experience', label: 'experience' },
+      { id: 'education', label: 'education' },
+      { id: 'leadership', label: 'leadership' },
+      { id: 'awards', label: 'awards' },
+      { id: 'skills', label: 'skills' },
+    ],
+  },
+  { id: 'productions', label: 'productions/' },
   { id: 'writing', label: 'writing/' },
   { id: 'contact', label: 'contact' },
+  { id: 'guestbook', label: 'guestbook/', href: `${base}guestbook/` },
 ];
 ---
 
@@ -50,6 +64,7 @@ const sections = [
     <meta name="theme-color" content="#000000" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
@@ -97,6 +112,10 @@ const sections = [
             <dt>uptime</dt>
             <dd class="mono"><Uptime client:idle birth={person.birth} /></dd>
           </div>
+          <div data-views hidden>
+            <dt>visits</dt>
+            <dd class="mono" data-views-n></dd>
+          </div>
         </dl>
         <ul class="rail-links">
           {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
@@ -112,12 +131,28 @@ const sections = [
           <p>
             Built with Astro and React, deployed by GitHub Actions. There's a terminal hidden in here: <span class="kbd-hint">press <kbd>`</kbd>&nbsp;on any page, or </span><a href={`${base}terminal/`} data-open-terminal>open it</a>. The <a href="https://github.com/iamzainrizwan/modul0/releases/tag/v0-handwritten">first version</a> of this site was hand-written.
           </p>
-          <p class="footer-sign"><ModMark /> modul0.dev</p>
+          <p class="footer-sign"><ModMark /> modul0.dev<span data-views hidden> · <span data-views-n></span> visits</span></p>
         </footer>
       </main>
     </div>
 
     <QuakeTerminal client:idle fs={fs} />
+    <script is:inline define:vars={{ api }}>
+      // the view counter: one visit per browser session, shown in the rail and footer
+      if (api) {
+        var counted = false;
+        try { counted = !!sessionStorage.getItem('modul0-counted'); } catch (e) {}
+        fetch(api + '/views', { method: counted ? 'GET' : 'POST' })
+          .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+          .then(function (d) {
+            try { sessionStorage.setItem('modul0-counted', '1'); } catch (e) {}
+            var n = Number(d.views).toLocaleString('en-GB');
+            document.querySelectorAll('[data-views-n]').forEach(function (el) { el.textContent = n; });
+            document.querySelectorAll('[data-views]').forEach(function (el) { el.hidden = false; });
+          })
+          .catch(function () {});
+      }
+    </script>
     <script>
       // terminal links open the drop-down once it's hydrated, else fall back to /terminal/
       document.addEventListener('click', (e) => {

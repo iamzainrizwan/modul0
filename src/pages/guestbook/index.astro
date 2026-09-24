@@ -1,0 +1,114 @@
+---
+import Site from '../../layouts/Site.astro';
+import { person } from '../../data/profile';
+import { api } from '../../data/api';
+---
+
+<Site section="guestbook" title={`Guestbook - ${person.name}`} description="Say hello, leave a review, or tell me what's broken.">
+  <h1 class="page-title">Guestbook</h1>
+  <p class="section-lede">Say hello, leave a review of the site, or tell me what's broken. Messages go up straight away.</p>
+
+  <form class="gb-form" id="sign" method="post" action={api ? `${api}/messages` : undefined} data-api={api}>
+    <fieldset disabled={!api}>
+      <legend class="sr-only">Sign the guestbook</legend>
+      <label class="gb-field">
+        <span>name <em>optional</em></span>
+        <input name="name" maxlength="40" autocomplete="nickname" placeholder="anonymous" />
+      </label>
+      <label class="gb-field">
+        <span>message <em class="gb-count" aria-hidden="true">500 max</em></span>
+        <textarea name="message" maxlength="500" rows="4" required></textarea>
+      </label>
+      <!-- people never see this; bots fill it in and get quietly ignored -->
+      <div class="gb-hp" aria-hidden="true">
+        <label>website <input name="website" tabindex="-1" autocomplete="off" /></label>
+      </div>
+      <button class="btn btn-primary" type="submit">Sign the guestbook</button>
+    </fieldset>
+    {!api && <p class="gb-note gb-shown">The guestbook's offline in this build.</p>}
+    <p class="gb-note" id="posted">Signed. Thanks!</p>
+    <p class="gb-note gb-err" id="not-posted">That didn't go through: it was empty, too long, or too soon after your last one (one a minute). Try again.</p>
+    <p class="gb-note gb-live" role="status" aria-live="polite"></p>
+  </form>
+
+  <section class="gb" id="messages" aria-labelledby="messages-h">
+    <header class="section-head">
+      <h2 id="messages-h" class="sub-h">Messages</h2>
+      <span class="section-meta" data-gb-meta></span>
+    </header>
+    <ol class="gb-list" data-gb-list></ol>
+    <noscript><p class="gb-empty">Messages load with JavaScript. Signing works without it.</p></noscript>
+  </section>
+</Site>
+
+<script>
+  import { renderMessages, type Message } from '../../scripts/guestbook';
+
+  const form = document.querySelector<HTMLFormElement>('.gb-form')!;
+  const api = form.dataset.api;
+  const list = document.querySelector<HTMLOListElement>('[data-gb-list]')!;
+  const meta = document.querySelector<HTMLElement>('[data-gb-meta]')!;
+  const live = form.querySelector<HTMLElement>('.gb-live')!;
+  const textarea = form.querySelector('textarea')!;
+  const count = form.querySelector<HTMLElement>('.gb-count')!;
+  let messages: Message[] = [];
+
+  const show = () => {
+    renderMessages(list, messages);
+    meta.textContent = `${messages.length} ${messages.length === 1 ? 'message' : 'messages'}`;
+  };
+
+  const errors: Record<string, string> = {
+    empty: 'Write something first.',
+    'too-long': 'That’s over 500 characters.',
+    'slow-down': 'One message a minute, please. Try again shortly.',
+  };
+
+  textarea.addEventListener('input', () => {
+    count.textContent = `${[...textarea.value].length}/500`;
+  });
+
+  if (api) {
+    fetch(`${api}/messages`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((d) => {
+        messages = d.messages;
+        show();
+      })
+      .catch(() => {
+        list.innerHTML = '';
+        meta.textContent = 'offline';
+        const p = document.createElement('li');
+        p.className = 'gb-empty';
+        p.textContent = 'Couldn’t load the messages right now.';
+        list.append(p);
+      });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const button = form.querySelector('button')!;
+      button.disabled = true;
+      live.classList.remove('gb-err');
+      live.textContent = 'Signing…';
+      try {
+        const res = await fetch(`${api}/messages`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(Object.fromEntries(new FormData(form))),
+        });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(errors[d.error] ?? 'Couldn’t post that. Try again in a bit.');
+        if (d.message) messages = [d.message, ...messages];
+        show();
+        form.reset();
+        count.textContent = '500 max';
+        live.textContent = 'Signed. Thanks!';
+      } catch (err) {
+        live.classList.add('gb-err');
+        live.textContent = err instanceof Error && !(err instanceof TypeError) ? err.message : 'Couldn’t reach the guestbook. Try again in a bit.';
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
+</script>

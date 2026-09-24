@@ -3,9 +3,10 @@ import Site from '../layouts/Site.astro';
 import ProjectExplorer from '../components/ProjectExplorer';
 import Pipeline from '../components/Pipeline.astro';
 import Timeline from '../components/Timeline.astro';
+import Productions from '../components/Productions.astro';
 import {
   person, links, featured, archive, areas, homelab, experience, education,
-  leadership, awards, hackathons, skills, certifications, interests,
+  leadership, awards, hackathons, skills, certifications, interests, productions,
 } from '../data/profile';
 import { getPosts, longDate } from '../data/buildFs';
 import { inline } from '../data/inline';
@@ -152,6 +153,16 @@ const email = links[0];
     </ul>
   </section>
 
+  <section id="productions" aria-labelledby="productions-h">
+    <header class="section-head">
+      <h2 id="productions-h" class="section-h">Productions</h2>
+      <span class="section-meta">lighting and sound since 2021</span>
+    </header>
+    <p class="section-lede">Away from the keyboard I'm in the lighting booth: about 14 productions at school, and now King's Tech Crew.</p>
+    <Productions items={productions.slice(0, 3)} />
+    <p class="more"><a href={`${base}productions/`}>All {productions.length} named productions</a></p>
+  </section>
+
   <section id="writing" aria-labelledby="writing-h">
     <header class="section-head">
       <h2 id="writing-h" class="section-h">Writing</h2>
@@ -178,5 +189,6 @@ const email = links[0];
     <dl class="contact">
       {links.map((l) => <><dt>{l.label}</dt><dd><a href={l.href}>{l.text}</a></dd></>)}
     </dl>
+    <p class="more"><a href={`${base}guestbook/`}>Or sign the guestbook</a></p>
   </section>
 </Site>

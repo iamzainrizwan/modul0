@@ -112,6 +112,13 @@ kbd {
 .tree li a:hover::before { color: var(--void); }
 .tree li a[aria-current] { background: var(--purple); color: var(--void); font-weight: 600; }
 .tree li a[aria-current]::before { color: var(--void); }
+.tree li a.tree-dir[aria-current] { background: none; }
+/* folders (cv/): children draw under the folder's own branch */
+.tree .tree-group > ul { margin: 0; }
+.tree .tree-group li a::before { content: '│  ├─ '; }
+.tree .tree-group li:last-child a::before { content: '│  └─ '; }
+.tree-group.is-open > .tree-dir { color: var(--text); }
+@media (min-width: 1001px) { .tree-group:not(.is-open) > ul { display: none; } }
 
 .rail-facts { margin: 0; padding-top: 1rem; padding-bottom: 1rem; display: grid; gap: 0.8rem; border-bottom: 1px solid var(--line); }
 .rail-facts dt { color: var(--muted); }
@@ -173,8 +180,12 @@ main { min-width: 0; padding: 0 clamp(1.25rem, 4vw, 3.5rem); }
   .tree-root { display: none; }
   .tree ul { display: flex; margin: 0; }
   .tree li a { padding: 0.55rem 0.7rem; white-space: nowrap; border-right: 1px solid var(--line); }
-  .tree li a::before, .tree li:last-child a::before { content: none; }
+  .tree li a::before, .tree li:last-child a::before, .tree .tree-group li a::before, .tree .tree-group li:last-child a::before { content: none; }
+  /* folders flatten away: their children sit in the nav like everything else */
+  .tree-dir { display: none !important; }
+  .tree-group, .tree .tree-group > ul { display: contents; }
   .tree li:first-child a { padding-left: 16px; }
+  .tree .tree-group li:first-child a { padding-left: 0.7rem; }
   html { scroll-padding-top: 6.5rem; }
   main { padding: 0 16px; }
 }
@@ -558,6 +569,54 @@ section.hero { margin-top: 0; border-top: none; }
 .award-what { font-size: 1.15rem; font-weight: 800; line-height: 1.2; letter-spacing: -0.02em; }
 .award-detail { margin-top: 0.3rem; font-size: 0.95rem; color: var(--muted); }
 
+/* productions: the awards list's shape, plus a link to the full page */
+.more { margin: 1.5rem 0 0; font-family: var(--mono); font-size: 0.8rem; font-weight: 600; }
+.more a::after { content: ' ->'; }
+.prod-group { margin-top: 3rem; padding-top: 0; border-top: none; }
+.prod-group:first-of-type { margin-top: 0; }
+.prod-note { margin: 2.5rem 0 1.5rem; color: var(--muted); }
+
+/* ---------- guestbook ---------- */
+.gb-form { max-width: 38rem; }
+.gb-form fieldset { margin: 0; padding: 0; border: none; min-width: 0; display: grid; gap: 1.1rem; justify-items: start; }
+.gb-form fieldset:disabled { opacity: 0.5; }
+.gb-field { display: grid; gap: 0.4rem; width: 100%; }
+.gb-field > span { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); display: flex; justify-content: space-between; gap: 1rem; }
+.gb-field em { font-style: normal; }
+.gb-field input, .gb-field textarea {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: var(--rule);
+  background: var(--void);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+.gb-field textarea { resize: vertical; min-height: 7rem; }
+.gb-field input::placeholder { color: var(--muted); }
+.gb-field input:focus-visible, .gb-field textarea:focus-visible { outline: none; border-color: var(--purple); box-shadow: 4px 4px 0 var(--purple); }
+.gb-form .btn { cursor: pointer; font: inherit; font-family: var(--mono); font-weight: 600; }
+.gb-form .btn:disabled { cursor: progress; }
+.gb-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.gb-note { margin: 1rem 0 0; font-family: var(--mono); font-size: 0.8rem; font-weight: 600; color: var(--green); }
+.gb-note:not(.gb-shown):not(:target):empty, #posted:not(:target), #not-posted:not(:target) { display: none; }
+.gb-note.gb-err, .gb-shown { color: var(--amber); }
+.gb { margin-top: 3.5rem; border-top: none; padding-top: 0; }
+.gb .section-head { margin-bottom: 1.25rem; }
+.gb .sub-h { margin: 0; }
+.gb-list { list-style: none; margin: 0; padding: 0; max-width: 44rem; }
+.gb-list li { padding: 1rem 0; border-bottom: 1px solid var(--line-strong); }
+.gb-list li:first-child { padding-top: 0; }
+.gb-head { margin: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem 1rem; flex-wrap: wrap; }
+.gb-name { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.gb-head time { font-family: var(--mono); font-size: 0.74rem; color: var(--muted); white-space: nowrap; }
+.gb-body { margin: 0.4rem 0 0; color: var(--soft); white-space: pre-line; overflow-wrap: anywhere; }
+.gb-empty { color: var(--muted); }
+.gb-del { margin-top: 0.6rem; }
+.gb-token fieldset { grid-template-columns: auto auto; }
+.gb-token .gb-field { grid-column: 1 / -1; }
+
 .hacks { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line-strong); }
 .hacks li { display: flex; flex-direction: column; padding: 0.9rem 1rem; border-bottom: 1px solid var(--line-strong); }
 .hacks li:nth-child(odd) { border-right: 1px solid var(--line-strong); }
@@ -818,7 +877,7 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
   .tree { overflow: visible; }
   .tree ul { flex-wrap: wrap; width: 100%; border-top: 1px solid var(--line); }
   .tree li { flex: 1 1 auto; }
-  .tree li a, .tree li:first-child a {
+  .tree li a, .tree li:first-child a, .tree .tree-group li:first-child a {
     padding: 0.5rem 0.25rem;
     text-align: center;
     font-size: 0.66rem;
@@ -832,7 +891,7 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 }
 @media (max-width: 380px) {
   html { font-size: 118.75%; } /* 19px on the smallest phones */
-  .tree li a, .tree li:first-child a { font-size: 0.64rem; padding-left: 0.15rem; padding-right: 0.15rem; }
+  .tree li a, .tree li:first-child a, .tree .tree-group li:first-child a { font-size: 0.64rem; padding-left: 0.15rem; padding-right: 0.15rem; }
   .boot-screen { font-size: 0.66rem; }
 }
 /* numbers sit on a common line even when a label wraps */

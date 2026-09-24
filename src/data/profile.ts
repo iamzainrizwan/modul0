@@ -416,7 +416,7 @@ export const leadership: Role[] = [
     place: 'Slough',
     when: 'Dec 2021 – Jun 2025',
     details: [
-      'Ran lighting and sound for about 14 productions, for a total audience of 1,000+.',
+      'Ran lighting and sound for [about 14 productions](#productions), for a total audience of 1,000+.',
       'Led teams producing other school events independently.',
       'Trained younger students to use professional audio and lighting equipment safely.',
     ],
@@ -432,6 +432,25 @@ export const leadership: Role[] = [
       'Mentored the school esports team, growing participation by about 40%.',
     ],
   },
+];
+
+// titles, years and types from zain's old theatre site
+// (iamzainrizwan/zain-codes-the-stage, src/pages/Theatre.tsx), not its prose;
+// carrie from zain 2026-09-24. the lgs list is the named ones: smaller events
+// make up the rest of the "about 14" (zain). role at lgs is the cv's.
+export type Production = { title: string; when: string; org: string; kind?: string; role: string; venue?: string };
+
+export const productions: Production[] = [
+  { title: 'Carrie', when: 'Nov 2025', org: 'King’s Tech Crew', role: 'Lighting operator', venue: 'Greenwood Theatre' },
+  { title: 'Greased Lightning', when: '2025', org: 'Langley Grammar School', kind: 'Whole-school production', role: 'Lighting and sound' },
+  { title: 'High School Musical', when: '2024', org: 'Langley Grammar School', kind: 'Whole-school production', role: 'Lighting and sound' },
+  { title: 'Senior House Variety', when: '2024', org: 'Langley Grammar School', role: 'Lighting and sound' },
+  { title: 'Culture Day Parade', when: '2023', org: 'Langley Grammar School', role: 'Lighting and sound' },
+  { title: 'Bugsy Malone', when: '2023', org: 'Langley Grammar School', role: 'Lighting and sound' },
+  { title: 'The 25th Annual Putnam County Spelling Bee', when: '2022', org: 'Langley Grammar School', kind: 'Senior production', role: 'Lighting and sound' },
+  { title: 'Greased Lightning', when: '2022', org: 'Langley Grammar School', kind: 'Junior production', role: 'Lighting and sound' },
+  { title: 'End of Year Assembly', when: '2022', org: 'Langley Grammar School', role: 'Lighting and sound' },
+  { title: 'Christmas Concert', when: '2021', org: 'Langley Grammar School', role: 'Lighting and sound' },
 ];
 
 export const awards = [

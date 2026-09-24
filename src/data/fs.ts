@@ -35,6 +35,18 @@ security   > ctf tooling, wireshark, educated guessing.</pre>`,
 2024-07  work experience, shell.
 2021-12  lead technician, langley grammar. ~14 productions.
 2020-09  digital leader, langley grammar. bett apple showcase.</pre>`,
+  'productions.log': `<pre>
+2025-11  carrie - king's tech crew, greenwood theatre. lighting op.
+2025     greased lightning - lgs, whole school
+2024     high school musical - lgs, whole school
+2024     senior house variety - lgs
+2023     culture day parade - lgs
+2023     bugsy malone - lgs
+2022     the 25th annual putnam county spelling bee - lgs, seniors
+2022     greased lightning - lgs, juniors
+2022     end of year assembly - lgs
+2021     christmas concert - lgs
+         lgs: lighting + sound, ~14 in total counting the small ones.</pre>`,
   'status.log': status,
   'looking-for.txt':
     'summer 2027 internships, 2027/28 placements, and anything else that needs fixing {or is bound to}.',

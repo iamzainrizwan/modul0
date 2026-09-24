@@ -34,8 +34,12 @@ those. When sources disagree, ask; don't pick one.
   `buildFs()`, which serialises fs.ts + rendered posts into each page for the
   client-side terminal.
 - `src/layouts/Site.astro` - the one site layout: sticky rail (file-tree nav,
-  now/uptime, links, terminal button) + content. `boot` prop plays the boot
-  animation (home only); `section` highlights a nav item on non-home pages.
+  now/uptime/visits, links, terminal button) + content. `boot` prop plays the
+  boot animation (home only); `section` highlights a nav item on non-home
+  pages; `noindex` for the guestbook admin. Nav items can be folders
+  (`children`, e.g. `cv/`: open on desktop only while one of its sections is
+  current, flattened into the grid on mobile - Zain wants mobile's nav left as
+  is) or pages (`href`, e.g. `guestbook/`).
 - `src/pages/index.astro` - home, every section in order.
 - `src/components/` - React islands: `BootSequence` (first visit per session;
   log -> typed name with a deliberate typo + backspace fix -> purple wipe. The
@@ -62,6 +66,20 @@ those. When sources disagree, ask; don't pick one.
   stripped for square corners, rebuilt daily by cron), never committed, so
   locally the page shows its "snake's asleep" fallback. The boot log's
   statuses are remainders too: `r0` done, `r1` still in progress.
+- Productions: `productions` in profile.ts (sources in its comment; the named
+  shows only, smaller events make up the rest of "about 14"), rendered by
+  `Productions.astro` as a 3-item teaser on home and in full on
+  `src/pages/productions/`. Terminal copy is `productions.log` in fs.ts.
+- Guestbook + view counter: `api/` is a Cloudflare Worker + D1 (setup,
+  moderation and local dev in `api/README.md`), deployed by
+  `.github/workflows/api.yml`. The site reads its url from `PUBLIC_API` at
+  build time (`src/data/api.ts`; repo variable in CI); unset, the guestbook
+  shows as offline and the counter stays hidden. `src/pages/guestbook/`
+  (posts work without js via a form post + 303 back to `#posted`),
+  `guestbook/admin/` (delete with the worker's `ADMIN_TOKEN`).
+  `src/scripts/guestbook.ts` renders messages with textContent only. Messages
+  go live straight away (Zain's call); spam control is a honeypot, length
+  caps and rate limits in the worker.
 - `src/content/blog/*.md` - posts; frontmatter `title`, `date`,
   `description`, optional `draft: true` (hides it in production). Schema in
   `src/content.config.ts`. Also `src/pages/rss.xml.js` and `404.astro`.

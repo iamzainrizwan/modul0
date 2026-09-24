@@ -1,0 +1,27 @@
+---
+import Site from '../../layouts/Site.astro';
+import Productions from '../../components/Productions.astro';
+import { person, productions } from '../../data/profile';
+
+const base = import.meta.env.BASE_URL;
+const groups = [...new Set(productions.map((p) => p.org))].map((org) => ({
+  org,
+  items: productions.filter((p) => p.org === org),
+}));
+---
+
+<Site section="productions" title={`Productions - ${person.name}`} description={`Theatre productions ${person.name} has run lighting and sound for.`}>
+  <h1 class="page-title">Productions</h1>
+  <p class="section-lede">
+    Lighting and sound, from the booth. Lead technician for about 14 productions at Langley Grammar School, and lighting
+    operator with King’s Tech Crew at King’s.
+  </p>
+  {groups.map((g) => (
+    <section class="prod-group" aria-label={g.org}>
+      <h2 class="sub-h">{g.org}</h2>
+      <Productions items={g.items} org={false} />
+    </section>
+  ))}
+  <p class="prod-note">These are the named ones. Smaller school events make up the rest of the 14.</p>
+  <p class="back"><a href={`${base}#productions`}>Back to the home page</a></p>
+</Site>

@@ -1,0 +1,20 @@
+# the guestbook + view counter api for modul0.dev. the site itself stays on
+# github pages; this is the only part that stores anything.
+name = "modul0-api"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+# pages that may call the api from a browser (comma separated)
+[vars]
+ALLOWED_ORIGINS = "https://modul0.dev,http://localhost:4321"
+# where a no-js guestbook post is sent back to
+RETURN_URL = "https://modul0.dev/guestbook/"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "modul0"
+# from `npx wrangler d1 create modul0`
+database_id = "6b1a9a38-cfad-41b4-a68e-b13992bf7ab0"
+
+# secrets (not in this file): ADMIN_TOKEN, deletes messages;
+# IP_SALT, salts the ip hashes. set each with `npx wrangler secret put NAME`.
