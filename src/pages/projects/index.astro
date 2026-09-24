@@ -1,0 +1,14 @@
+---
+import Site from '../../layouts/Site.astro';
+import ProjectExplorer from '../../components/ProjectExplorer';
+import { person, featured, archive, areas } from '../../data/profile';
+---
+
+<Site section="projects" title={`Projects - ${person.name}`} description={`Everything ${person.name} has built: ${featured.length} featured projects and ${archive.length} more, filterable by area.`}>
+  <header class="page-head">
+    <h1 class="page-title">Projects</h1>
+    <span class="section-meta">{featured.length + archive.length} projects</span>
+  </header>
+  <p class="section-lede">Three I'd most like to talk about, in full, then everything else I've built, most recent first.</p>
+  <ProjectExplorer client:load featured={featured} archive={archive} areas={areas} />
+</Site>

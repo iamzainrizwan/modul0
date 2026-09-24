@@ -15,3 +15,11 @@ CREATE TABLE IF NOT EXISTS counters (
   value INTEGER NOT NULL DEFAULT 0
 );
 INSERT OR IGNORE INTO counters (name, value) VALUES ('views', 0);
+
+-- one row per visitor (salted ip hash) for today only, so the counter moves
+-- once per visitor per day. older days are pruned by the worker.
+CREATE TABLE IF NOT EXISTS visits (
+  ip_hash TEXT NOT NULL,
+  day TEXT NOT NULL,
+  PRIMARY KEY (ip_hash, day)
+);

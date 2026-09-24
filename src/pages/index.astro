@@ -1,16 +1,16 @@
 ---
 import Site from '../layouts/Site.astro';
-import ProjectExplorer from '../components/ProjectExplorer';
 import Pipeline from '../components/Pipeline.astro';
-import Timeline from '../components/Timeline.astro';
 import Productions from '../components/Productions.astro';
-import {
-  person, links, featured, archive, areas, homelab, experience, education,
-  leadership, awards, hackathons, skills, certifications, interests, productions,
-} from '../data/profile';
+import ProjectTeasers from '../components/ProjectTeasers.astro';
+import CvGlance from '../components/CvGlance.astro';
+import GuestbookTeaser from '../components/GuestbookTeaser.astro';
+import { person, links, featured, archive, homelab, productions } from '../data/profile';
 import { getPosts, longDate } from '../data/buildFs';
 import { inline } from '../data/inline';
 
+// home is the skim: every section is a teaser with the strongest bits, and
+// a link to its full page. the full content lives on those pages.
 const posts = await getPosts();
 const base = import.meta.env.BASE_URL;
 const ft = homelab.failureTest;
@@ -42,120 +42,45 @@ const email = links[0];
 
   <section id="projects" aria-labelledby="projects-h">
     <header class="section-head">
-      <h2 id="projects-h" class="section-h">Projects</h2>
+      <h2 id="projects-h" class="section-h"><a class="head-link" href={`${base}projects/`}>Projects</a></h2>
       <span class="section-meta">{featured.length + archive.length} projects</span>
     </header>
-    <p class="section-lede">Three I'd most like to talk about, then everything else I've built, most recent first.</p>
-    <ProjectExplorer client:load featured={featured} archive={archive} areas={areas} />
+    <p class="section-lede">Three I'd most like to talk about. Every project, with the details, is on the projects page.</p>
+    <ProjectTeasers featured={featured} archive={archive} />
+    <p class="more"><a href={`${base}projects/`}>All {featured.length + archive.length} projects, with details and filters</a></p>
   </section>
 
   <section id="homelab" aria-labelledby="homelab-h">
     <header class="section-head">
-      <h2 id="homelab-h" class="section-h">Homelab</h2>
+      <h2 id="homelab-h" class="section-h"><a class="head-link" href={`${base}homelab/`}>Homelab</a></h2>
       <span class="section-meta">2 machines, 1 pipeline</span>
     </header>
     <p class="section-lede">
-      alexandria is where my projects actually run. Every change reaches it through a pipeline I built (s3ntry), and a
-      monitor I wrote tells me when something breaks.
+      alexandria is where my projects actually run. Every change reaches it through a pipeline I built, and a monitor I
+      wrote tells me when something breaks. Then I broke it on purpose to time the alerts.
     </p>
     <Pipeline />
-    <div class="drill" id="failure-drill">
-      <h3 class="sub-h">Failure drill</h3>
-      <p>I stopped the live 1337 container five times at random points in the poll cycle and timed how long the Discord alert took to arrive, using a <a href={ft.script}>test script</a> and each message's timestamp.</p>
-      <dl class="readout">
-        <div><dt>Trials</dt><dd>{ft.trials}</dd></div>
-        <div><dt>Up/down changes caught</dt><dd>{ft.transitions}</dd></div>
-        <div><dt>Mean time to alert</dt><dd>{ft.meanAlert}</dd></div>
-        <div><dt>Poll interval</dt><dd>{ft.pollInterval}</dd></div>
-      </dl>
-      <p class="drill-finding">{ft.finding}</p>
-      <p class="drill-link"><a href={ft.writeup}>Read the full write-up, with raw timings</a></p>
-    </div>
-    <ul class="machines">
-      {homelab.machines.map((m) => (
-        <li class="machine">
-          <p class="machine-name">{m.name}<span>{m.role}</span></p>
-          <p set:html={inline(m.text)} />
-        </li>
-      ))}
-    </ul>
-  </section>
-
-  <section id="experience" aria-labelledby="experience-h">
-    <header class="section-head">
-      <h2 id="experience-h" class="section-h">Experience</h2>
-      <span class="section-meta">{experience.length} roles</span>
-    </header>
-    <Timeline roles={experience} />
-  </section>
-
-  <section id="education" aria-labelledby="education-h">
-    <header class="section-head">
-      <h2 id="education-h" class="section-h">Education</h2>
-      <span class="section-meta">{education.length} schools</span>
-    </header>
-    <Timeline roles={education} />
-  </section>
-
-  <section id="leadership" aria-labelledby="leadership-h">
-    <header class="section-head">
-      <h2 id="leadership-h" class="section-h">Leadership and activities</h2>
-      <span class="section-meta">{leadership.length} roles</span>
-    </header>
-    <Timeline roles={leadership} />
-  </section>
-
-  <section id="awards" aria-labelledby="awards-h">
-    <header class="section-head">
-      <h2 id="awards-h" class="section-h">Awards and hackathons</h2>
-      <span class="section-meta">{awards.length} awards, {hackathons.length} hackathons</span>
-    </header>
-    <ul class="awards">
-      {awards.map((a) => (
-        <li>
-          <span class="award-when">{a.when}</span>
-          <span class="award-what">{a.what}</span>
-          <span class="award-detail" set:html={inline(a.detail)} />
-        </li>
-      ))}
-    </ul>
-    <h3 class="sub-h">Hackathons</h3>
-    <ul class="hacks">
-      {hackathons.map((h) => (
-        <li>
-          <span class="hack-name" set:html={inline(h.name)} />
-          <span class="hack-meta" set:html={inline(h.where + (h.built ? `, built ${h.built}` : ''))} />
-        </li>
-      ))}
-    </ul>
-  </section>
-
-  <section id="skills" aria-labelledby="skills-h">
-    <header class="section-head">
-      <h2 id="skills-h" class="section-h">Skills</h2>
-      <span class="section-meta">{skills.reduce((n, g) => n + g.items.length, 0)} tools</span>
-    </header>
-    <dl class="skills">
-      {skills.map((g) => (
-        <div>
-          <dt>{g.group}</dt>
-          <dd><ul class="stack">{g.items.map((i) => <li>{i}</li>)}</ul></dd>
-        </div>
-      ))}
-      <div>
-        <dt>Certifications</dt>
-        <dd><ul class="stack">{certifications.map((c) => <li set:html={inline(c)} />)}</ul></dd>
-      </div>
+    <dl class="readout readout-home">
+      <div><dt>Failure trials</dt><dd>{ft.trials}</dd></div>
+      <div><dt>Up/down changes caught</dt><dd>{ft.transitions}</dd></div>
+      <div><dt>Mean time to alert</dt><dd>{ft.meanAlert}</dd></div>
+      <div><dt>Poll interval</dt><dd>{ft.pollInterval}</dd></div>
     </dl>
-    <h3 class="sub-h">Outside of code</h3>
-    <ul class="interests">
-      {interests.map((i) => <li set:html={inline(i)} />)}
-    </ul>
+    <p class="more"><a href={`${base}homelab/#failure-drill`}>Why 2 were missed, the raw timings, and both machines</a></p>
+  </section>
+
+  <section id="cv" aria-labelledby="cv-h">
+    <header class="section-head">
+      <h2 id="cv-h" class="section-h"><a class="head-link" href={`${base}cv/`}>CV</a></h2>
+      <span class="section-meta">at a glance</span>
+    </header>
+    <CvGlance />
+    <p class="more"><a href={`${base}cv/`}>The full CV: every role, award and skill</a></p>
   </section>
 
   <section id="productions" aria-labelledby="productions-h">
     <header class="section-head">
-      <h2 id="productions-h" class="section-h">Productions</h2>
+      <h2 id="productions-h" class="section-h"><a class="head-link" href={`${base}productions/`}>Productions</a></h2>
       <span class="section-meta">lighting and sound since 2021</span>
     </header>
     <p class="section-lede">Away from the keyboard I'm in the lighting booth: about 14 productions at school, and now King's Tech Crew.</p>
@@ -165,12 +90,12 @@ const email = links[0];
 
   <section id="writing" aria-labelledby="writing-h">
     <header class="section-head">
-      <h2 id="writing-h" class="section-h">Writing</h2>
+      <h2 id="writing-h" class="section-h"><a class="head-link" href={`${base}blog/`}>Writing</a></h2>
       <span class="section-meta">{posts.length} {posts.length === 1 ? 'post' : 'posts'}</span>
     </header>
     {posts.length ? (
       <ul class="post-list">
-        {posts.map((p) => (
+        {posts.slice(0, 3).map((p) => (
           <li>
             <a href={`${base}blog/${p.id}/`}>{p.data.title}</a>
             <time datetime={p.data.date.toISOString()}>{longDate(p.data.date)}</time>
@@ -179,6 +104,15 @@ const email = links[0];
         ))}
       </ul>
     ) : <p>Nothing published yet.</p>}
+    <p class="more"><a href={`${base}blog/`}>All writing, and the RSS feed</a></p>
+  </section>
+
+  <section id="guestbook" aria-labelledby="guestbook-h">
+    <header class="section-head">
+      <h2 id="guestbook-h" class="section-h"><a class="head-link" href={`${base}guestbook/`}>Guestbook</a></h2>
+      <span class="section-meta" data-gb-meta>say hello</span>
+    </header>
+    <GuestbookTeaser />
   </section>
 
   <section id="contact" aria-labelledby="contact-h">
@@ -189,6 +123,5 @@ const email = links[0];
     <dl class="contact">
       {links.map((l) => <><dt>{l.label}</dt><dd><a href={l.href}>{l.text}</a></dd></>)}
     </dl>
-    <p class="more"><a href={`${base}guestbook/`}>Or sign the guestbook</a></p>
   </section>
 </Site>

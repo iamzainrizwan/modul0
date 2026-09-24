@@ -1,0 +1,31 @@
+---
+// home's cv teaser: one line per cv section, each opening that section of /cv/
+import { experience, education, leadership, awards, skills } from '../data/profile';
+import { plain } from '../data/inline';
+
+const base = import.meta.env.BASE_URL;
+const infra = skills.find((g) => g.group === 'Infrastructure')?.items ?? [];
+const tools = skills.reduce((n, g) => n + g.items.length, 0);
+const rows = [
+  { id: 'experience', main: `${experience[0].role}, ${experience[0].org}`, sub: `${experience[0].when}. ${plain(experience[0].details[0])}` },
+  { id: 'education', main: `${education[0].role}, ${education[0].org}`, sub: plain(education[0].details[0]) },
+  { id: 'leadership', main: `${leadership[0].role}, ${leadership[0].org}`, sub: `${leadership[0].when}, plus ${leadership.length - 1} more roles` },
+  { id: 'awards', main: awards[0].what, sub: `${awards[1].what}, plus ${awards.length - 2} more` },
+  { id: 'skills', main: skills[0].items.join(', '), sub: `${infra.slice(0, 4).join(', ')} and more: ${tools} tools in all` },
+];
+---
+
+<ul class="glance">
+  {rows.map((r) => (
+    <li>
+      <a class="glance-row" href={`${base}cv/#${r.id}`}>
+        <span class="glance-k">{r.id}</span>
+        <span class="glance-v">
+          <span class="glance-main">{r.main}</span>
+          <span class="glance-sub">{r.sub}</span>
+        </span>
+        <span class="glance-go" aria-hidden="true">-&gt;</span>
+      </a>
+    </li>
+  ))}
+</ul>

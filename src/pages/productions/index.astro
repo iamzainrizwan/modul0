@@ -11,7 +11,10 @@ const groups = [...new Set(productions.map((p) => p.org))].map((org) => ({
 ---
 
 <Site section="productions" title={`Productions - ${person.name}`} description={`Theatre productions ${person.name} has run lighting and sound for.`}>
-  <h1 class="page-title">Productions</h1>
+  <header class="page-head">
+    <h1 class="page-title">Productions</h1>
+    <span class="section-meta">{productions.length} named, about 15 in all</span>
+  </header>
   <p class="section-lede">
     Lighting and sound, from the booth. Lead technician for about 14 productions at Langley Grammar School, and lighting
     operator with King’s Tech Crew at King’s.

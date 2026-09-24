@@ -36,11 +36,22 @@ those. When sources disagree, ask; don't pick one.
 - `src/layouts/Site.astro` - the one site layout: sticky rail (file-tree nav,
   now/uptime/visits, links, terminal button) + content. `boot` prop plays the
   boot animation (home only); `section` highlights a nav item on non-home
-  pages; `noindex` for the guestbook admin. Nav items can be folders
-  (`children`, e.g. `cv/`: open on desktop only while one of its sections is
-  current, flattened into the grid on mobile - Zain wants mobile's nav left as
-  is) or pages (`href`, e.g. `guestbook/`).
-- `src/pages/index.astro` - home, every section in order.
+  pages; `noindex` for the guestbook admin. Nav: files (about, contact)
+  scroll home, directories (`href`) open their page; scroll-spy highlights
+  home's teaser with the same id. `cv/` is a folder (`children`): open on
+  desktop while its teaser or one of its /cv/ sections is current; flattened
+  into the grid on mobile, where its first child stands in for it
+  (`.tree-proxy`). Zain wants mobile's nav grid left as is.
+- `src/pages/index.astro` - home, the skim: hero, then a teaser per section
+  (projects, homelab, cv, productions, writing, guestbook) that links to its
+  full page, then contact. Zain wants home to stay rich for a skimming
+  recruiter, so teasers carry the strongest facts (featured projects, the
+  drill readout, the cv at a glance), not just links. Full pages:
+  `projects/` (ProjectExplorer), `homelab/`, `cv/` (experience, education,
+  leadership, awards, skills), `productions/`, `blog/`, `guestbook/`.
+  Teasers: `ProjectTeasers`, `CvGlance`, `GuestbookTeaser` (.astro).
+  Content links to a section (`#project-x`, `#leadership`, `#failure-drill`)
+  are rewritten to the page it lives on by `route()` in `src/data/inline.ts`.
 - `src/components/` - React islands: `BootSequence` (first visit per session;
   log -> typed name with a deliberate typo + backspace fix -> purple wipe. The
   "N archived" count in its log is hardcoded: keep it equal to `archive.length`;
@@ -78,8 +89,12 @@ those. When sources disagree, ask; don't pick one.
   (posts work without js via a form post + 303 back to `#posted`),
   `guestbook/admin/` (delete with the worker's `ADMIN_TOKEN`).
   `src/scripts/guestbook.ts` renders messages with textContent only. Messages
-  go live straight away (Zain's call); spam control is a honeypot, length
-  caps and rate limits in the worker.
+  go live straight away (Zain's call), so the worker caps every abuse path
+  (listed in `api/README.md`); admin can delete one message or everything
+  from one poster. Schema changes: re-run `schema.sql` remotely (it's all
+  IF NOT EXISTS) before pushing worker code that needs them. Don't write
+  `\u` escapes through tool calls: they arrive as raw characters, and a raw
+  U+2028 breaks a JS regex.
 - `src/content/blog/*.md` - posts; frontmatter `title`, `date`,
   `description`, optional `draft: true` (hides it in production). Schema in
   `src/content.config.ts`. Also `src/pages/rss.xml.js` and `404.astro`.

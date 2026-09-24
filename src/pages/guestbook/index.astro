@@ -27,7 +27,7 @@ import { api } from '../../data/api';
     </fieldset>
     {!api && <p class="gb-note gb-shown">The guestbook's offline in this build.</p>}
     <p class="gb-note" id="posted">Signed. Thanks!</p>
-    <p class="gb-note gb-err" id="not-posted">That didn't go through: it was empty, too long, or too soon after your last one (one a minute). Try again.</p>
+    <p class="gb-note gb-err" id="not-posted">That didn't go through. It was empty, too long, a repeat, had more than two links, or came too soon after your last one (one a minute). Try again.</p>
     <p class="gb-note gb-live" role="status" aria-live="polite"></p>
   </form>
 
@@ -62,6 +62,9 @@ import { api } from '../../data/api';
     empty: 'Write something first.',
     'too-long': 'That’s over 500 characters.',
     'slow-down': 'One message a minute, please. Try again shortly.',
+    duplicate: 'That exact message is already up.',
+    'reserved-name': 'That name’s taken. Pick another.',
+    links: 'Two links at most, please.',
   };
 
   textarea.addEventListener('input', () => {

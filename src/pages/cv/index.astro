@@ -1,0 +1,85 @@
+---
+import Site from '../../layouts/Site.astro';
+import Timeline from '../../components/Timeline.astro';
+import {
+  person, experience, education, leadership, awards, hackathons, skills, certifications, interests,
+} from '../../data/profile';
+import { inline } from '../../data/inline';
+---
+
+<Site section="cv" title={`CV - ${person.name}`} description={`${person.name}: experience, education, leadership, awards and skills.`}>
+  <h1 class="page-title">CV</h1>
+  <p class="section-lede">Experience, education, leadership, awards and skills, most recent first.</p>
+
+  <section id="experience" class="cv-first" aria-labelledby="experience-h">
+    <header class="section-head">
+      <h2 id="experience-h" class="section-h">Experience</h2>
+      <span class="section-meta">{experience.length} roles</span>
+    </header>
+    <Timeline roles={experience} />
+  </section>
+
+  <section id="education" aria-labelledby="education-h">
+    <header class="section-head">
+      <h2 id="education-h" class="section-h">Education</h2>
+      <span class="section-meta">{education.length} schools</span>
+    </header>
+    <Timeline roles={education} />
+  </section>
+
+  <section id="leadership" aria-labelledby="leadership-h">
+    <header class="section-head">
+      <h2 id="leadership-h" class="section-h">Leadership and activities</h2>
+      <span class="section-meta">{leadership.length} roles</span>
+    </header>
+    <Timeline roles={leadership} />
+  </section>
+
+  <section id="awards" aria-labelledby="awards-h">
+    <header class="section-head">
+      <h2 id="awards-h" class="section-h">Awards and hackathons</h2>
+      <span class="section-meta">{awards.length} awards, {hackathons.length} hackathons</span>
+    </header>
+    <ul class="awards">
+      {awards.map((a) => (
+        <li>
+          <span class="award-when">{a.when}</span>
+          <span class="award-what">{a.what}</span>
+          <span class="award-detail" set:html={inline(a.detail)} />
+        </li>
+      ))}
+    </ul>
+    <h3 class="sub-h">Hackathons</h3>
+    <ul class="hacks">
+      {hackathons.map((h) => (
+        <li>
+          <span class="hack-name" set:html={inline(h.name)} />
+          <span class="hack-meta" set:html={inline(h.where + (h.built ? `, built ${h.built}` : ''))} />
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section id="skills" aria-labelledby="skills-h">
+    <header class="section-head">
+      <h2 id="skills-h" class="section-h">Skills</h2>
+      <span class="section-meta">{skills.reduce((n, g) => n + g.items.length, 0)} tools</span>
+    </header>
+    <dl class="skills">
+      {skills.map((g) => (
+        <div>
+          <dt>{g.group}</dt>
+          <dd><ul class="stack">{g.items.map((i) => <li>{i}</li>)}</ul></dd>
+        </div>
+      ))}
+      <div>
+        <dt>Certifications</dt>
+        <dd><ul class="stack">{certifications.map((c) => <li set:html={inline(c)} />)}</ul></dd>
+      </div>
+    </dl>
+    <h3 class="sub-h">Outside of code</h3>
+    <ul class="interests">
+      {interests.map((i) => <li set:html={inline(i)} />)}
+    </ul>
+  </section>
+</Site>

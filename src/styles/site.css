@@ -112,7 +112,6 @@ kbd {
 .tree li a:hover::before { color: var(--void); }
 .tree li a[aria-current] { background: var(--purple); color: var(--void); font-weight: 600; }
 .tree li a[aria-current]::before { color: var(--void); }
-.tree li a.tree-dir[aria-current] { background: none; }
 /* folders (cv/): children draw under the folder's own branch */
 .tree .tree-group > ul { margin: 0; }
 .tree .tree-group li a::before { content: '│  ├─ '; }
@@ -183,6 +182,7 @@ main { min-width: 0; padding: 0 clamp(1.25rem, 4vw, 3.5rem); }
   .tree li a::before, .tree li:last-child a::before, .tree .tree-group li a::before, .tree .tree-group li:last-child a::before { content: none; }
   /* folders flatten away: their children sit in the nav like everything else */
   .tree-dir { display: none !important; }
+  .tree li a.tree-proxy { background: var(--purple); color: var(--void); font-weight: 600; }
   .tree-group, .tree .tree-group > ul { display: contents; }
   .tree li:first-child a { padding-left: 16px; }
   .tree .tree-group li:first-child a { padding-left: 0.7rem; }
@@ -569,9 +569,88 @@ section.hero { margin-top: 0; border-top: none; }
 .award-what { font-size: 1.15rem; font-weight: 800; line-height: 1.2; letter-spacing: -0.02em; }
 .award-detail { margin-top: 0.3rem; font-size: 0.95rem; color: var(--muted); }
 
+/* ---------- home teasers: the skim, each linking to its full page ---------- */
+
+/* section headings on home open their page */
+.head-link { color: inherit; text-decoration: none; }
+@media (hover: hover) { .head-link:hover { background: var(--purple); color: var(--void); } }
+.head-link::after { content: '/'; color: var(--purple); }
+@media (hover: hover) { .head-link:hover::after { color: var(--void); } }
+
+/* full pages: title with its count, like a section head */
+.page-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem 1rem; flex-wrap: wrap; margin: 3rem 0 2.5rem; }
+.page-head .page-title { margin: 0; }
+.cv-first { margin-top: 3.5rem; }
+
+/* featured projects as three cards; the whole card is the link */
+.teasers { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+.teasers > li { display: flex; }
+.teaser {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 1.2rem 1.25rem 1.1rem;
+  border: var(--rule);
+  color: var(--text);
+  text-decoration: none;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+@media (hover: hover) {
+  .teaser:hover { background: var(--void); color: var(--text); transform: translate(-4px, -4px); box-shadow: 8px 8px 0 var(--purple); }
+  .teaser:hover .teaser-go { background: var(--purple); color: var(--void); }
+}
+@media (prefers-reduced-motion: reduce) { .teaser { transition: none; } .teaser:hover { transform: none; } }
+.teaser-top { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; }
+.teaser-name { margin-top: 1rem; font-size: clamp(1.7rem, 2.6vw, 2.1rem); font-weight: 800; line-height: 1; letter-spacing: -0.04em; }
+.teaser-tagline { margin-top: 0.5rem; font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
+.teaser-summary { margin: 0.9rem 0 1rem; font-size: 1rem; line-height: 1.5; color: var(--soft); }
+.teaser-stack { margin-top: auto; padding-top: 0.8rem; border-top: 1px solid var(--line-strong); font-family: var(--mono); font-size: 0.74rem; color: var(--muted); }
+.teaser-go { align-self: flex-start; margin: 0.8rem -0.4rem 0; padding: 0.1rem 0.4rem; font-family: var(--mono); font-size: 0.8rem; font-weight: 600; color: var(--purple); }
+@media (max-width: 1180px) { .teasers { grid-template-columns: minmax(0, 1fr); } .teaser-summary { max-width: 40rem; } }
+
+/* every other project, by name */
+.also { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.6rem 1rem; margin-top: 1.75rem; }
+.also-h { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
+.also ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.also li a { display: inline-block; padding: 0.2rem 0.55rem; border: 1px solid var(--line-strong); font-family: var(--mono); font-size: 0.78rem; color: var(--soft); text-decoration: none; }
+@media (hover: hover) { .also li a:hover { border-color: var(--purple); } }
+
+.readout-home { margin-top: 2rem; }
+
+/* cv at a glance: one row per section, each a link into /cv/ */
+.glance { list-style: none; margin: 0; padding: 0; border-top: var(--rule); }
+.glance-row {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr) auto;
+  gap: 0.25rem 1.5rem;
+  align-items: baseline;
+  padding: 1rem 0.25rem;
+  border-bottom: 1px solid var(--line-strong);
+  color: var(--text);
+  text-decoration: none;
+}
+.glance-k { font-family: var(--mono); font-size: 0.78rem; font-weight: 600; color: var(--purple); }
+.glance-v { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+.glance-main { font-size: 1.2rem; font-weight: 800; line-height: 1.2; letter-spacing: -0.02em; }
+.glance-sub { font-size: 0.95rem; color: var(--muted); }
+.glance-go { font-family: var(--mono); font-size: 0.85rem; color: var(--muted); }
+@media (hover: hover) {
+  .glance-row:hover { background: var(--purple); color: var(--void); }
+  .glance-row:hover .glance-k, .glance-row:hover .glance-sub, .glance-row:hover .glance-go { color: var(--void); }
+}
+@media (max-width: 640px) {
+  .glance-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .glance-k { grid-column: 1 / -1; }
+}
+
+/* guestbook teaser */
+.gb-teaser .gb-list { margin-bottom: 1.75rem; }
+.gb-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem; margin: 0; }
+.more-inline { font-family: var(--mono); font-size: 0.8rem; font-weight: 600; }
+
 /* productions: the awards list's shape, plus a link to the full page */
 .more { margin: 1.5rem 0 0; font-family: var(--mono); font-size: 0.8rem; font-weight: 600; }
-.more a::after { content: ' ->'; }
+.more a::after { content: '\00a0->'; white-space: nowrap; }
 .prod-group { margin-top: 3rem; padding-top: 0; border-top: none; }
 .prod-group:first-of-type { margin-top: 0; }
 .prod-note { margin: 2.5rem 0 1.5rem; color: var(--muted); }
@@ -596,7 +675,7 @@ section.hero { margin-top: 0; border-top: none; }
 .gb-field textarea { resize: vertical; min-height: 7rem; }
 .gb-field input::placeholder { color: var(--muted); }
 .gb-field input:focus-visible, .gb-field textarea:focus-visible { outline: none; border-color: var(--purple); box-shadow: 4px 4px 0 var(--purple); }
-.gb-form .btn { cursor: pointer; font: inherit; font-family: var(--mono); font-weight: 600; }
+.gb-form .btn { cursor: pointer; }
 .gb-form .btn:disabled { cursor: progress; }
 .gb-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .gb-note { margin: 1rem 0 0; font-family: var(--mono); font-size: 0.8rem; font-weight: 600; color: var(--green); }
@@ -613,9 +692,11 @@ section.hero { margin-top: 0; border-top: none; }
 .gb-head time { font-family: var(--mono); font-size: 0.74rem; color: var(--muted); white-space: nowrap; }
 .gb-body { margin: 0.4rem 0 0; color: var(--soft); white-space: pre-line; overflow-wrap: anywhere; }
 .gb-empty { color: var(--muted); }
-.gb-del { margin-top: 0.6rem; }
+.gb-del { margin: 0.6rem 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 1.5rem; }
+.gb-poster { font-family: var(--mono); font-size: 0.74rem; color: var(--muted); }
 .gb-token fieldset { grid-template-columns: auto auto; }
 .gb-token .gb-field { grid-column: 1 / -1; }
+.gb-admin { margin-top: 3rem; }
 
 .hacks { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line-strong); }
 .hacks li { display: flex; flex-direction: column; padding: 0.9rem 1rem; border-bottom: 1px solid var(--line-strong); }
@@ -654,6 +735,11 @@ section.hero { margin-top: 0; border-top: none; }
 .contact dt { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
 .contact dd { margin: 0; overflow-wrap: anywhere; font-size: clamp(1.2rem, 2.4vw, 1.6rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.25; }
 @media (max-width: 520px) { .contact { grid-template-columns: 1fr; gap: 0; } .contact dd { margin-bottom: 0.9rem; } }
+/* the smallest phones: the long contact urls and the three hero buttons still fit */
+@media (max-width: 380px) {
+  .contact dd { font-size: 1.02rem; overflow-wrap: normal; }
+  .cta .btn { padding-left: 0.25rem; padding-right: 0.25rem; font-size: 0.7rem; white-space: nowrap; }
+}
 
 .site-footer {
   margin: 6rem calc(-1 * clamp(1.25rem, 4vw, 3.5rem)) 0;

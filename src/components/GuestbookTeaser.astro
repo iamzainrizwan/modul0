@@ -1,0 +1,33 @@
+---
+// home's guestbook teaser: the latest few messages (loaded live) and a way in
+import { api } from '../data/api';
+const base = import.meta.env.BASE_URL;
+---
+
+<div class="gb-teaser" data-api={api}>
+  <p class="section-lede">Say hello, leave a review of the site, or tell me what's broken. It goes up straight away.</p>
+  <ol class="gb-list" data-gb-list></ol>
+  <noscript><p class="gb-empty">The messages load with JavaScript.</p></noscript>
+  <p class="gb-cta">
+    <a class="btn btn-primary" href={`${base}guestbook/#sign`}>Sign the guestbook</a>
+    <a class="more-inline" href={`${base}guestbook/`}>Read every message</a>
+  </p>
+</div>
+
+<script>
+  import { renderMessages } from '../scripts/guestbook';
+
+  const root = document.querySelector<HTMLElement>('.gb-teaser');
+  const api = root?.dataset.api;
+  const list = root?.querySelector<HTMLElement>('[data-gb-list]');
+  const meta = document.querySelector<HTMLElement>('[data-gb-meta]');
+  if (root && api && list) {
+    fetch(`${api}/messages`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then(({ messages }) => {
+        renderMessages(list, messages.slice(0, 3));
+        if (meta) meta.textContent = `${messages.length} ${messages.length === 1 ? 'message' : 'messages'}`;
+      })
+      .catch(() => list.remove());
+  } else list?.remove();
+</script>

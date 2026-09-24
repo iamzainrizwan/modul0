@@ -1,6 +1,6 @@
 // shared by the guestbook and its admin page. messages are user-written, so
 // everything goes in with textContent, never innerHTML.
-export type Message = { id: number; name: string; message: string; created: string };
+export type Message = { id: number; name: string; message: string; created: string; poster?: string };
 
 const date = (iso: string) =>
   new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });

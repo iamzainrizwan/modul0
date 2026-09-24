@@ -32,27 +32,25 @@ const {
 const base = import.meta.env.BASE_URL;
 const fs = await buildFs();
 
-// cv/ is a folder on desktop: its children only show while you're inside it.
-// on narrow screens the folder flattens away and they sit in the grid as before.
+// the tree mirrors home: files (about, contact) scroll to a home section,
+// directories open their full page. home has a teaser for each directory with
+// the same id, so the highlight follows you down home too. cv/ is a folder on
+// desktop (its children only show while you're in it); on narrow screens the
+// folder flattens away and its children sit in the grid like everything else.
 const sections = [
   { id: 'about', label: 'about' },
-  { id: 'projects', label: 'projects/' },
-  { id: 'homelab', label: 'homelab/' },
+  { id: 'projects', label: 'projects/', href: `${base}projects/` },
+  { id: 'homelab', label: 'homelab/', href: `${base}homelab/` },
   {
     id: 'cv',
     label: 'cv/',
-    children: [
-      { id: 'experience', label: 'experience' },
-      { id: 'education', label: 'education' },
-      { id: 'leadership', label: 'leadership' },
-      { id: 'awards', label: 'awards' },
-      { id: 'skills', label: 'skills' },
-    ],
+    href: `${base}cv/`,
+    children: ['experience', 'education', 'leadership', 'awards', 'skills'].map((id) => ({ id, label: id, href: `${base}cv/#${id}` })),
   },
-  { id: 'productions', label: 'productions/' },
-  { id: 'writing', label: 'writing/' },
-  { id: 'contact', label: 'contact' },
+  { id: 'productions', label: 'productions/', href: `${base}productions/` },
+  { id: 'writing', label: 'writing/', href: `${base}blog/` },
   { id: 'guestbook', label: 'guestbook/', href: `${base}guestbook/` },
+  { id: 'contact', label: 'contact' },
 ];
 ---
 

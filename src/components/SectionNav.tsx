@@ -12,14 +12,16 @@ export default function SectionNav({ items, base, initial }: { items: Item[]; ba
   // on narrow screens the nav scrolls sideways; keep the active item in view
   useEffect(() => {
     const el = nav.current;
-    const link = el?.querySelector<HTMLElement>('[aria-current]');
+    // the folder itself is hidden on narrow screens, so find the visible one
+    const link = [...(el?.querySelectorAll<HTMLElement>('[aria-current], .tree-proxy') ?? [])].find((a) => a.offsetParent);
     if (!el || !link || el.scrollWidth <= el.clientWidth) return;
     const left = link.offsetLeft - el.clientWidth / 2 + link.offsetWidth / 2;
     el.scrollTo({ left, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   }, [current]);
 
   useEffect(() => {
-    const sections = items.flatMap((i) => i.children ?? [i]).map((i) => document.getElementById(i.id)).filter(Boolean) as HTMLElement[];
+    // a folder is a section on home (its teaser) and its children are sections on its page
+    const sections = items.flatMap((i) => [i, ...(i.children ?? [])]).map((i) => document.getElementById(i.id)).filter(Boolean) as HTMLElement[];
     if (!sections.length) return;
     const atBottom = () => innerHeight + scrollY >= document.documentElement.scrollHeight - 4;
     const io = new IntersectionObserver(
@@ -48,9 +50,10 @@ export default function SectionNav({ items, base, initial }: { items: Item[]; ba
       {l.endsWith('/') && <span className="tree-slash">/</span>}
     </>
   );
-  const link = (i: Item) => (
+  const here = (i: Item) => (current === i.id ? (i.id === initial ? 'page' : 'location') : undefined);
+  const link = (i: Item, proxy = false) => (
     <li key={i.id}>
-      <a href={i.href ?? `${base}#${i.id}`} aria-current={current === i.id ? (i.href ? 'page' : 'location') : undefined}>
+      <a href={i.href ?? `${base}#${i.id}`} aria-current={here(i)} className={proxy ? 'tree-proxy' : undefined}>
         {label(i.label)}
       </a>
     </li>
@@ -62,11 +65,12 @@ export default function SectionNav({ items, base, initial }: { items: Item[]; ba
       <ul>
         {items.map((i) =>
           i.children ? (
-            <li key={i.id} className={`tree-group${i.children.some((c) => c.id === current) ? ' is-open' : ''}`}>
-              <a className="tree-dir" href={`${base}#${i.children[0].id}`}>
+            <li key={i.id} className={`tree-group${current === i.id || i.children.some((c) => c.id === current) ? ' is-open' : ''}`}>
+              <a className="tree-dir" href={i.href ?? `${base}#${i.children[0].id}`} aria-current={here(i)}>
                 {label(i.label)}
               </a>
-              <ul>{i.children.map(link)}</ul>
+              {/* while the folder itself is current, its first child stands in for it where the folder is hidden */}
+              <ul>{i.children.map((c, n) => link(c, n === 0 && current === i.id))}</ul>
             </li>
           ) : (
             link(i)

@@ -18,3 +18,25 @@ database_id = "6b1a9a38-cfad-41b4-a68e-b13992bf7ab0"
 
 # secrets (not in this file): ADMIN_TOKEN, deletes messages;
 # IP_SALT, salts the ip hashes. set each with `npx wrangler secret put NAME`.
+
+# per-ip rate limits (workers rate limiting: period is 10 or 60 seconds).
+# namespace ids are just unique numbers for this account.
+[[ratelimits]]
+name = "WRITE_LIMIT" # posting a message
+namespace_id = "1001"
+simple = { limit = 3, period = 60 }
+
+[[ratelimits]]
+name = "READ_LIMIT" # loading messages
+namespace_id = "1002"
+simple = { limit = 30, period = 60 }
+
+[[ratelimits]]
+name = "VIEW_LIMIT" # the counter (one read per page load)
+namespace_id = "1003"
+simple = { limit = 20, period = 60 }
+
+[[ratelimits]]
+name = "ADMIN_LIMIT" # admin reads, deletes and wrong tokens
+namespace_id = "1004"
+simple = { limit = 10, period = 60 }

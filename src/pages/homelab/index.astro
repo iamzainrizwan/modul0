@@ -1,0 +1,40 @@
+---
+import Site from '../../layouts/Site.astro';
+import Pipeline from '../../components/Pipeline.astro';
+import { person, homelab } from '../../data/profile';
+import { inline } from '../../data/inline';
+
+const ft = homelab.failureTest;
+---
+
+<Site section="homelab" title={`Homelab - ${person.name}`} description="alexandria: the server my projects run on, the pipeline that deploys to it, and the monitor that watches it.">
+  <header class="page-head">
+    <h1 class="page-title">Homelab</h1>
+    <span class="section-meta">2 machines, 1 pipeline</span>
+  </header>
+  <p class="section-lede">
+    alexandria is where my projects actually run. Every change reaches it through a pipeline I built (s3ntry), and a
+    monitor I wrote tells me when something breaks.
+  </p>
+  <Pipeline />
+  <div class="drill" id="failure-drill">
+    <h2 class="sub-h">Failure drill</h2>
+    <p>I stopped the live 1337 container five times at random points in the poll cycle and timed how long the Discord alert took to arrive, using a <a href={ft.script}>test script</a> and each message's timestamp.</p>
+    <dl class="readout">
+      <div><dt>Trials</dt><dd>{ft.trials}</dd></div>
+      <div><dt>Up/down changes caught</dt><dd>{ft.transitions}</dd></div>
+      <div><dt>Mean time to alert</dt><dd>{ft.meanAlert}</dd></div>
+      <div><dt>Poll interval</dt><dd>{ft.pollInterval}</dd></div>
+    </dl>
+    <p class="drill-finding">{ft.finding}</p>
+    <p class="drill-link"><a href={ft.writeup}>Read the full write-up, with raw timings</a></p>
+  </div>
+  <ul class="machines">
+    {homelab.machines.map((m) => (
+      <li class="machine">
+        <p class="machine-name">{m.name}<span>{m.role}</span></p>
+        <p set:html={inline(m.text)} />
+      </li>
+    ))}
+  </ul>
+</Site>

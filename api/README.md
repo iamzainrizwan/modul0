@@ -11,7 +11,7 @@ cd api
 npm install                              # wrangler, pinned in package.json
 npx wrangler login                       # opens the browser
 npx wrangler d1 create modul0            # copy the database_id into wrangler.toml
-npx wrangler d1 execute modul0 --remote --file=schema.sql
+npx wrangler d1 execute modul0 --remote --file=schema.sql   # safe to re-run
 npx wrangler secret put ADMIN_TOKEN      # a long random string: `openssl rand -hex 32`
 npx wrangler secret put IP_SALT          # another one
 npx wrangler deploy                      # prints https://modul0-api.<you>.workers.dev
@@ -26,10 +26,30 @@ Then in the GitHub repo (Settings > Secrets and variables > Actions):
 Re-run the `deploy` workflow so the site picks up `PUBLIC_API`. After that,
 changes under `api/` deploy themselves (`.github/workflows/api.yml`).
 
+## What stops abuse
+
+Messages go live straight away, so the worker caps everything
+(`src/index.js`, top comment):
+
+- writes (posts, counting a visit, deletes) only from the site's origins
+- per-IP rate limits on every endpoint (`[[ratelimits]]` in `wrangler.toml`)
+- one post a minute per IP, 10 a day per IP, 200 a day for the whole site
+- 4 KB bodies, 40-character names, 500-character messages, 2 links max
+- a honeypot field, no repeats of a message within a week, reserved names
+  (zain, admin, modul0...)
+- invisible and text-direction characters stripped, zalgo trimmed
+- the visit counter moves once per visitor per day
+- IPs are never stored, only a salted hash
+
+If spam still gets through, the next step is Cloudflare Turnstile (a free,
+mostly invisible captcha), at the cost of posting without JavaScript.
+
 ## Moderating
 
-Messages go live straight away. Delete them at
-https://modul0.dev/guestbook/admin/ with the `ADMIN_TOKEN`, or from here:
+Delete messages at https://modul0.dev/guestbook/admin/ with the
+`ADMIN_TOKEN`. With the token saved, each message shows a short poster tag
+(from the salted IP hash) and a button to delete everything from that poster,
+for spam waves. Or from here:
 
 ```sh
 npx wrangler d1 execute modul0 --remote --command "SELECT id, name, message FROM messages ORDER BY id DESC LIMIT 20"
