@@ -1,7 +1,7 @@
 // how the site moves (see "pixel motion" in site.css). production uses these
 // defaults; the test site (PUBLIC_TEST=1, see .github/workflows/test.yml) shows
 // a panel that overrides them per browser, and replays the boot on every load.
-export type MotionStyle = 'dither' | 'redraw' | 'print' | 'instant';
+export type MotionStyle = 'dither' | 'redraw' | 'print' | 'instant' | 'smooth';
 export type Motion = {
   style: MotionStyle;
   // extras, independent of the style and of each other
@@ -15,6 +15,7 @@ export const styles: { id: MotionStyle; label: string }[] = [
   { id: 'redraw', label: 'redraw' },
   { id: 'print', label: 'print' },
   { id: 'instant', label: 'instant' },
+  { id: 'smooth', label: 'smooth (the old style)' },
 ];
 export const extras: { id: Exclude<keyof Motion, 'style'>; label: string }[] = [
   { id: 'reveal', label: 'scroll reveal' },

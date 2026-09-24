@@ -314,7 +314,7 @@ section.hero { margin-top: 0; border-top: none; }
   font-size: 0.85rem;
   font-weight: 600;
   text-decoration: none;
-  transition: transform 0.1s steps(2, end), box-shadow 0.1s steps(2, end);
+  transition: transform var(--hv-dur) var(--hv), box-shadow var(--hv-dur) var(--hv);
 }
 @media (hover: hover) { .btn:hover { background: var(--void); color: var(--text); transform: translate(-3px, -3px); box-shadow: 3px 3px 0 var(--purple); } }
 .btn-primary { background: var(--white); color: var(--void); }
@@ -344,7 +344,7 @@ section.hero { margin-top: 0; border-top: none; }
   padding: 1.6rem 1.75rem;
   border: var(--rule);
   background: var(--void);
-  transition: transform 0.12s steps(2, end), box-shadow 0.12s steps(2, end);
+  transition: transform var(--hv-dur) var(--hv), box-shadow var(--hv-dur) var(--hv);
 }
 @media (hover: hover) { .feature:hover { transform: translate(-4px, -4px); box-shadow: 8px 8px 0 var(--purple); } }
 @media (prefers-reduced-motion: reduce) { .feature { transition: none; } .feature:hover { transform: none; } }
@@ -406,7 +406,7 @@ section.hero { margin-top: 0; border-top: none; }
   background: var(--void);
 }
 /* filter change: each card reveals in the current motion style, one after another (pixel motion below) */
-.card-in { animation: var(--rv-in) var(--rv-dur) var(--rv-ease) both; animation-delay: calc(var(--i) * var(--rv-stagger)); }
+.card-in { animation: var(--tx-in) var(--tx-dur) var(--tx-ease) both; animation-delay: calc(var(--i) * var(--tx-stagger)); }
 @media (prefers-reduced-motion: reduce) { .card-in { animation: none; } }
 .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; }
 .card-name { margin: 0; font-family: var(--serif); font-size: 1.25rem; font-weight: 800; line-height: 1.05; letter-spacing: -0.025em; }
@@ -594,7 +594,7 @@ section.hero { margin-top: 0; border-top: none; }
   border: var(--rule);
   color: var(--text);
   text-decoration: none;
-  transition: transform 0.12s steps(2, end), box-shadow 0.12s steps(2, end);
+  transition: transform var(--hv-dur) var(--hv), box-shadow var(--hv-dur) var(--hv);
 }
 @media (hover: hover) {
   .teaser:hover { background: var(--void); color: var(--text); transform: translate(-4px, -4px); box-shadow: 8px 8px 0 var(--purple); }
@@ -846,8 +846,8 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 }
 .boot-skip { position: absolute; right: 1.25rem; bottom: 1rem; font-size: 0.74rem; color: var(--muted); }
 .boot-wipe { position: absolute; inset: 0; background: var(--purple); }
-.boot-wipe-in { animation: var(--rv-in) var(--rv-dur) var(--rv-ease) both; }
-.boot-wipe-out { animation: var(--rv-out) calc(var(--rv-dur) * 1.3) var(--rv-ease) both; }
+.boot-wipe-in { animation: var(--boot-in, var(--sf-in)) var(--sf-dur) var(--boot-ease-in, var(--sf-ease)) both; }
+.boot-wipe-out { animation: var(--boot-out, var(--sf-out)) calc(var(--sf-dur) * 1.3) var(--boot-ease-out, var(--sf-ease)) both; }
 
 /* ---------- quake terminal ---------- */
 
@@ -864,9 +864,9 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
   background: var(--void);
   border-bottom: 4px solid var(--purple);
   transform: translateY(-110%);
-  transition: transform 0.16s steps(4, end), visibility 0s linear 0.16s;
+  transition: transform var(--qk-dur) var(--qk), visibility 0s linear var(--qk-dur);
 }
-.quake.is-open { visibility: visible; transform: none; transition: transform 0.16s steps(4, end), visibility 0s; }
+.quake.is-open { visibility: visible; transform: none; transition: transform var(--qk-dur) var(--qk), visibility 0s; }
 @media (prefers-reduced-motion: reduce) { .quake, .quake.is-open { transition: none; } }
 .quake-bar {
   display: flex;
@@ -893,7 +893,7 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 }
 .quake-close:hover { background: var(--void); color: var(--purple); }
 .quake-scroll { flex: 1; overflow-y: auto; }
-.quake-scrim { position: fixed; inset: 0; z-index: 899; background: conic-gradient(#0000 0 25%, var(--void) 0) 0 0 / 4px 4px; animation: var(--rv-in) var(--rv-dur) var(--rv-ease) both; }
+.quake-scrim { position: fixed; inset: 0; z-index: 899; background: var(--scrim); animation: var(--scrim-in) var(--sf-dur) var(--sf-ease) both; }
 @media (prefers-reduced-motion: reduce) { .quake-scrim { animation: none; } }
 @media (max-width: 560px) { .quake-hint { display: none; } .quake-close { margin-left: auto; } .quake { height: 75vh; } }
 
@@ -999,23 +999,61 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 /* ---------- pixel motion ----------
    terminal-esque: nothing glides. one reveal style drives every "something
    appears" moment (the boot wipe, scroll reveal, the project filter, the
-   terminal scrim) through --rv-* on <html data-motion>. page changes
+   terminal scrim) through --sf-* / --tx-* on <html data-motion>. page changes
    themselves are instant: links are prefetched, and both view transitions
    and drawing each page in on arrival were tried and dropped (a blank
    frame, and body text chopped into pixel dashes):
-     dither   8px pixels dissolve in, in a scattered order (25/50/75/100%)
+     dither   solid surfaces dissolve in 8px pixels (scattered order); text pops
      redraw   the screen repaints top to bottom in chunky bands
      print    things just appear, one after another, like `cat`
      instant  a hard cut
+     smooth   the original eased motion, from before the terminal pass
    extras stack on top (data-mx-*): scroll reveal, the block-cursor hover,
    decoded headings. on the test site a panel switches all
    of it (MotionPanel.astro); elsewhere the defaults in src/data/motion.ts.
    everything is off for reduced motion. */
 
-:root, html[data-motion='dither'] { --rv-in: px-in; --rv-out: px-out; --rv-ease: steps(1, end); --rv-dur: 0.24s; --rv-stagger: 60ms; }
-html[data-motion='redraw'] { --rv-in: rd-in; --rv-out: rd-out; --rv-ease: steps(6, end); --rv-dur: 0.2s; --rv-stagger: 60ms; }
-html[data-motion='print'] { --rv-in: print; --rv-out: print-out; --rv-ease: step-end; --rv-dur: 0.06s; --rv-stagger: 35ms; }
-html[data-motion='instant'] { --rv-in: cut-in; --rv-out: cut-out; --rv-ease: linear; --rv-dur: 0.06s; --rv-stagger: 0ms; }
+/* surfaces (the boot wipe, the terminal scrim) and text (headings and cards
+   revealing, the project filter) animate separately: text never dissolves,
+   because a pixel mask over text chops it into dashes that read as diagonal
+   lines. dither keeps the dissolve for solid surfaces and pops text in. */
+:root, html[data-motion='dither'] {
+  --sf-in: px-in; --sf-out: px-out; --sf-ease: steps(1, end); --sf-dur: 0.24s;
+  --tx-in: print; --tx-ease: step-end; --tx-dur: 0.06s; --tx-stagger: 60ms;
+  --hv: steps(2, end); --hv-dur: 0.12s; --qk: steps(4, end); --qk-dur: 0.16s;
+  --scrim: conic-gradient(#0000 0 25%, var(--void) 0) 0 0 / 4px 4px; --scrim-in: var(--sf-in);
+}
+html[data-motion='redraw'] {
+  --sf-in: rd-in; --sf-out: rd-out; --sf-ease: steps(6, end); --sf-dur: 0.2s;
+  --tx-in: rd-in; --tx-ease: steps(4, end); --tx-dur: 0.16s; --tx-stagger: 60ms;
+}
+html[data-motion='print'] {
+  --sf-in: print; --sf-out: print-out; --sf-ease: step-end; --sf-dur: 0.06s;
+  --tx-in: print; --tx-ease: step-end; --tx-dur: 0.06s; --tx-stagger: 35ms;
+}
+html[data-motion='instant'] {
+  --sf-in: cut-in; --sf-out: cut-out; --sf-ease: linear; --sf-dur: 0.06s;
+  --tx-in: cut-in; --tx-ease: linear; --tx-dur: 0.01s; --tx-stagger: 0ms;
+  --hv-dur: 0s; --qk-dur: 0s;
+}
+/* smooth: how the site moved before the terminal pass. the boot panel slides
+   up and away, the terminal eases down, hovers glide, the scrim fades,
+   things fade up, anchor jumps scroll */
+html[data-motion='smooth'] {
+  --sf-in: fade; --sf-out: fade-out; --sf-ease: ease; --sf-dur: 0.24s;
+  --boot-in: slide-in; --boot-out: slide-out; --boot-ease-in: cubic-bezier(0.7, 0, 0.84, 0); --boot-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --tx-in: fade-up; --tx-ease: cubic-bezier(0.2, 0.7, 0.2, 1); --tx-dur: 0.36s; --tx-stagger: 60ms;
+  --hv: ease; --hv-dur: 0.14s; --qk: cubic-bezier(0.2, 0.9, 0.25, 1); --qk-dur: 0.34s;
+  --scrim: rgba(0, 0, 0, 0.72); --scrim-in: fade;
+  scroll-behavior: smooth;
+}
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes slide-in { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes slide-out { from { transform: none; } to { transform: translateY(-100%); } }
+@media (prefers-reduced-motion: reduce) { html[data-motion='smooth'] { scroll-behavior: auto; } }
+html[data-motion='smooth'] .print { animation: fade 0.22s ease both; animation-delay: calc(var(--i, 0) * 40ms); }
 
 /* the dissolve: an 8x8 cell of 8px pixels (a 64px tile) filling in a
    blue-noise order (best-candidate sampling: each pixel lands far from the
@@ -1048,7 +1086,7 @@ html[data-motion='instant'] { --rv-in: cut-in; --rv-out: cut-out; --rv-ease: lin
 /* scroll reveal: .px hides until .px-in
    (a script in Site.astro adds .px-ready, so without js nothing is hidden) */
 .px-ready .px:not(.px-in) { visibility: hidden; }
-.px-in { animation: var(--rv-in) var(--rv-dur) var(--rv-ease) both; animation-delay: calc(var(--i, 0) * var(--rv-stagger)); }
+.px-in { animation: var(--tx-in) var(--tx-dur) var(--tx-ease) both; animation-delay: calc(var(--i, 0) * var(--tx-stagger)); }
 
 /* lines of detail print one after another, like terminal output */
 .print { animation: print 1ms step-end both; animation-delay: calc(var(--i, 0) * 45ms); }
@@ -1079,7 +1117,6 @@ html[data-motion='instant'] .print { animation: none; }
   .px-in, .print, .card-in, .quake-scrim { animation: none; }
   html[data-mx-cursor] a:hover { animation: none; background-size: 100% 100%; color: var(--void); }
 }
-html[data-motion='instant'] .quake, html[data-motion='instant'] .quake.is-open { transition: none; }
 
 /* ---------- motion panel (test site only) ---------- */
 .mpanel { position: fixed; right: 12px; bottom: 12px; z-index: 950; font-family: var(--mono); font-size: 0.72rem; color: var(--text); background: var(--void); border: var(--rule); box-shadow: 4px 4px 0 var(--purple); }
