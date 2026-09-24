@@ -1,8 +1,7 @@
 // the js half of the site's motion (the css half is "pixel motion" in
 // site.css). settings live on <html>: data-motion is the reveal style,
 // data-mx-* the extras, set before first paint by the head script in
-// Site.astro (which also sets .px-draw to hold main's blocks back until the
-// arrival draw starts). nothing here runs for reduced motion, and nothing is hidden
+// Site.astro. nothing here runs for reduced motion, and nothing is hidden
 // unless this runs (.px-ready), so the site is whole without js.
 
 const html = document.documentElement;
@@ -22,19 +21,6 @@ const index = (el: Element) => {
 const REVEAL = '.section-h, .page-title, .sub-h, .teaser, .readout > div, .glance > li, .machine';
 // headings that decode: two of their characters flicker through glyphs
 const HEADINGS = '.hero-h, .page-title, .section-h, .sub-h, .article h1';
-
-// the page as blocks, top to bottom: main's children, with sections opened up
-function blocks(): HTMLElement[] {
-  const main = document.querySelector('main');
-  if (!main) return [];
-  const out: HTMLElement[] = [];
-  for (const el of main.children) {
-    if (el.tagName === 'SECTION') out.push(...(el.children as HTMLCollectionOf<HTMLElement>));
-    else out.push(el as HTMLElement);
-  }
-  // an island's wrapper has no box of its own (display: contents)
-  return out.filter((el) => el.tagName !== 'ASTRO-ISLAND' && el.offsetHeight > 0);
-}
 
 const GLYPHS = '#%&*?/<>01';
 // two characters of a heading (one if it's only two long) flicker through
@@ -125,21 +111,8 @@ export function initMotion() {
   for (const el of labels) if (!onScreen(el)) io.observe(el);
   html.classList.add('px-ready');
 
-  // on arrival the page draws itself block by block, top to bottom, in the
-  // current style (links are prefetched, so this is all a page change is).
-  // labels on screen decode. behind the boot sequence, wait for it first.
-  const now = () => {
-    if (has('pages') && style() !== 'instant') {
-      blocks()
-        .filter(onScreen)
-        .forEach((el, i) => {
-          el.style.setProperty('--i', String(Math.min(i, 14)));
-          el.classList.add('px', 'px-in', 'px-arrive');
-        });
-    }
-    html.classList.remove('px-draw');
-    labels.filter(onScreen).forEach((el, i) => decode(el, 150 + i * 120));
-  };
+  // headings on screen at load decode; behind the boot sequence, wait for it first
+  const now = () => labels.filter(onScreen).forEach((el, i) => decode(el, 150 + i * 120));
   if (html.dataset.boot) {
     const mo = new MutationObserver(() => {
       if (html.dataset.boot) return;

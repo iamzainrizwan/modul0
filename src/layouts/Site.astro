@@ -91,14 +91,9 @@ const sections = [
         if (testSite) Object.assign(m, JSON.parse(localStorage.getItem('modul0-motion') || '{}'));
       } catch (e) {}
       root.dataset.motion = m.style;
-      ['pages', 'reveal', 'cursor', 'decode'].forEach(function (x) {
+      ['reveal', 'cursor', 'decode'].forEach(function (x) {
         if (m[x]) root.setAttribute('data-mx-' + x, '');
       });
-      // each page draws itself in on arrival, so hold its blocks back until that starts
-      if (m.pages && m.style !== 'instant' && !reduced) {
-        root.classList.add('px-draw');
-        setTimeout(function () { root.classList.remove('px-draw'); }, 3000);
-      }
       try {
         // the test site replays the boot on every load
         if (boot && (testSite || !sessionStorage.getItem('modul0-booted')) && !reduced) {

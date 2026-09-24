@@ -998,14 +998,17 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 
 /* ---------- pixel motion ----------
    terminal-esque: nothing glides. one reveal style drives every "something
-   appears" moment (page changes, the boot wipe, scroll reveal, the project
-   filter, the terminal scrim) through --rv-* on <html data-motion>:
+   appears" moment (the boot wipe, scroll reveal, the project filter, the
+   terminal scrim) through --rv-* on <html data-motion>. page changes
+   themselves are instant: links are prefetched, and both view transitions
+   and drawing each page in on arrival were tried and dropped (a blank
+   frame, and body text chopped into pixel dashes):
      dither   8px pixels dissolve in, in a scattered order (25/50/75/100%)
      redraw   the screen repaints top to bottom in chunky bands
-     print    blocks just appear, one after another, like `cat`
+     print    things just appear, one after another, like `cat`
      instant  a hard cut
-   extras stack on top (data-mx-*): page transitions, scroll reveal, the
-   block-cursor hover, decoded labels. on the test site a panel switches all
+   extras stack on top (data-mx-*): scroll reveal, the block-cursor hover,
+   decoded headings. on the test site a panel switches all
    of it (MotionPanel.astro); elsewhere the defaults in src/data/motion.ts.
    everything is off for reduced motion. */
 
@@ -1042,14 +1045,10 @@ html[data-motion='instant'] { --rv-in: cut-in; --rv-out: cut-out; --rv-ease: lin
 @keyframes cut-in { from { opacity: 1; } to { opacity: 1; } }
 @keyframes cut-out { from { opacity: 1; } 99% { opacity: 1; } to { opacity: 0; } }
 
-/* page arrival and scroll reveal: .px hides until .px-in
+/* scroll reveal: .px hides until .px-in
    (a script in Site.astro adds .px-ready, so without js nothing is hidden) */
 .px-ready .px:not(.px-in) { visibility: hidden; }
 .px-in { animation: var(--rv-in) var(--rv-dur) var(--rv-ease) both; animation-delay: calc(var(--i, 0) * var(--rv-stagger)); }
-.px-arrive { animation-delay: calc(var(--i, 0) * 30ms); }
-
-/* page arrival: the head script holds main's blocks back until motion.ts draws them */
-.px-draw main > :not(section), .px-draw main > section > * { visibility: hidden; }
 
 /* lines of detail print one after another, like terminal output */
 .print { animation: print 1ms step-end both; animation-delay: calc(var(--i, 0) * 45ms); }

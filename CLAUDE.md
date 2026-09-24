@@ -102,20 +102,20 @@ those. When sources disagree, ask; don't pick one.
 ## Motion
 
 Terminal-esque on purpose: nothing glides. One reveal style drives every
-"something appears" moment (a page drawing in on arrival, boot wipe, scroll
-reveal, project filter, terminal scrim) via `--rv-*` on `html[data-motion]`:
-dither (8px pixels in a blue-noise order: any regular pattern, a checkerboard especially, reads as diagonal stripes),
-redraw (top-down bands), print (blocks appear in order, like `cat`),
-instant. Extras stack via `data-mx-*`: pages, reveal, cursor (block cursor
-sweeps hovered links), decode (two characters per heading flicker through glyphs, width-locked). Defaults in
-`src/data/motion.ts`; the head script in Site.astro sets the attributes (and
-`.px-draw`, holding main's blocks back) before paint; `src/scripts/motion.ts`
-does the js half (the page draw, reveal, decode). Page changes are plain
-prefetched loads that then draw block by block: cross-document view
-transitions were tried and dropped (snapshots + a blank frame flashed).
-Animations that hand off on animationend need distinct keyframes for each
-step. Never touch DOM inside React islands, never hide anything without js,
-everything off for reduced motion.
+"something appears" moment (boot wipe, scroll reveal, project filter,
+terminal scrim) via `--rv-*` on `html[data-motion]`: dither (8px pixels in a
+blue-noise order: any regular pattern, a checkerboard especially, reads as
+diagonal stripes), redraw (top-down bands), print (appears in order, like
+`cat`), instant. Extras stack via `data-mx-*`: reveal, cursor (block cursor
+sweeps hovered links), decode (two characters per heading flicker through
+glyphs, width-locked). Defaults in `src/data/motion.ts`; the head script in
+Site.astro sets the attributes before paint; `src/scripts/motion.ts` does
+the js half. Page changes are instant, prefetched loads with no animation:
+view transitions and a per-page arrival draw were both tried and dropped
+(a blank frame; body text dissolving reads as dashed lines). Don't
+dissolve body text. Animations that hand off on animationend need distinct
+keyframes for each step. Never touch DOM inside React islands, never hide
+anything without js, everything off for reduced motion.
 
 ## Test site
 
