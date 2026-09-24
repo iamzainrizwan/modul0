@@ -23,5 +23,6 @@ export const extras: { id: Exclude<keyof Motion, 'style'>; label: string }[] = [
   { id: 'decode', label: 'decode headings' },
 ];
 
-export const defaults: Motion = { style: 'dither', reveal: true, cursor: false, decode: false };
+// chosen by zain on the test site, 2026-09-24
+export const defaults: Motion = { style: 'dither', reveal: true, cursor: true, decode: true };
 export const testSite = import.meta.env.PUBLIC_TEST === '1';
