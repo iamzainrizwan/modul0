@@ -8,7 +8,9 @@
 // not zain's own abandoned sherpa repo; details come from his commits there.
 //
 // confirmed by zain: degree is stated as "year 2 cs @ kcl" (no bsc/msci);
-// uber = regional finalist (not 2nd); ctf = top 5 in ucl vs kcl + kcl welcome.
+// uber = regional finalist (not 2nd), zain's first hackathon: the
+// accessibility business case route with a figma prototype (so
+// educhain is zain's first coding hackathon); ctf = top 5 in ucl vs kcl + kcl welcome.
 // kcl average (79.6%) is credit-weighted from zain's year 1 transcript:
 // programming practice and applications counts 2x, introduction to
 // professional practice is excluded (0 credits, capped at 70). confirmed by
@@ -174,14 +176,16 @@ export const archive: Project[] = [
     year: '2025',
     tagline: 'EasyA x Algorand London Hackathon',
     summary:
-      'Instant credential verification for international students, whose visa paperwork can take weeks. Students manage and share verified credentials on the [Algorand](https://algorand.co/) blockchain. Built in 36 hours at my first in-person hackathon.',
+      'Instant credential verification for international students, whose visa paperwork can take weeks. Institutions issue tamper-proof credentials on the [Algorand](https://algorand.co/) blockchain, each linked to a commemorative NFT, and anyone can verify them. Built by a team in 36 hours at my first coding hackathon ([demo video](https://youtu.be/aDbYxcGWAPQ)).',
     status: 'done',
-    statusText: 'Hackathon',
-    stack: ['Algorand', 'Smart contracts'],
+    statusText: 'Hackathon, October 2025',
+    stack: ['Algorand', 'PyTeal', 'Next.js', 'TypeScript'],
     areas: ['Backend', 'Apps'],
+    repo: 'https://github.com/SCGR-1/Hackathon_10.18',
     context: 'Team project',
     details: [
-      'Used Algorand stateful smart contracts and atomic transactions.',
+      'The team’s [PyTeal contract](https://github.com/SCGR-1/Hackathon_10.18/blob/master/hackathon1018/projects/cred_contracts/src/app.py) stores each credential in a 161-byte Algorand box; revoking one flips a single byte.',
+      'I wrote little of the code: my part was learning the codebase and getting it deployed.',
       'Presented it to the judges, which was also my first technical presentation.',
     ],
   },
@@ -466,7 +470,7 @@ export const hackathons = [
   { name: 'Google Student AI Hackathon', where: 'London', built: '[Sherpa](#project-sherpa)' },
   { name: '[EasyA](https://www.easya.io/) x [Algorand](https://algorand.co/) London Hackathon', where: 'London, 36 hours', built: '[EduChain](#project-educhain)' },
   { name: '[Encode London](https://www.encode.club/)', where: 'Encode Hub, Shoreditch', built: '' },
-  { name: 'Uber Global Hackathon', where: 'MENA region, regional finalist', built: '' },
+  { name: 'Uber Global Hackathon', where: 'MENA region, regional finalist', built: 'an accessibility business case study with a Figma prototype' },
 ];
 
 export const skills = [
