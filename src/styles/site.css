@@ -778,6 +778,8 @@ section.hero { margin-top: 0; border-top: none; }
 .site-footer p { margin: 0; max-width: 44rem; }
 .site-footer .footer-sign { margin-top: 0.9rem; color: var(--text); font-weight: 600; }
 .footer-sign .mod-mark { margin: 0 0.35em 0 0; }
+.footer-build { color: var(--muted); font-weight: 400; }
+.footer-build a { color: var(--soft); }
 @media (max-width: 1000px) { .site-footer { margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px; } }
 
 /* ---------- blog pages ---------- */
@@ -937,6 +939,10 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
    in was half of why the drop felt laggy */
 .quake-scrim { position: fixed; inset: 0; z-index: 899; background: var(--scrim); }
 @media (max-width: 560px) { .quake-hint { display: none; } .quake-close { margin-left: auto; } .quake { height: 75vh; } }
+
+/* rm -rf / in the terminal takes the page with it (keyframes in terminal.css) */
+html[data-broken] .shell { animation: brk 1.3s step-end both; }
+@media (prefers-reduced-motion: reduce) { html[data-broken] .shell { animation: none; } }
 
 /* even out line lengths so headings and facts never strand one word */
 .hero-h, .section-h, .feature-name, .card-name, .tl-role, .award-what, .page-title, .article h1, .article h2, .open p { text-wrap: balance; }

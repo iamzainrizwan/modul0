@@ -27,6 +27,8 @@ const COMMANDS: [string, string, string?][] = [
   ['uptime [-v]', 'time since i was born (-v shows the maths)', 'uptime -v'],
   ['expr a % b', 'the remainder of a / b', 'expr 17 % 5'],
   ['man modul0', "why it's called that"],
+  ['grep [text]', 'search every file', 'grep alexandria'],
+  ['curl modul0.dev/cv.txt', 'the cv as plain text (works from your own terminal too)', 'curl modul0.dev/cv.txt'],
   ['tail -f status.log', "what i'm working on right now"],
   ['pgrep -a zain', 'recent achievements'],
   ['theme [light|dark]', 'switch the colours', 'theme'],
@@ -60,6 +62,26 @@ function expr(src: string) {
   const line = `${m[1]} ${op(o)} ${m[3]} = <b>${r}</b>`;
   return o === '%' && r === 0n ? `${line}<br><span class="dim">remainder 0: divides clean, nothing left over.</span>` : line;
 }
+
+// sl(1), for when you meant ls
+const TRAIN = `      ____
+ ____|[]|_|__________
+|  __  |   modul0 ${op('%')} |
+|_|__|_|_____________|
+  O  O    O O   O O`;
+
+// `rm -rf /`: what it deletes on the way down (then it all comes back)
+const DOOMED = ['/home/zain/projects', '/home/zain/homelab', '/home/zain/cv', '/home/zain', '/'];
+
+// text for grep: markup stripped, entities decoded, one entry per line
+const textLines = (html: string) =>
+  html
+    .replace(/<br\s*\/?>|<\/(p|li|h\d|div|pre)>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&(amp|lt|gt|quot|#39|nbsp);/g, (_, e) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", nbsp: ' ' })[e as string]!)
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
 
 // prose in paragraphs, not a hand-wrapped <pre>, so it reflows on phones
 const MAN_MODUL0 = `<div class="man">
@@ -101,8 +123,11 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
   const history: string[] = [];
   let historyIdx = 0;
   let uptimeTimer: number | undefined;
+  // inside `vim`, until you find :q
+  let vim = false;
+  const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const prompt = () => `zain@modul0:~${cwd ? '/' + cwd : ''}$`;
+  const prompt = () => (vim ? '~' : `zain@modul0:~${cwd ? '/' + cwd : ''}$`);
 
   function print(html: string, command?: string, promptAt = prompt(), cls = 'entry') {
     const entry = document.createElement('div');
@@ -189,11 +214,76 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
     return `<pre>t = now - ${fs.birth}\n\n${rows.join('\n')}\n\n<span class="dim">each unit is what's left once the bigger ones are taken out.</span></pre>`;
   }
 
+  // every file, every line containing the text (case-insensitive), with the
+  // match highlighted and the file clickable
+  function grep(q: string) {
+    const needle = q.replace(/^(['"])(.*)\1$/, '$2').toLowerCase();
+    if (!needle) return error('usage: grep [text]');
+    const sources: [string, string][] = [
+      ...Object.entries(fs.files).map(([n, h]): [string, string] => [`~/${n}`, h]),
+      ...Object.entries(fs.projects).map(([n, h]): [string, string] => [`~/projects/${n}`, h]),
+      ...Object.entries(fs.blog).map(([n, p]): [string, string] => [`~/blog/${n}`, `${p.title}<br>${p.description}<br>${p.html}`]),
+    ];
+    const rows: string[] = [];
+    let more = 0;
+    for (const [path, html] of sources) {
+      for (const l of textLines(html)) {
+        const at = l.toLowerCase().indexOf(needle);
+        if (at < 0) continue;
+        if (rows.length >= 20) {
+          more++;
+          continue;
+        }
+        // a window around the match, so long paragraphs stay one line
+        const from = Math.max(0, at - 40), to = Math.min(l.length, at + needle.length + 40);
+        const clip = (from ? '...' : '') + escape(l.slice(from, at)) + `<span class="accent">${escape(l.slice(at, at + needle.length))}</span>` + escape(l.slice(at + needle.length, to)) + (to < l.length ? '...' : '');
+        rows.push(`<a class="run dir" href="#" data-cmd="cat ${path}">${path}</a><span class="dim">:</span> ${clip}`);
+      }
+    }
+    if (!rows.length) return `<span class="dim">no matches for "${escape(needle)}"</span>`;
+    return rows.map((r) => `<div>${r}</div>`).join('') + (more ? `<span class="dim">...and ${more} more</span>` : '');
+  }
+
+  // the site deletes itself, goes dark for a beat, and comes back
+  function breakSite(raw: string, promptAt: string) {
+    print('', raw, promptAt);
+    form.hidden = true;
+    const d = reduced() ? 0 : 110;
+    DOOMED.forEach((p, i) => setTimeout(() => print(`<span class="dim">removed '${p}'</span>`, undefined, '', 'entry boot'), i * d));
+    let down = 0;
+    setTimeout(() => {
+      print(error('kernel panic - not syncing: the site is gone'), undefined, '', 'entry boot');
+      if (!reduced()) document.documentElement.dataset.broken = '';
+      down = performance.now();
+    }, DOOMED.length * d);
+    setTimeout(() => {
+      delete document.documentElement.dataset.broken;
+      // the real downtime, measured
+      print(`restored from backup in ${((performance.now() - down) / 1000).toFixed(1)}s. told you: things that don't break.`);
+      form.hidden = false;
+      input.focus({ preventScroll: true });
+    }, DOOMED.length * d + (reduced() ? 0 : 1300));
+  }
+
+  // vim: everything is an editor command now
+  function vimKeys(line: string, raw: string, promptAt: string) {
+    if ([':q', ':q!', ':wq', ':wq!', ':x', 'ZZ', 'ZQ'].includes(line)) {
+      vim = false;
+      print('<span class="dim">you escaped vim. put that on the cv.</span>', raw, promptAt);
+    } else if (line === ':w' || line === ':w!') {
+      print(error("E45: 'readonly' option is set"), raw, promptAt);
+    } else {
+      print(`${error(`E492: Not an editor command: ${escape(line)}`)}<br><span class="dim">(try :q)</span>`, raw, promptAt);
+    }
+    promptText.textContent = prompt();
+  }
+
   function run(raw: string) {
     const promptAt = prompt();
     const line = raw.trim();
     if (line) history.push(line);
     historyIdx = history.length;
+    if (vim) return vimKeys(line, raw, promptAt);
     const [command, ...args] = line.split(/\s+/);
     let out = '';
     switch (command) {
@@ -257,6 +347,52 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
         }
         break;
       }
+      case 'grep':
+        out = grep(args.filter((a) => !/^-\w+$/.test(a)).join(' '));
+        break;
+      case 'curl': {
+        const url = (args.find((a) => !a.startsWith('-')) ?? '').replace(/^https?:\/\//, '').replace(/^www\./, '');
+        if (url === 'modul0.dev/cv.txt' || url === 'cv.txt') {
+          print('', raw, promptAt);
+          fetch(`${fs.base}cv.txt`)
+            .then((r) => (r.ok ? r.text() : Promise.reject(r.status)))
+            .then((t) => print(`<pre>${escape(t)}</pre>`))
+            .catch(() => print(error("curl: (7) couldn't connect. the file's at modul0.dev/cv.txt")));
+          return;
+        }
+        out = `${url ? error(`curl: ${escape(url)}: not from in here`) : error('curl: try a url')}<br>try <a class="run" href="#" data-cmd="curl modul0.dev/cv.txt">curl modul0.dev/cv.txt</a>, here or in a real terminal`;
+        break;
+      }
+      case 'rm': {
+        const flags = args.filter((a) => a.startsWith('-')).join('');
+        const target = args.find((a) => !a.startsWith('-')) ?? '';
+        if (/r/i.test(flags) && /f/.test(flags) && ['/', '/*', '~', '~/', '*', '.'].includes(target)) return breakSite(raw, promptAt);
+        out = target ? error(`rm: cannot remove '${escape(target)}': read-only file system`) : error('rm: missing operand');
+        break;
+      }
+      case 'sl':
+        out = reduced()
+          ? `<pre>${TRAIN}</pre><span class="dim">you meant ls.</span>`
+          : `<div class="sl" role="img" aria-label="a steam train goes past"><pre>${TRAIN}</pre></div>`;
+        break;
+      case 'vi':
+      case 'vim':
+      case 'nvim':
+        vim = true;
+        out = `<pre>${'~\n'.repeat(5)}<span class="dim">"${escape(args[0] ?? '[No Name]')}" [readonly]</span>\n<span class="accent">-- NORMAL --</span></pre>`;
+        break;
+      case 'nano':
+      case 'emacs':
+        out = `${escape(command)}: not installed. there's <a class="run" href="#" data-cmd="vim">vim</a>, though.`;
+        break;
+      case 'ping': {
+        const host = (args.find((a) => !a.startsWith('-')) ?? '').toLowerCase();
+        if (!host) out = error('ping: usage error: destination address required');
+        else if (host === 'alexandria') out = "PING alexandria: it doesn't answer strangers.";
+        else if (['modul0.dev', 'modul0', 'localhost', '127.0.0.1'].includes(host)) out = `64 bytes from ${escape(host)}: time=0ms. you're already here.`;
+        else out = error(`ping: ${escape(host)}: this is a website. it can't send icmp.`);
+        break;
+      }
       case 'history':
         out = `<pre>${history.map((h, i) => `${String(i + 1).padStart(4)}  ${escape(h)}`).join('\n')}</pre>`;
         break;
@@ -291,6 +427,9 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
     }
     print(out, raw, promptAt);
     promptText.textContent = prompt();
+    // the train leaves; what's left is the joke
+    const sl = output.lastElementChild?.querySelector('.sl');
+    sl?.addEventListener('animationend', () => (sl.outerHTML = '<span class="dim">the train left. you meant ls.</span>'), { once: true });
   }
 
   function complete() {
@@ -370,5 +509,13 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
   BOOT.forEach((line, i) => setTimeout(() => print(line, undefined, '', i === BOOT.length - 1 ? 'entry' : 'entry boot'), i * delay));
   setTimeout(ready, BOOT.length * delay);
 
-  return { focus: () => input.focus({ preventScroll: true }) };
+  return {
+    focus: () => input.focus({ preventScroll: true }),
+    // put text on the command line, ready to finish and run (the page's / key)
+    type: (text: string) => {
+      input.value = text;
+      input.focus({ preventScroll: true });
+      input.setSelectionRange(text.length, text.length);
+    },
+  };
 }

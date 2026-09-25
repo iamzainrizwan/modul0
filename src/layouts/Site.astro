@@ -10,6 +10,7 @@ import SectionNav from '../components/SectionNav';
 import Uptime from '../components/Uptime';
 import ModMark from '../components/ModMark.astro';
 import { api } from '../data/api';
+import { build } from '../data/build';
 import { ldJson } from '../data/seo';
 import { defaults as motion, testSite } from '../data/motion';
 import MotionPanel from '../components/MotionPanel.astro';
@@ -176,9 +177,17 @@ const sections = [
         <slot />
         <footer class="site-footer">
           <p>
-            Built with Astro and React, deployed by GitHub Actions. There's a terminal hidden in here: <span class="kbd-hint">press <kbd>`</kbd>&nbsp;on any page, or </span><a href={`${base}terminal/`} data-open-terminal data-astro-reload>open it</a>. The <a href="https://github.com/iamzainrizwan/modul0/releases/tag/v0-handwritten">first version</a> of this site was hand-written.
+            Built with Astro and React, deployed by GitHub Actions. There's a terminal hidden in here: <span class="kbd-hint">press <kbd>`</kbd>&nbsp;on any page, or </span><a href={`${base}terminal/`} data-open-terminal data-astro-reload>open it</a>. <span class="kbd-hint">The page takes vim keys too: <kbd>j</kbd>&nbsp;and <kbd>k</kbd>&nbsp;jump between sections, <kbd>/</kbd>&nbsp;searches. </span>The <a href="https://github.com/iamzainrizwan/modul0/releases/tag/v0-handwritten">first version</a> of this site was hand-written.
           </p>
-          <p class="footer-sign"><ModMark /> modul0.dev<span data-views hidden> · <span data-views-n></span> visits</span></p>
+          <p class="footer-sign">
+            <ModMark /> modul0.dev<span data-views hidden> · <span data-views-n></span> visits</span>
+            {build.short && (
+              <span class="footer-build">
+                · updated <time datetime={build.at} data-ago>{new Date(build.at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })}</time>
+                · <a href={build.url} title="the commit this build came from">{build.short}</a>
+              </span>
+            )}
+          </p>
         </footer>
       </main>
     </div>
@@ -223,6 +232,48 @@ const sections = [
         const next = e.newDocument.documentElement as HTMLElement;
         for (const a of [...document.documentElement.attributes]) {
           if (a.name === 'data-motion' || a.name === 'data-theme' || a.name.startsWith('data-mx-')) next.setAttribute(a.name, a.value);
+        }
+      });
+
+      // the footer's "updated" stamp reads as time ago (the date without js).
+      // the footer is swapped with each page, so on every page-load
+      const ago = () => {
+        for (const t of document.querySelectorAll<HTMLTimeElement>('time[data-ago]')) {
+          const s = (Date.now() - Date.parse(t.dateTime)) / 1000;
+          if (!(s >= 0) || s > 30 * 86400) continue;
+          t.textContent = s < 60 ? 'just now' : s < 3600 ? `${Math.floor(s / 60)}m ago` : s < 86400 ? `${Math.floor(s / 3600)}h ago` : `${Math.floor(s / 86400)}d ago`;
+        }
+      };
+      ago();
+      document.addEventListener('astro:page-load', ago);
+
+      // vim keys on the page: j/k jump between headings, gg/G to the top and
+      // bottom, / opens the terminal on a grep. never while typing, never with
+      // a modifier, never while the terminal's open
+      let lastG = 0;
+      document.addEventListener('keydown', (e) => {
+        if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+        if ((e.target as HTMLElement).closest?.('input, textarea, select, [contenteditable]')) return;
+        if (document.querySelector('.quake.is-open')) return;
+        if (e.key === 'j' || e.key === 'k') {
+          const pad = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+          const heads = [...document.querySelectorAll<HTMLElement>('main :is(h1, h2, h3)')].filter((h) => h.offsetParent !== null);
+          const top = (h: HTMLElement) => h.getBoundingClientRect().top - pad;
+          const next = e.key === 'j' ? heads.find((h) => top(h) > 2) : heads.filter((h) => top(h) < -2).pop();
+          if (!next) return;
+          e.preventDefault();
+          next.scrollIntoView({ block: 'start' });
+        } else if (e.key === 'G') {
+          e.preventDefault();
+          scrollTo(0, document.documentElement.scrollHeight);
+        } else if (e.key === 'g') {
+          if (Date.now() - lastG < 500) {
+            scrollTo(0, 0);
+            lastG = 0;
+          } else lastG = Date.now();
+        } else if (e.key === '/' && (window as any).__quakeReady) {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent('modul0:terminal', { detail: { input: 'grep ' } }));
         }
       });
 

@@ -9,7 +9,7 @@ import { inline } from '../../data/inline';
 
 <Site section="cv" title={`CV - ${person.name}`} description={`${person.name}: experience, education, leadership, awards and skills.`}>
   <h1 class="page-title">CV</h1>
-  <p class="section-lede">Experience, education, leadership, awards and skills, most recent first.</p>
+  <p class="section-lede">Experience, education, leadership, awards and skills, most recent first. Also in plain text: <a class="mono" href={`${import.meta.env.BASE_URL}cv.txt`}>curl modul0.dev/cv.txt</a>.</p>
 
   <section id="experience" class="cv-first" aria-labelledby="experience-h">
     <header class="section-head">

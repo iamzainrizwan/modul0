@@ -10,6 +10,8 @@ export default function QuakeTerminal({ fs }: { fs: Fs }) {
   const scroller = useRef<HTMLDivElement>(null);
   const engine = useRef<ReturnType<typeof boot>>(null);
   const opener = useRef<Element | null>(null);
+  // text to put on the command line once it's open (the page's / key)
+  const pending = useRef<string | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -21,7 +23,10 @@ export default function QuakeTerminal({ fs }: { fs: Fs }) {
         setOpen(false);
       }
     };
-    const onOpen = () => setOpen(true);
+    const onOpen = (e: Event) => {
+      pending.current = (e as CustomEvent<{ input?: string }>).detail?.input ?? null;
+      setOpen(true);
+    };
     (window as any).__quakeReady = true;
     window.addEventListener('keydown', onKey);
     window.addEventListener('modul0:terminal', onOpen);
@@ -41,6 +46,10 @@ export default function QuakeTerminal({ fs }: { fs: Fs }) {
         engine.current = boot(root.current, fs, { onExit: () => setOpen(false), scroller: scroller.current!, bootDelay: 30 });
       }
       engine.current?.focus();
+      if (pending.current !== null) {
+        engine.current?.type(pending.current);
+        pending.current = null;
+      }
     } else if (opener.current instanceof HTMLElement) {
       opener.current.focus({ preventScroll: true });
     }
