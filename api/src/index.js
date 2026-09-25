@@ -8,6 +8,12 @@
 //   DELETE /messages?poster=tag    everything from one poster         } Bearer ADMIN_TOKEN
 //   GET    /views                  the count
 //   POST   /views                  count this visit (once per visitor per day)
+//   GET    /wall                   the pixel wall, plus how long until you can place
+//   GET    /wall.svg               the same as an image (the page without js)
+//   POST   /wall                   place one pixel: {x, y, color}, one a day each
+//   GET    /admin/wall             recent placements with poster tags     } admin
+//   DELETE /wall?poster=tag        undo everything from one poster        }
+//   DELETE /wall?all=1             clear the wall                         }
 //
 // each new message pings discord (notify). messages go live straight away,
 // so everything that can be abused is capped:
@@ -30,6 +36,10 @@ const SITE_DAY = 200; // everyone, so a flood can't bury the page
 const LINKS_MAX = 2;
 // nobody else gets to sign as me (compared lowercase with spaces and punctuation removed)
 const RESERVED = ['zain', 'zainrizwan', 'iamzainrizwan', 'admin', 'modul0', 'moderator'];
+// the wall: SIZE x SIZE cells, colours 0 blank, 1 purple, 2 ink
+const SIZE = 32;
+const COLORS = 3;
+const WALL_SITE_DAY = 1000; // placements a day for everyone, so a botnet can't repaint it all
 
 export default {
   async fetch(request, env, ctx) {
@@ -76,13 +86,45 @@ async function route(request, env, url, ctx) {
     if (method === 'POST') return json({ views: await countVisit(env, ip) });
   }
 
+  if ((pathname === '/wall' || pathname === '/wall.svg') && method === 'GET') {
+    if (!(await allow(env.READ_LIMIT, ip))) return json({ error: 'slow-down' }, 429);
+    const cells = await wall(env);
+    if (pathname === '/wall.svg') {
+      return new Response(svg(cells), { headers: { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=60' } });
+    }
+    return json({ size: SIZE, cells, wait: await wallWait(env, ip) });
+  }
+
+  if (pathname === '/wall' && method === 'POST') {
+    if (!(await allow(env.WALL_LIMIT, ip))) return json({ error: 'slow-down' }, 429);
+    return place(request, env, ip);
+  }
+
   // everything below is admin
   const one = pathname.match(/^\/messages\/(\d+)$/);
-  const admin = (pathname === '/admin/messages' && method === 'GET') || (method === 'DELETE' && (one || pathname === '/messages'));
+  const admin =
+    ((pathname === '/admin/messages' || pathname === '/admin/wall') && method === 'GET') ||
+    (method === 'DELETE' && (one || pathname === '/messages' || pathname === '/wall'));
   if (admin) {
     if (!(await allow(env.ADMIN_LIMIT, ip))) return json({ error: 'slow-down' }, 429);
     if (!(await isAdmin(request, env))) return json({ error: 'unauthorised' }, 401);
 
+    if (pathname === '/admin/wall') {
+      const { results } = await env.DB.prepare(
+        'SELECT id, x, y, color, created, substr(ip_hash, 1, 8) AS poster FROM pixels ORDER BY id DESC LIMIT ?',
+      ).bind(LIST_MAX).all();
+      return json({ pixels: results });
+    }
+    if (pathname === '/wall') {
+      if (url.searchParams.get('all') === '1') {
+        const { meta } = await env.DB.prepare('DELETE FROM pixels').run();
+        return json({ deleted: meta.changes });
+      }
+      const poster = url.searchParams.get('poster') ?? '';
+      if (!/^[0-9a-f]{8}$/.test(poster)) return json({ error: 'bad-request' }, 400);
+      const { meta } = await env.DB.prepare('DELETE FROM pixels WHERE substr(ip_hash, 1, 8) = ?').bind(poster).run();
+      return json({ deleted: meta.changes });
+    }
     if (method === 'GET') {
       const { results } = await env.DB.prepare(
         'SELECT id, name, message, created, substr(ip_hash, 1, 8) AS poster FROM messages ORDER BY id DESC LIMIT ?',
@@ -200,6 +242,66 @@ function reply(isForm, env, data, status) {
   // the page shows the matching note with :target, so it works without js
   to.hash = data.error ? 'not-posted' : 'posted';
   return new Response(null, { status: 303, headers: { location: to.toString() } });
+}
+
+// the wall as SIZE*SIZE digits, row by row: the newest placement in each cell
+async function wall(env) {
+  const cells = Array(SIZE * SIZE).fill('0');
+  const { results } = await env.DB.prepare(
+    'SELECT x, y, color FROM pixels WHERE id IN (SELECT MAX(id) FROM pixels GROUP BY x, y)',
+  ).all();
+  for (const p of results) cells[p.y * SIZE + p.x] = String(p.color);
+  return cells.join('');
+}
+
+// seconds until this visitor's next pixel: one per utc day
+async function wallWait(env, ip) {
+  const hash = await sha256((env.IP_SALT ?? '') + ip);
+  const day = new Date().toISOString().slice(0, 10);
+  const row = await env.DB.prepare('SELECT COUNT(*) AS n FROM pixels WHERE ip_hash = ? AND created >= ?').bind(hash, `${day}T00:00:00Z`).first();
+  if (!row?.n) return 0;
+  const midnight = Date.parse(`${day}T00:00:00Z`) + 86400 * 1000;
+  return Math.ceil((midnight - Date.now()) / 1000);
+}
+
+async function place(request, env, ip) {
+  if (Number(request.headers.get('content-length') ?? 0) > 256) return json({ error: 'too-long' }, 413);
+  let body;
+  try {
+    body = JSON.parse(await request.text());
+  } catch {
+    return json({ error: 'bad-request' }, 400);
+  }
+  const { x, y, color } = body ?? {};
+  const cell = (n, max) => Number.isInteger(n) && n >= 0 && n < max;
+  if (!cell(x, SIZE) || !cell(y, SIZE) || !cell(color, COLORS)) return json({ error: 'bad-request' }, 400);
+
+  const wait = await wallWait(env, ip);
+  if (wait > 0) return json({ error: 'one-a-day', wait }, 429);
+  const today = `${new Date().toISOString().slice(0, 10)}T00:00:00Z`;
+  const everyone = await env.DB.prepare('SELECT COUNT(*) AS n FROM pixels WHERE created >= ?').bind(today).first();
+  if (everyone.n >= WALL_SITE_DAY) return json({ error: 'wall-busy' }, 429);
+  // painting a cell the colour it already is would waste the day's pixel
+  const current = await env.DB.prepare('SELECT color FROM pixels WHERE x = ? AND y = ? ORDER BY id DESC LIMIT 1').bind(x, y).first();
+  if ((current?.color ?? 0) === color) return json({ error: 'same' }, 409);
+
+  // the once-a-day check again inside the insert, so two requests racing
+  // each other can't both land
+  const hash = await sha256((env.IP_SALT ?? '') + ip);
+  const { meta } = await env.DB.prepare(
+    'INSERT INTO pixels (x, y, color, ip_hash) SELECT ?1, ?2, ?3, ?4 WHERE NOT EXISTS (SELECT 1 FROM pixels WHERE ip_hash = ?4 AND created >= ?5)',
+  ).bind(x, y, color, hash, today).run();
+  if (!meta.changes) return json({ error: 'one-a-day', wait: await wallWait(env, ip) }, 429);
+  return json({ ok: true, cells: await wall(env), wait: await wallWait(env, ip) }, 201);
+}
+
+// the wall as an image, drawn for black like the 404 snake: purple and white on #000
+function svg(cells) {
+  const fill = ['', '#a769ff', '#fff'];
+  const rects = [...cells]
+    .map((c, i) => (c === '0' ? '' : `<rect x="${i % SIZE}" y="${Math.floor(i / SIZE)}" width="1" height="1" fill="${fill[c]}"/>`))
+    .join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SIZE} ${SIZE}" width="512" height="512" shape-rendering="crispEdges"><rect width="${SIZE}" height="${SIZE}" fill="#000"/>${rects}</svg>`;
 }
 
 async function views(env) {
