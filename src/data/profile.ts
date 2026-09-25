@@ -11,6 +11,8 @@
 // uber = regional finalist (not 2nd), zain's first hackathon: the
 // accessibility business case route with a figma prototype (so
 // educhain is zain's first coding hackathon); ctf = top 5 in ucl vs kcl + kcl welcome.
+// happy to relocate for an internship or placement (year in industry):
+// confirmed by zain 2026-09-25.
 // kcl average (79.6%) is credit-weighted from zain's year 1 transcript:
 // programming practice and applications counts 2x, introduction to
 // professional practice is excluded (0 credits, capped at 70). confirmed by
@@ -34,7 +36,7 @@ export const person = {
     'Most of what I build is useful little tools running on my own server, [alexandria](#homelab). I built the [pipeline that deploys to it](#project-s3ntry) and the monitor that tells me when something on it breaks.',
   ],
   lookingFor:
-    "Looking for summer 2027 internships, 2027/28 placements, and anything else that needs fixing (or is bound to). On-site, hybrid or remote, London area.",
+    "Looking for summer 2027 internships, 2027/28 placements, and anything else that needs fixing (or is bound to). Based in London, happy to relocate; on-site, hybrid or remote.",
   now: 'ledgr: stats view shipped; categoriser next (stretch)',
 };
 

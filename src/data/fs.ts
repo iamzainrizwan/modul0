@@ -49,7 +49,7 @@ security   > ctf tooling, wireshark, educated guessing.</pre>`,
          lgs: lighting + sound, ~14 in total counting the small ones.</pre>`,
   'status.log': status,
   'looking-for.txt':
-    'summer 2027 internships, 2027/28 placements, and anything else that needs fixing {or is bound to}.',
+    'summer 2027 internships, 2027/28 placements, and anything else that needs fixing {or is bound to}. based in london, happy to relocate.',
   'contact.txt': `<pre>
 email     > <a href="mailto:iamzainrizwan@gmail.com">iamzainrizwan@gmail.com</a>
 linkedin  > <a href="https://www.linkedin.com/in/iamzainrizwan/">linkedin.com/in/iamzainrizwan</a>
