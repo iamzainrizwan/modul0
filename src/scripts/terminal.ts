@@ -1,5 +1,6 @@
 import { listing, postView } from './render';
 import { uptimeRows, uptimeText } from './uptime';
+import { getTheme, setTheme } from './theme';
 
 type Post = { title: string; date: string; description: string; html: string };
 export type Fs = {
@@ -28,6 +29,7 @@ const COMMANDS: [string, string, string?][] = [
   ['man modul0', "why it's called that"],
   ['tail -f status.log', "what i'm working on right now"],
   ['pgrep -a zain', 'recent achievements'],
+  ['theme [light|dark]', 'switch the colours', 'theme'],
   ['history', 'commands you\'ve run'],
   ['clear', 'clear screen'],
   ['exit', 'back to the normal site'],
@@ -244,6 +246,15 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
         else if (args[0] === 'modul0') out = MAN_MODUL0;
         else out = error(`no manual entry for ${escape(args[0])}`);
         break;
+      case 'theme': {
+        const t = args[0] ?? (getTheme() === 'light' ? 'dark' : 'light');
+        if (t !== 'light' && t !== 'dark') out = error(`theme: ${escape(t)}: try light or dark`);
+        else {
+          setTheme(t);
+          out = `theme: ${t}`;
+        }
+        break;
+      }
       case 'history':
         out = `<pre>${history.map((h, i) => `${String(i + 1).padStart(4)}  ${escape(h)}`).join('\n')}</pre>`;
         break;

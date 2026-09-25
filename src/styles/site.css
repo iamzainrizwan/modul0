@@ -156,6 +156,29 @@ kbd {
 .rail-terminal kbd { margin-left: auto; }
 .rail-terminal:hover kbd { color: var(--void); border-color: var(--void); }
 
+/* theme toggle: two cells, the current one a solid block. sits just above
+   the terminal button on desktop, top right of the bar on narrow screens */
+.theme-toggle {
+  order: 1;
+  display: flex;
+  margin: auto 1.25rem 1rem;
+  padding: 0;
+  border: var(--rule);
+  background: var(--void);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.theme-toggle[hidden] { display: none; }
+.theme-toggle > span { flex: 1; padding: 0.3rem 0.6rem; color: var(--soft); text-align: center; }
+.theme-toggle[aria-pressed='false'] .theme-dark,
+.theme-toggle[aria-pressed='true'] .theme-light { background: var(--white); color: var(--void); }
+@media (hover: hover) {
+  .theme-toggle:hover[aria-pressed='false'] .theme-light,
+  .theme-toggle:hover[aria-pressed='true'] .theme-dark { background: var(--purple); color: var(--void); }
+}
+.rail-terminal { order: 2; margin-top: 0; }
+
 main { min-width: 0; padding: 0 clamp(1.25rem, 4vw, 3.5rem); }
 
 /* narrow: rail collapses into a sticky top bar with a scrolling nav */
@@ -172,6 +195,8 @@ main { min-width: 0; padding: 0 clamp(1.25rem, 4vw, 3.5rem); }
   .rail > * { padding-left: 16px; padding-right: 16px; }
   .rail-name { font-size: 1.45rem; padding-top: 0.7rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--line); }
   .rail-study, .rail-facts, .rail-links, .rail-terminal { display: none; }
+  .theme-toggle { position: absolute; top: 0.5rem; right: 16px; margin: 0; font-size: 0.66rem; }
+  .theme-toggle > span { padding: 0.2rem 0.45rem; }
   .tree { display: flex; align-items: center; overflow-x: auto; scrollbar-width: none; padding: 0; border: none; }
   .tree::-webkit-scrollbar { display: none; }
   .tree-root { display: none; }
@@ -790,6 +815,8 @@ button.nf-op:hover, button.nf-op[aria-expanded='true'] { background: var(--white
 .snake-body { padding: 1rem; }
 .snake-body svg { display: block; width: 100%; height: auto; }
 .snake-body.still svg * { animation-play-state: paused !important; }
+/* the svg is drawn for black (deploy.yml: white snake, dark cells), so it keeps a black panel in light mode */
+html[data-theme='light'] .snake-body:not(.asleep) { background: #000; }
 .snake-body.asleep { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
 .snake figcaption { padding: 0.7rem 1rem; border-top: 1px solid var(--line-strong); font-family: var(--mono); font-size: 0.74rem; color: var(--muted); }
 @media (max-width: 640px) { .snake-body { padding: 0.6rem; } .snake-head, .snake figcaption { padding-left: 0.6rem; padding-right: 0.6rem; } }
@@ -987,6 +1014,7 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
   html { font-size: 118.75%; } /* 19px on the smallest phones */
   .tree li a, .tree li:first-child a, .tree .tree-group li:first-child a { font-size: 0.64rem; padding-left: 0.15rem; padding-right: 0.15rem; }
   .boot-screen { font-size: 0.66rem; }
+  .theme-toggle > span { padding: 0.2rem 0.3rem; }
 }
 /* numbers sit on a common line even when a label wraps */
 .readout > div { display: flex; flex-direction: column; }

@@ -1,5 +1,8 @@
-/* amoled + purple, brutal. dark-only on purpose, square everything, no glow.
-   type is serif (reading, display) and mono (ui, terminal) only. */
+/* amoled + purple, brutal. square everything, no glow. type is serif
+   (reading, display) and mono (ui, terminal) only. dark is the default for
+   everyone, whatever the browser prefers; light is opt-in (the rail toggle or
+   `theme light` in the terminal, saved per browser, set before paint).
+   --void is the paper and --white the ink, in both themes. */
 :root {
   --void: #000;
   --raised: #000;
@@ -18,4 +21,23 @@
   --mono: 'IBM Plex Mono', ui-monospace, monospace;
   --serif: 'Newsreader', Georgia, 'Times New Roman', serif;
   color-scheme: dark;
+}
+
+/* light: ink on paper, same hard edges. purple deepens so it holds on white
+   (and white text sits on it the way black does in dark) */
+html[data-theme='light'] {
+  --void: #fff;
+  --raised: #fff;
+  --line: #d6d6d6;
+  --line-strong: #8c8c8c;
+  --white: #000;
+  --text: #000;
+  --soft: #2e2e2e;
+  --muted: #585858;      /* 7:1 on paper */
+  --purple: #6a2bd9;     /* 6.6:1 on paper, and white on it */
+  --purple-deep: #521fb0;
+  --green: #0b7a45;
+  --amber: #8a5800;
+  --red: #c01830;
+  color-scheme: light;
 }

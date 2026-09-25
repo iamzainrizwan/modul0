@@ -110,6 +110,13 @@ const sections = [
       // boot animation runs, so the page never flashes underneath either.
       // both fail open after a few seconds if the scripts never load.
       var root = document.documentElement;
+      // theme: dark unless this browser chose light (src/scripts/theme.ts)
+      try {
+        if (localStorage.getItem('modul0-theme') === 'light') {
+          root.dataset.theme = 'light';
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff');
+        }
+      } catch (e) {}
       var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
       var m = Object.assign({}, motion);
       try {
@@ -137,6 +144,10 @@ const sections = [
     <div class="shell">
       <aside class="rail" transition:persist="rail">
         <a class="rail-name" href={base}>{person.name.toLowerCase()}<ModMark /></a>
+        <!-- shown by the script below: without js it can't do anything -->
+        <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false" aria-label="Light mode" hidden>
+          <span class="theme-dark">dark</span><span class="theme-light">light</span>
+        </button>
         <p class="rail-study">{person.study}</p>
         <SectionNav client:load items={sections} base={base} initial={section} />
         <dl class="rail-facts">
@@ -192,7 +203,17 @@ const sections = [
     </script>
     <script>
       import { initMotion } from '../scripts/motion';
+      import { getTheme, setTheme } from '../scripts/theme';
       initMotion();
+
+      // the theme toggle lives in the persisted rail, so this wires it once;
+      // the terminal's `theme` command fires modul0:theme too
+      const toggle = document.querySelector<HTMLButtonElement>('[data-theme-toggle]')!;
+      const sync = () => toggle.setAttribute('aria-pressed', String(getTheme() === 'light'));
+      toggle.hidden = false;
+      sync();
+      toggle.addEventListener('click', () => setTheme(getTheme() === 'light' ? 'dark' : 'light'));
+      window.addEventListener('modul0:theme', sync);
 
       // the router swaps in each new page's <html> attributes, which don't have
       // the motion settings (the pre-paint script sets those at runtime): carry
@@ -201,7 +222,7 @@ const sections = [
       document.addEventListener('astro:before-swap', (e: any) => {
         const next = e.newDocument.documentElement as HTMLElement;
         for (const a of [...document.documentElement.attributes]) {
-          if (a.name === 'data-motion' || a.name.startsWith('data-mx-')) next.setAttribute(a.name, a.value);
+          if (a.name === 'data-motion' || a.name === 'data-theme' || a.name.startsWith('data-mx-')) next.setAttribute(a.name, a.value);
         }
       });
 

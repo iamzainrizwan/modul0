@@ -5,8 +5,12 @@ deployed to GitHub Pages by `.github/workflows/deploy.yml` on push to `main`.
 Live at https://modul0.dev (GitHub Pages custom domain, DNS at name.com; the old
 iamzainrizwan.github.io/modul0/ URL redirects there).
 
-Look: brutalist AMOLED + purple (`src/styles/tokens.css`), dark-only on
-purpose. Zain's rules: square corners only (no border-radius anywhere), serif
+Look: brutalist AMOLED + purple (`src/styles/tokens.css`). Dark is the
+default for everyone, whatever the browser prefers; light (ink on paper,
+deeper purple) is opt-in via the rail toggle or `theme light` in the terminal,
+saved per browser (`src/scripts/theme.ts`), set before paint by the body
+scripts in Site.astro and Terminal.astro and carried across router swaps.
+Colours only via tokens: `--void` is the paper, `--white` the ink. Zain's rules: square corners only (no border-radius anywhere), serif
 or monospace fonts only (Newsreader for reading/display, IBM Plex Mono for
 ui/terminal, never sans-serif), loud but minimal: hard 2px rules, hard offset
 shadows, solid purple blocks, no blur or glow.

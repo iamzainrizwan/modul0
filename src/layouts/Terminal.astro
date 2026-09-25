@@ -23,11 +23,20 @@ const base = import.meta.env.BASE_URL;
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
     <style is:global>
-      html, body { margin: 0; background: #000; }
+      html, body { margin: 0; background: var(--void); }
       .terminal { min-height: 100vh; min-height: 100dvh; }
     </style>
   </head>
   <body>
+    <script is:inline>
+      // same theme as the site (src/scripts/theme.ts): dark unless chosen light
+      try {
+        if (localStorage.getItem('modul0-theme') === 'light') {
+          document.documentElement.dataset.theme = 'light';
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff');
+        }
+      } catch (e) {}
+    </script>
     <main class="terminal">
       <div class="t-output" aria-live="polite"></div>
       <form class="t-input" hidden>
