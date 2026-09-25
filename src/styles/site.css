@@ -926,7 +926,7 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 
 /* drop mockups (test site: data-quake from the motion panel, see
    src/data/motion.ts). five different arrivals, all on the step clock (held
-   frames, never a glide) and all over in under 170ms. shared: no slide,
+   frames, never a glide) and all over in under 200ms. shared: no slide,
    close on the same frame, the scrim goes down whole. --qk-at is when the
    terminal's contents show; opacity, not visibility, so the input can take
    focus on the first frame */
@@ -957,8 +957,8 @@ html[data-quake='glitch'] .quake.is-open { animation: qk-glitch 120ms step-end b
 html[data-quake='dissolve'] .quake.is-open { --qk-at: 120ms; animation: px-in 160ms steps(1, end) -40ms both, qk-flood 1ms step-end 120ms both; }
 /* 4 loader: the title bar fills left to right like a progress bar, then
    the body lands */
-html[data-quake='loader'] .quake.is-open { --qk-at: 125ms; animation: qk-shell 1ms step-end 125ms both; }
-html[data-quake='loader'] .quake.is-open > .quake-bar { animation: qk-load 125ms step-end both; }
+html[data-quake='loader'] .quake.is-open { --qk-at: 190ms; animation: qk-shell 1ms step-end 190ms both; }
+html[data-quake='loader'] .quake.is-open > .quake-bar { animation: qk-load 190ms step-end both; }
 @keyframes qk-shell { from { background: transparent; border-bottom-color: transparent; } to { background: var(--void); border-bottom-color: var(--purple); } }
 @keyframes qk-load {
   0% { clip-path: inset(0 80% 0 0); }
