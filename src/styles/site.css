@@ -924,6 +924,30 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 @media (prefers-reduced-motion: reduce) { .quake-scrim { animation: none; } }
 @media (max-width: 560px) { .quake-hint { display: none; } .quake-close { margin-left: auto; } .quake { height: 75vh; } }
 
+/* drop mockups (test site: data-quake from the motion panel, see
+   src/data/motion.ts). all of them: no slide, close on the same frame, the
+   scrim goes down whole. what differs is the first frame or two, each held
+   with step-end so it's a hard cut, never a glide */
+html[data-quake] .quake, html[data-quake] .quake.is-open { transform: none; transition: none; }
+html[data-quake] .quake-scrim { animation: none; }
+/* 2: half-dropped for one beat, then home */
+html[data-quake='shutter'] .quake.is-open { animation: qk-shutter 60ms step-end both; }
+@keyframes qk-shutter { 0% { transform: translateY(-50%); } 50%, 100% { transform: none; } }
+/* 3: painted in place, a third at a time */
+html[data-quake='bands'] .quake.is-open { animation: qk-bands 75ms step-end both; }
+@keyframes qk-bands { 0% { clip-path: inset(0 0 67% 0); } 33% { clip-path: inset(0 0 33% 0); } 67%, 100% { clip-path: inset(0); } }
+/* 4: the purple bar lands on the keypress, the body a beat later */
+html[data-quake='bar'] .quake.is-open { animation: qk-shell 80ms step-end both; }
+html[data-quake='bar'] .quake.is-open > .quake-scroll { animation: qk-late 80ms step-end both; }
+/* 5: a purple outline of the terminal, then it fills */
+html[data-quake='wire'] .quake.is-open { animation: qk-wire 90ms step-end both; }
+html[data-quake='wire'] .quake.is-open > * { animation: qk-late 90ms step-end both; }
+@keyframes qk-shell { 0% { background: transparent; border-bottom-color: transparent; } 50%, 100% { background: var(--void); border-bottom-color: var(--purple); } }
+@keyframes qk-wire { 0% { background: transparent; border-bottom-color: transparent; outline: 2px solid var(--purple); outline-offset: -2px; } 50%, 100% { background: var(--void); border-bottom-color: var(--purple); outline: 0 solid transparent; } }
+/* opacity, not visibility: the input has to take focus on the first frame */
+@keyframes qk-late { 0% { opacity: 0; } 50%, 100% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { html[data-quake] .quake.is-open, html[data-quake] .quake.is-open > * { animation: none; } }
+
 /* even out line lengths so headings and facts never strand one word */
 .hero-h, .section-h, .feature-name, .card-name, .tl-role, .award-what, .page-title, .article h1, .article h2, .open p { text-wrap: balance; }
 @media (max-width: 480px) {

@@ -126,6 +126,7 @@ const sections = [
       ['reveal', 'cursor', 'decode'].forEach(function (x) {
         if (m[x]) root.setAttribute('data-mx-' + x, '');
       });
+      if (m.quake && m.quake !== 'current') root.dataset.quake = m.quake;
       try {
         // the test site replays the boot on every load (a real load: not when
         // the router swaps home in, which sets __modul0Nav)
@@ -222,7 +223,7 @@ const sections = [
       document.addEventListener('astro:before-swap', (e: any) => {
         const next = e.newDocument.documentElement as HTMLElement;
         for (const a of [...document.documentElement.attributes]) {
-          if (a.name === 'data-motion' || a.name === 'data-theme' || a.name.startsWith('data-mx-')) next.setAttribute(a.name, a.value);
+          if (a.name === 'data-motion' || a.name === 'data-theme' || a.name === 'data-quake' || a.name.startsWith('data-mx-')) next.setAttribute(a.name, a.value);
         }
       });
 

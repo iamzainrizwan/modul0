@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { boot, type Fs } from '../scripts/terminal';
+import { quakeBoot, type QuakeDrop } from '../data/motion';
 
 // drop-down terminal available on every page: ` toggles it, esc or `exit`
 // closes it. the engine is the same one /terminal/ uses.
@@ -34,11 +35,14 @@ export default function QuakeTerminal({ fs }: { fs: Fs }) {
   useEffect(() => {
     if (open) {
       opener.current = document.activeElement;
+      // how it arrives (data-quake, test site mockups; unset is the live one)
+      const drop = (document.documentElement.dataset.quake ?? 'current') as QuakeDrop;
       // first open boots the engine; later opens keep the session
       if (!engine.current && root.current) {
-        engine.current = boot(root.current, fs, { onExit: () => setOpen(false), scroller: scroller.current! });
+        engine.current = boot(root.current, fs, { onExit: () => setOpen(false), scroller: scroller.current!, bootDelay: quakeBoot[drop] ?? 150 });
       }
-      setTimeout(() => engine.current?.focus(), 50);
+      if (drop === 'current') setTimeout(() => engine.current?.focus(), 50);
+      else engine.current?.focus();
     } else if (opener.current instanceof HTMLElement) {
       opener.current.focus({ preventScroll: true });
     }

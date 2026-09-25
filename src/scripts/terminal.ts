@@ -85,6 +85,8 @@ type Options = {
   onExit?: () => void;
   // element that scrolls the output; defaults to the page
   scroller?: HTMLElement;
+  // ms between the boot lines (0 prints them at once); default 150
+  bootDelay?: number;
 };
 
 // mounts the terminal inside `terminal`, which must contain the markup from
@@ -364,7 +366,7 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
     if (window.matchMedia('(hover: hover)').matches) input.focus({ preventScroll: true });
   }
 
-  const delay = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 150;
+  const delay = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : (opts.bootDelay ?? 150);
   BOOT.forEach((line, i) => setTimeout(() => print(line, undefined, '', i === BOOT.length - 1 ? 'entry' : 'entry boot'), i * delay));
   setTimeout(ready, BOOT.length * delay);
 
