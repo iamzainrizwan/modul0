@@ -34,11 +34,13 @@ export default function QuakeTerminal({ fs }: { fs: Fs }) {
   useEffect(() => {
     if (open) {
       opener.current = document.activeElement;
-      // first open boots the engine; later opens keep the session
+      // first open boots the engine (boot lines 30ms apart, so it's typeable
+      // almost at once); later opens keep the session. focus straight away:
+      // the input is focusable from the drop's first frame
       if (!engine.current && root.current) {
-        engine.current = boot(root.current, fs, { onExit: () => setOpen(false), scroller: scroller.current! });
+        engine.current = boot(root.current, fs, { onExit: () => setOpen(false), scroller: scroller.current!, bootDelay: 30 });
       }
-      setTimeout(() => engine.current?.focus(), 50);
+      engine.current?.focus();
     } else if (opener.current instanceof HTMLElement) {
       opener.current.focus({ preventScroll: true });
     }
@@ -46,8 +48,8 @@ export default function QuakeTerminal({ fs }: { fs: Fs }) {
 
   return (
     <>
-      {/* kept mounted so the session survives closing. it drops in a few hard
-          frames (css steps, .quake.is-open) rather than sliding */}
+      {/* kept mounted so the session survives closing. it loads in a few hard
+          frames (the bar fills, then the body lands: .quake.is-open) */}
       <div
         className={open ? 'quake is-open' : 'quake'}
         role="dialog"

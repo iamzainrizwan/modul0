@@ -108,11 +108,13 @@ those. When sources disagree, ask; don't pick one.
 
 Terminal-esque on purpose: nothing glides. One style (`html[data-motion]`)
 drives every "something appears" moment, split into surfaces (`--sf-*`: boot
-wipe, terminal scrim) and text (`--tx-*`: scroll reveal, project filter):
+wipe) and text (`--tx-*`: scroll reveal, project filter):
 dither (surfaces dissolve in 8px blue-noise pixels, text pops; never
 dissolve text, it reads as diagonal dashes), redraw (top-down bands), print
 (appears in order, like `cat`), instant, smooth (the original eased motion).
-Hover and terminal-drop timing come from the style too (`--hv`, `--qk`). Extras stack via `data-mx-*`: reveal, cursor (block cursor
+Hover and terminal-drop timing come from the style too (`--hv`, `--qk-dur`;
+the drop is the "loader": the quake's title bar fills in five steps, then the
+body lands, 190ms; Zain's pick from five mockups, 2026-09-25). Extras stack via `data-mx-*`: reveal, cursor (block cursor
 sweeps hovered links), decode (two characters per heading flicker through
 glyphs, width-locked). Defaults in `src/data/motion.ts`; the head script in
 Site.astro sets the attributes before paint; `src/scripts/motion.ts` does

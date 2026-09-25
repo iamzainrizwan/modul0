@@ -890,11 +890,24 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
   flex-direction: column;
   background: var(--void);
   border-bottom: 4px solid var(--purple);
-  transform: translateY(-110%);
-  transition: transform var(--qk-dur) var(--qk), visibility 0s linear var(--qk-dur);
 }
-.quake.is-open { visibility: visible; transform: none; transition: transform var(--qk-dur) var(--qk), visibility 0s; }
-@media (prefers-reduced-motion: reduce) { .quake, .quake.is-open { transition: none; } }
+/* it loads rather than slides: the title bar fills left to right in five
+   hard steps like a progress bar, then the body lands (--qk-dur, from the
+   motion style). the input sits under opacity, not visibility, so it takes
+   focus on the first frame. closing is instant */
+.quake.is-open { visibility: visible; animation: qk-shell 1ms step-end var(--qk-dur) both; }
+.quake.is-open > .quake-bar { animation: qk-load var(--qk-dur) step-end both; }
+.quake.is-open > .quake-scroll { animation: qk-show 1ms step-end var(--qk-dur) both; }
+@keyframes qk-shell { from { background: transparent; border-bottom-color: transparent; } to { background: var(--void); border-bottom-color: var(--purple); } }
+@keyframes qk-show { from { opacity: 0; } to { opacity: 1; } }
+@keyframes qk-load {
+  0% { clip-path: inset(0 80% 0 0); }
+  20% { clip-path: inset(0 60% 0 0); }
+  40% { clip-path: inset(0 40% 0 0); }
+  60% { clip-path: inset(0 20% 0 0); }
+  80%, 100% { clip-path: inset(0); }
+}
+@media (prefers-reduced-motion: reduce) { .quake.is-open, .quake.is-open > * { animation: none; } }
 .quake-bar {
   display: flex;
   align-items: center;
@@ -920,8 +933,9 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 }
 .quake-close:hover { background: var(--void); color: var(--purple); }
 .quake-scroll { flex: 1; overflow-y: auto; }
-.quake-scrim { position: fixed; inset: 0; z-index: 899; background: var(--scrim); animation: var(--scrim-in) var(--sf-dur) var(--sf-ease) both; }
-@media (prefers-reduced-motion: reduce) { .quake-scrim { animation: none; } }
+/* the scrim goes down whole with the terminal: animating a full-screen mask
+   in was half of why the drop felt laggy */
+.quake-scrim { position: fixed; inset: 0; z-index: 899; background: var(--scrim); }
 @media (max-width: 560px) { .quake-hint { display: none; } .quake-close { margin-left: auto; } .quake { height: 75vh; } }
 
 /* even out line lengths so headings and facts never strand one word */
@@ -1026,8 +1040,8 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 
 /* ---------- pixel motion ----------
    terminal-esque: nothing glides. one reveal style drives every "something
-   appears" moment (the boot wipe, scroll reveal, the project filter, the
-   terminal scrim) through --sf-* / --tx-* on <html data-motion>. page changes
+   appears" moment (the boot wipe, scroll reveal, the project filter)
+   through --sf-* / --tx-* on <html data-motion>. page changes
    themselves are instant: links are prefetched, and both view transitions
    and drawing each page in on arrival were tried and dropped (a blank
    frame, and body text chopped into pixel dashes):
@@ -1041,15 +1055,15 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
    of it (MotionPanel.astro); elsewhere the defaults in src/data/motion.ts.
    everything is off for reduced motion. */
 
-/* surfaces (the boot wipe, the terminal scrim) and text (headings and cards
+/* surfaces (the boot wipe) and text (headings and cards
    revealing, the project filter) animate separately: text never dissolves,
    because a pixel mask over text chops it into dashes that read as diagonal
    lines. dither keeps the dissolve for solid surfaces and pops text in. */
 :root, html[data-motion='dither'] {
   --sf-in: px-in; --sf-out: px-out; --sf-ease: steps(1, end); --sf-dur: 0.24s;
   --tx-in: print; --tx-ease: step-end; --tx-dur: 0.06s; --tx-stagger: 60ms;
-  --hv: steps(2, end); --hv-dur: 0.12s; --qk: steps(4, end); --qk-dur: 0.16s;
-  --scrim: conic-gradient(#0000 0 25%, var(--void) 0) 0 0 / 4px 4px; --scrim-in: var(--sf-in);
+  --hv: steps(2, end); --hv-dur: 0.12s; --qk-dur: 0.19s;
+  --scrim: conic-gradient(#0000 0 25%, var(--void) 0) 0 0 / 4px 4px;
 }
 html[data-motion='redraw'] {
   --sf-in: rd-in; --sf-out: rd-out; --sf-ease: steps(6, end); --sf-dur: 0.2s;
@@ -1065,14 +1079,13 @@ html[data-motion='instant'] {
   --hv-dur: 0s; --qk-dur: 0s;
 }
 /* smooth: how the site moved before the terminal pass. the boot panel slides
-   up and away, the terminal eases down, hovers glide, the scrim fades,
-   things fade up, anchor jumps scroll */
+   up and away, hovers glide, things fade up, anchor jumps scroll */
 html[data-motion='smooth'] {
   --sf-in: fade; --sf-out: fade-out; --sf-ease: ease; --sf-dur: 0.24s;
   --boot-in: slide-in; --boot-out: slide-out; --boot-ease-in: cubic-bezier(0.7, 0, 0.84, 0); --boot-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --tx-in: fade-up; --tx-ease: cubic-bezier(0.2, 0.7, 0.2, 1); --tx-dur: 0.36s; --tx-stagger: 60ms;
-  --hv: ease; --hv-dur: 0.14s; --qk: cubic-bezier(0.2, 0.9, 0.25, 1); --qk-dur: 0.34s;
-  --scrim: rgba(0, 0, 0, 0.72); --scrim-in: fade;
+  --hv: ease; --hv-dur: 0.14s;
+  --scrim: rgba(0, 0, 0, 0.72);
   scroll-behavior: smooth;
 }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
@@ -1142,7 +1155,7 @@ html[data-motion='instant'] .print { animation: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .px-ready .px:not(.px-in) { visibility: visible; }
-  .px-in, .print, .card-in, .quake-scrim { animation: none; }
+  .px-in, .print, .card-in { animation: none; }
   html[data-mx-cursor] a:hover { animation: none; background-size: 100% 100%; color: var(--void); }
 }
 
