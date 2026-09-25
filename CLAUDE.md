@@ -68,7 +68,20 @@ those. When sources disagree, ask; don't pick one.
   by QuakeTerminal and by the full-screen `/terminal/` page
   (`src/layouts/Terminal.astro`). `src/scripts/render.ts` - blog html inside it.
   Beyond the fs commands it has `expr` (bigint `+ - * / %`, also bare `17 % 5`),
-  `man modul0` (why the name: Zain's own words, keep them) and `uptime -v`.
+  `man modul0` (why the name: Zain's own words, keep them), `uptime -v`,
+  `grep` (every file), `curl modul0.dev/cv.txt` and `theme`. Easter eggs, not
+  in `help`: `rm -rf /` (sets `html[data-broken]`: the page tears, a fixed
+  `body::after` cover blacks out and lifts, then "restored in Ns", the real
+  downtime), `sl`, `vim` (stuck until `:q`), `nano`, `ping`. Keep their
+  jokes free of facts about Zain's setup that nothing sources.
+- Page keys (Site.astro): `j`/`k` jump between headings, `gg`/`G`, and `/`
+  opens the terminal on `grep ` (`modul0:terminal` with `detail.input`). Off
+  while typing, with modifiers, or with the terminal open.
+- `src/pages/cv.txt.ts` - the cv as plain text from profile.ts (76 columns),
+  for `curl modul0.dev/cv.txt`. GitHub Pages can't sniff curl, so the bare
+  domain stays html. `src/data/build.ts` - commit sha and commit time, read
+  from git at build: the footer's "updated 3h ago · sha" (commit time, not
+  build time, or the daily snake rebuild would make it always fresh).
 - `src/scripts/uptime.ts` - the uptime maths, shared by the rail's `Uptime`
   island (a `<details>` that opens into the remainders) and the terminal.
 - The % motif: `ModMark.astro` (two squares + slash; squares use `--mark-sq`,
@@ -91,7 +104,11 @@ those. When sources disagree, ask; don't pick one.
   build time (`src/data/api.ts`; repo variable in CI); unset, the guestbook
   shows as offline and the counter stays hidden. `src/pages/guestbook/`
   (posts work without js via a form post + 303 back to `#posted`),
-  `guestbook/admin/` (delete with the worker's `ADMIN_TOKEN`).
+  `guestbook/admin/` (delete with the worker's `ADMIN_TOKEN`). The page also
+  has the pixel wall (`src/scripts/wall.ts`, worker `/wall`): 32x32, one pixel
+  a day per visitor, drawn on a canvas from the theme tokens at whole device
+  pixels per cell; without js it's the worker's `/wall.svg`. Admin undoes a
+  poster or clears it.
   `src/scripts/guestbook.ts` renders messages with textContent only. Messages
   go live straight away (Zain's call), so the worker caps every abuse path
   (listed in `api/README.md`); admin can delete one message or everything

@@ -724,6 +724,30 @@ section.hero { margin-top: 0; border-top: none; }
 .gb-token .gb-field { grid-column: 1 / -1; }
 .gb-admin { margin-top: 3rem; }
 
+/* the pixel wall (src/scripts/wall.ts): a hard-framed square, crisp cells */
+.wall-lede { margin: 0 0 1.25rem; color: var(--soft); max-width: 38rem; }
+.wall-frame { width: 100%; max-width: 32rem; border: var(--rule); box-shadow: 6px 6px 0 var(--purple); line-height: 0; }
+.wall-frame.is-live { width: fit-content; }
+.wall-img, .wall-canvas { display: block; width: 100%; height: auto; aspect-ratio: 1; image-rendering: pixelated; }
+/* wall.ts sets the canvas's exact width: whole device pixels per cell */
+.wall-canvas { max-width: none; }
+.wall-canvas[hidden] { display: none; }
+.wall-canvas { cursor: crosshair; touch-action: manipulation; }
+.wall-canvas:focus-visible { outline: 3px solid var(--purple); outline-offset: 4px; }
+.wall-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem; max-width: 32rem; margin-top: 1.5rem; }
+.wall-controls[hidden] { display: none; }
+.wall-controls fieldset { display: flex; flex-wrap: wrap; gap: 0.5rem 1.1rem; margin: 0; padding: 0; border: none; font-family: var(--mono); font-size: 0.8rem; }
+.wall-controls label { display: flex; align-items: center; gap: 0.45rem; cursor: pointer; }
+.wall-controls input { appearance: none; width: 1.1rem; height: 1.1rem; margin: 0; border: 2px solid var(--text); background: var(--void); cursor: pointer; }
+.wall-controls input[value='1'] { background: var(--purple); }
+.wall-controls input[value='2'] { background: var(--white); }
+.wall-controls input[value='0'] { background: linear-gradient(to top right, var(--void) calc(50% - 1px), var(--text) calc(50% - 1px) calc(50% + 1px), var(--void) calc(50% + 1px)); }
+.wall-controls input:checked { outline: 2px solid var(--text); outline-offset: 2px; }
+.wall-controls .btn { cursor: pointer; }
+.wall-controls .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.wall-controls .wall-live { flex-basis: 100%; margin: 0; }
+.wall-admin li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 1.25rem; font-family: var(--mono); font-size: 0.8rem; }
+
 .hacks { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line-strong); }
 .hacks li { display: flex; flex-direction: column; padding: 0.9rem 1rem; border-bottom: 1px solid var(--line-strong); }
 .hacks li:nth-child(odd) { border-right: 1px solid var(--line-strong); }

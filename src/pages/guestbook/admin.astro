@@ -19,6 +19,13 @@ const base = import.meta.env.BASE_URL;
     <p class="gb-note gb-live" role="status" aria-live="polite">{api ? '' : "The guestbook's offline in this build."}</p>
   </form>
   <ol class="gb-list gb-admin" data-gb-list></ol>
+  <section class="gb" aria-labelledby="wall-admin-h">
+    <header class="section-head">
+      <h2 id="wall-admin-h" class="sub-h">Wall</h2>
+      <button type="button" class="text-btn" data-wall-clear hidden>clear the whole wall</button>
+    </header>
+    <ol class="gb-list wall-admin" data-wall-list></ol>
+  </section>
   <noscript><p>This page needs JavaScript.</p></noscript>
   <p class="back"><a href={`${base}guestbook/`}>Back to the guestbook</a></p>
 </Site>
@@ -93,6 +100,49 @@ const base = import.meta.env.BASE_URL;
       show();
     }
 
+    // the wall: recent placements (needs the token), undo a poster, or clear it
+    const wallList = document.querySelector<HTMLOListElement>('[data-wall-list]')!;
+    const wallClear = document.querySelector<HTMLButtonElement>('[data-wall-clear]')!;
+    type Pixel = { id: number; x: number; y: number; color: number; created: string; poster: string };
+    const COLOUR = ['erase', 'purple', 'ink'];
+    async function loadWall() {
+      const t = token();
+      if (!t) return;
+      const res = await fetch(`${api}/admin/wall`, { headers: { authorization: `Bearer ${t}` } });
+      if (!res.ok) return;
+      const pixels: Pixel[] = (await res.json()).pixels;
+      wallClear.hidden = false;
+      wallList.replaceChildren(
+        ...pixels.map((p) => {
+          const li = document.createElement('li');
+          const what = document.createElement('span');
+          what.textContent = `${COLOUR[p.color]} at ${p.x}, ${p.y}`;
+          const when = document.createElement('span');
+          when.className = 'gb-poster';
+          when.textContent = `${p.created.replace('T', ' ').slice(0, 16)} · poster ${p.poster}`;
+          const n = pixels.filter((q) => q.poster === p.poster).length;
+          li.append(what, when, button(`undo ${n === 1 ? 'it' : `all ${n}`} from ${p.poster}`, () => undoWall(p.poster)));
+          return li;
+        }),
+      );
+      if (!pixels.length) {
+        const li = document.createElement('li');
+        li.className = 'gb-empty';
+        li.textContent = 'Nothing on the wall yet.';
+        wallList.append(li);
+      }
+    }
+    async function wallDelete(query: string, done: string) {
+      const res = await fetch(`${api}/wall?${query}`, { method: 'DELETE', headers: { authorization: `Bearer ${token()}` } });
+      if (res.status === 401) return say('Wrong token.', true);
+      if (!res.ok) return say('That failed. Try again.', true);
+      const { deleted } = await res.json();
+      say(`${done} (${deleted} ${deleted === 1 ? 'pixel' : 'pixels'}).`);
+      loadWall();
+    }
+    const undoWall = (poster: string) => confirm(`Undo every pixel from poster ${poster}?`) && wallDelete(`poster=${poster}`, `Undid ${poster}`);
+    wallClear.addEventListener('click', () => confirm('Clear the whole wall? This can’t be undone.') && wallDelete('all=1', 'Cleared the wall'));
+
     async function removePoster(poster: string, n: number) {
       if (!confirm(`Delete all ${n} messages from poster ${poster}?`)) return;
       const res = await fetch(`${api}/messages?poster=${poster}`, { method: 'DELETE', headers: { authorization: `Bearer ${token()}` } });
@@ -119,11 +169,13 @@ const base = import.meta.env.BASE_URL;
     if (api) {
       input.value = store.get();
       load().catch(() => say('Couldn’t load the messages.', true));
+      loadWall().catch(() => {});
       form.addEventListener('submit', (e) => {
         e.preventDefault();
         store.set(input.value);
         say('Token saved in this browser.');
         load().catch(() => say('Couldn’t load the messages.', true));
+        loadWall().catch(() => {});
       });
       form.querySelector('[data-forget]')!.addEventListener('click', () => {
         store.clear();

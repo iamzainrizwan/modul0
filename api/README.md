@@ -40,6 +40,9 @@ Messages go live straight away, so the worker caps everything
   (zain, admin, modul0...)
 - invisible and text-direction characters stripped, zalgo trimmed
 - the visit counter moves once per visitor per day
+- the pixel wall: one pixel per visitor per UTC day (enforced inside the
+  insert, so racing requests can't both land), 1,000 a day for the whole
+  wall, no painting a cell the colour it already is, 5 attempts a minute
 - IPs are never stored, only a salted hash
 
 If spam still gets through, the next step is Cloudflare Turnstile (a free,
@@ -54,6 +57,10 @@ rejected posts don't ping. A failed ping is logged (`npx wrangler tail`) and
 never fails the post.
 
 ## Moderating
+
+The wall's recent placements are on the same admin page, with a poster tag
+each: undo everything from one poster (the cells go back to whatever was
+under them), or clear the whole wall.
 
 Delete messages at https://modul0.dev/guestbook/admin/ with the
 `ADMIN_TOKEN`. With the token saved, each message shows a short poster tag
