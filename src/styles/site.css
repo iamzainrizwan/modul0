@@ -925,27 +925,52 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 @media (max-width: 560px) { .quake-hint { display: none; } .quake-close { margin-left: auto; } .quake { height: 75vh; } }
 
 /* drop mockups (test site: data-quake from the motion panel, see
-   src/data/motion.ts). all of them: no slide, close on the same frame, the
-   scrim goes down whole. what differs is the first frame or two, each held
-   with step-end so it's a hard cut, never a glide */
+   src/data/motion.ts). five different arrivals, all on the step clock (held
+   frames, never a glide) and all over in under 170ms. shared: no slide,
+   close on the same frame, the scrim goes down whole. --qk-at is when the
+   terminal's contents show; opacity, not visibility, so the input can take
+   focus on the first frame */
 html[data-quake] .quake, html[data-quake] .quake.is-open { transform: none; transition: none; }
 html[data-quake] .quake-scrim { animation: none; }
-/* 2: half-dropped for one beat, then home */
-html[data-quake='shutter'] .quake.is-open { animation: qk-shutter 60ms step-end both; }
-@keyframes qk-shutter { 0% { transform: translateY(-50%); } 50%, 100% { transform: none; } }
-/* 3: painted in place, a third at a time */
-html[data-quake='bands'] .quake.is-open { animation: qk-bands 75ms step-end both; }
-@keyframes qk-bands { 0% { clip-path: inset(0 0 67% 0); } 33% { clip-path: inset(0 0 33% 0); } 67%, 100% { clip-path: inset(0); } }
-/* 4: the purple bar lands on the keypress, the body a beat later */
-html[data-quake='bar'] .quake.is-open { animation: qk-shell 80ms step-end both; }
-html[data-quake='bar'] .quake.is-open > .quake-scroll { animation: qk-late 80ms step-end both; }
-/* 5: a purple outline of the terminal, then it fills */
-html[data-quake='wire'] .quake.is-open { animation: qk-wire 90ms step-end both; }
-html[data-quake='wire'] .quake.is-open > * { animation: qk-late 90ms step-end both; }
-@keyframes qk-shell { 0% { background: transparent; border-bottom-color: transparent; } 50%, 100% { background: var(--void); border-bottom-color: var(--purple); } }
-@keyframes qk-wire { 0% { background: transparent; border-bottom-color: transparent; outline: 2px solid var(--purple); outline-offset: -2px; } 50%, 100% { background: var(--void); border-bottom-color: var(--purple); outline: 0 solid transparent; } }
-/* opacity, not visibility: the input has to take focus on the first frame */
-@keyframes qk-late { 0% { opacity: 0; } 50%, 100% { opacity: 1; } }
+html[data-quake] .quake.is-open > * { animation: qk-show 1ms step-end var(--qk-at, 0ms) both; }
+@keyframes qk-show { from { opacity: 0; } to { opacity: 1; } }
+
+/* 1 crt: a purple line across the middle, it opens out, the picture lands */
+html[data-quake='crt'] .quake.is-open { --qk-at: 90ms; transform-origin: 50% 50%; animation: qk-crt 90ms step-end both; }
+@keyframes qk-crt {
+  0% { transform: scaleY(0.012); background: var(--purple); }
+  50% { transform: scaleY(0.4); background: var(--purple); }
+  100% { transform: none; background: var(--void); }
+}
+/* 2 glitch: arrives torn (sideways offset slices with a hard purple ghost),
+   settles in three frames */
+html[data-quake='glitch'] .quake.is-open { animation: qk-glitch 120ms step-end both; }
+@keyframes qk-glitch {
+  0% { transform: translateX(-14px); clip-path: inset(0 -24px 55% -24px); box-shadow: 12px 0 0 var(--purple); }
+  33% { transform: translateX(9px); clip-path: inset(28% -24px 0 -24px); box-shadow: -8px 0 0 var(--purple); }
+  67% { transform: translateX(-3px); clip-path: inset(0 -24px 10% -24px); box-shadow: 4px 0 0 var(--purple); }
+  100% { transform: none; clip-path: none; box-shadow: none; }
+}
+/* 3 dissolve: the panel dithers in as solid purple pixels (the site's
+   blue-noise order, starting a quarter filled so the first frame isn't
+   empty), then cuts to the terminal: text itself never dissolves */
+html[data-quake='dissolve'] .quake.is-open { --qk-at: 120ms; animation: px-in 160ms steps(1, end) -40ms both, qk-flood 1ms step-end 120ms both; }
+/* 4 loader: the title bar fills left to right like a progress bar, then
+   the body lands */
+html[data-quake='loader'] .quake.is-open { --qk-at: 125ms; animation: qk-shell 1ms step-end 125ms both; }
+html[data-quake='loader'] .quake.is-open > .quake-bar { animation: qk-load 125ms step-end both; }
+@keyframes qk-shell { from { background: transparent; border-bottom-color: transparent; } to { background: var(--void); border-bottom-color: var(--purple); } }
+@keyframes qk-load {
+  0% { clip-path: inset(0 80% 0 0); }
+  20% { clip-path: inset(0 60% 0 0); }
+  40% { clip-path: inset(0 40% 0 0); }
+  60% { clip-path: inset(0 20% 0 0); }
+  80%, 100% { clip-path: inset(0); }
+}
+/* 5 flood: one frame of solid purple where the terminal goes, then a cut */
+html[data-quake='flood'] .quake.is-open { --qk-at: 50ms; animation: qk-flood 1ms step-end 50ms both; }
+@keyframes qk-flood { from { background: var(--purple); } to { background: var(--void); } }
+
 @media (prefers-reduced-motion: reduce) { html[data-quake] .quake.is-open, html[data-quake] .quake.is-open > * { animation: none; } }
 
 /* even out line lengths so headings and facts never strand one word */
