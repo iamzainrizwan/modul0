@@ -718,6 +718,9 @@ section.hero { margin-top: 0; border-top: none; }
 .gb-head time { font-family: var(--mono); font-size: 0.74rem; color: var(--muted); white-space: nowrap; }
 .gb-body { margin: 0.4rem 0 0; color: var(--soft); white-space: pre-line; overflow-wrap: anywhere; }
 .gb-empty { color: var(--muted); }
+/* zain's reply, stepped in under the message on a purple rule */
+.gb-reply { margin: 0.8rem 0 0 1rem; padding-left: 1rem; border-left: 2px solid var(--purple); }
+.gb-reply .gb-name { font-size: 1rem; color: var(--purple); }
 .gb-del { margin: 0.6rem 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 1.5rem; }
 .gb-poster { font-family: var(--mono); font-size: 0.74rem; color: var(--muted); }
 .gb-token fieldset { grid-template-columns: auto auto; }

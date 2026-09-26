@@ -28,6 +28,9 @@ export function setupWall(root: HTMLElement) {
   let sel: Cell | null = null;
   let hover: Cell | null = null;
   let busy = false;
+  // while the replay runs, what's drawn instead of the live wall
+  let shown: string | null = null;
+  let replay: number | undefined;
   // device pixels per cell: the canvas is sized to the screen, a whole number
   // per cell, so the grid lines stay crisp at any width (a 512 canvas scaled
   // down to a phone aliases them into stripes)
@@ -59,9 +62,10 @@ export function setupWall(root: HTMLElement) {
     const t = Math.max(1, Math.round(px / 8)); // outline thickness, in step with the cells
     ctx.fillStyle = paper;
     ctx.fillRect(0, 0, full, full);
-    for (let i = 0; i < cells.length; i++) {
-      if (cells[i] === '0') continue;
-      ctx.fillStyle = fill[+cells[i]];
+    const view = shown ?? cells;
+    for (let i = 0; i < view.length; i++) {
+      if (view[i] === '0') continue;
+      ctx.fillStyle = fill[+view[i]];
       ctx.fillRect((i % SIZE) * px, Math.floor(i / SIZE) * px, px, px);
     }
     ctx.fillStyle = line;
@@ -78,6 +82,7 @@ export function setupWall(root: HTMLElement) {
       ctx.fillRect(x, y, w, s);
       ctx.fillRect(x + s - w, y, w, s);
     };
+    if (shown !== null) return;
     if (hover && (!sel || hover.x !== sel.x || hover.y !== sel.y)) box(hover, 0, t, purple);
     if (sel) {
       // a preview of the pixel, boxed in ink with a paper gap so it shows on any colour
@@ -90,7 +95,7 @@ export function setupWall(root: HTMLElement) {
 
   function label() {
     const w = left();
-    place.disabled = busy || !sel || w > 0;
+    place.disabled = busy || !sel || w > 0 || shown !== null;
     place.textContent = w > 0 ? `Next pixel in ${until(w)}` : sel ? `Place at ${sel.x}, ${sel.y}` : 'Pick a cell';
     if (meta) {
       const n = [...cells].filter((c) => c !== '0').length;
@@ -152,6 +157,54 @@ export function setupWall(root: HTMLElement) {
     }
   });
   form.addEventListener('change', update);
+
+  // replay: the wall from empty, every placement in order, in about 80 hard
+  // frames (4s), then back to the live wall. click again to stop
+  const again = root.querySelector<HTMLButtonElement>('[data-wall-replay]')!;
+  const stop = () => {
+    clearInterval(replay);
+    replay = undefined;
+    shown = null;
+    again.textContent = 'replay';
+    update();
+  };
+  again.addEventListener('click', async () => {
+    if (replay !== undefined) return stop();
+    again.textContent = 'loading…';
+    try {
+      const res = await fetch(`${api}/wall/history`);
+      if (!res.ok) throw new Error();
+      const { moves } = (await res.json()) as { moves: string };
+      const n = moves.length / 3;
+      if (!n) {
+        again.textContent = 'replay';
+        return say('Nothing to replay yet.');
+      }
+      const frame = new Array(SIZE * SIZE).fill('0');
+      const per = Math.max(1, Math.ceil(n / 80));
+      let i = 0;
+      again.textContent = 'stop';
+      shown = frame.join('');
+      update();
+      replay = window.setInterval(() => {
+        if (!root.isConnected) return stop();
+        for (const end = Math.min(n, i + per); i < end; i++) {
+          const x = parseInt(moves[i * 3], 32), y = parseInt(moves[i * 3 + 1], 32);
+          frame[y * SIZE + x] = moves[i * 3 + 2];
+        }
+        shown = frame.join('');
+        draw();
+        if (i >= n) {
+          clearInterval(replay);
+          // hold the last frame a beat, then hand back to the live wall
+          replay = window.setTimeout(stop, 600);
+        }
+      }, 50);
+    } catch {
+      again.textContent = 'replay';
+      say('Couldn’t load the replay right now.', true);
+    }
+  });
 
   const errors: Record<string, string> = {
     'one-a-day': 'One pixel a day. Come back tomorrow.',

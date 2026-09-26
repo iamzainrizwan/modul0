@@ -73,6 +73,7 @@ const base = import.meta.env.BASE_URL;
         row.className = 'gb-del';
         const n = messages.filter((x) => x.poster === m.poster).length;
         row.append(button(`delete #${m.id}`, () => remove(m)));
+        row.append(button(m.reply ? 'edit reply' : 'reply', () => answer(m)));
         if (m.poster) {
           const tag = document.createElement('span');
           tag.className = 'gb-poster';
@@ -152,6 +153,26 @@ const base = import.meta.env.BASE_URL;
       messages = messages.filter((x) => x.poster !== poster);
       show();
       say(`Deleted ${deleted} from ${poster}.`);
+    }
+
+    // your reply under a message: edit it in place, empty removes it
+    async function answer(m: Message) {
+      const t = token();
+      if (!t) return say('Enter the token first.', true);
+      const text = prompt(`Reply to ${m.name} (empty removes it):\n\n${m.message}`, m.reply ?? '');
+      if (text === null) return;
+      const res = await fetch(`${api}/messages/${m.id}/reply`, {
+        method: 'PUT',
+        headers: { authorization: `Bearer ${t}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ reply: text }),
+      });
+      if (res.status === 401) return say('Wrong token.', true);
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) return say(d.error === 'too-long' ? 'That’s over 500 characters.' : 'Reply failed. Try again.', true);
+      m.reply = d.reply;
+      m.replied = d.replied ?? null;
+      show();
+      say(d.reply ? `Replied to #${m.id}.` : `Removed the reply on #${m.id}.`);
     }
 
     async function remove(m: Message) {

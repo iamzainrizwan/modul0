@@ -38,3 +38,12 @@ CREATE TABLE IF NOT EXISTS pixels (
 );
 CREATE INDEX IF NOT EXISTS pixels_cell ON pixels (x, y, id);
 CREATE INDEX IF NOT EXISTS pixels_ip ON pixels (ip_hash, created);
+
+-- zain's replies to guestbook messages (one per message, shown under it).
+-- a table of its own: sqlite can't add a column "if not exists", and this
+-- file has to stay safe to re-run.
+CREATE TABLE IF NOT EXISTS replies (
+  message_id INTEGER PRIMARY KEY,
+  reply TEXT NOT NULL,
+  created TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+);

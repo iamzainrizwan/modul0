@@ -6,11 +6,14 @@
 //   GET    /admin/messages         the same plus a short poster tag   } need
 //   DELETE /messages/:id           one message                        } Authorization:
 //   DELETE /messages?poster=tag    everything from one poster         } Bearer ADMIN_TOKEN
+//   PUT    /messages/:id/reply     zain's reply under a message       }
+//                                  ({reply}; empty removes it)
 //   GET    /views                  the count
 //   POST   /views                  count this visit (once per visitor per day)
 //   GET    /wall                   the pixel wall, plus how long until you can place
 //   GET    /wall.svg               the same as an image (the page without js)
 //   POST   /wall                   place one pixel: {x, y, color}, one a day each
+//   GET    /wall/history           every placement in order, for the replay
 //   GET    /admin/wall             recent placements with poster tags     } admin
 //   DELETE /wall?poster=tag        undo everything from one poster        }
 //   DELETE /wall?all=1             clear the wall                         }
@@ -40,6 +43,7 @@ const RESERVED = ['zain', 'zainrizwan', 'iamzainrizwan', 'admin', 'modul0', 'mod
 const SIZE = 32;
 const COLORS = 3;
 const WALL_SITE_DAY = 1000; // placements a day for everyone, so a botnet can't repaint it all
+const HISTORY_MAX = 20000; // placements the replay gets (the newest, if there are more)
 
 export default {
   async fetch(request, env, ctx) {
@@ -69,7 +73,8 @@ async function route(request, env, url, ctx) {
   if (pathname === '/messages' && method === 'GET') {
     if (!(await allow(env.READ_LIMIT, ip))) return json({ error: 'slow-down' }, 429);
     const { results } = await env.DB.prepare(
-      'SELECT id, name, message, created FROM messages ORDER BY id DESC LIMIT ?',
+      `SELECT m.id, m.name, m.message, m.created, r.reply, r.created AS replied
+       FROM messages m LEFT JOIN replies r ON r.message_id = m.id ORDER BY m.id DESC LIMIT ?`,
     ).bind(LIST_MAX).all();
     return json({ messages: results });
   }
@@ -95,6 +100,14 @@ async function route(request, env, url, ctx) {
     return json({ size: SIZE, cells, wait: await wallWait(env, ip) });
   }
 
+  if (pathname === '/wall/history' && method === 'GET') {
+    if (!(await allow(env.READ_LIMIT, ip))) return json({ error: 'slow-down' }, 429);
+    // three base-32 characters a placement (x, y, colour), oldest first
+    const { results } = await env.DB.prepare('SELECT x, y, color FROM pixels ORDER BY id DESC LIMIT ?').bind(HISTORY_MAX).all();
+    const moves = results.reverse().map((p) => p.x.toString(32) + p.y.toString(32) + p.color.toString(32)).join('');
+    return json({ size: SIZE, moves }, 200, { 'cache-control': 'public, max-age=60' });
+  }
+
   if (pathname === '/wall' && method === 'POST') {
     if (!(await allow(env.WALL_LIMIT, ip))) return json({ error: 'slow-down' }, 429);
     return place(request, env, ip);
@@ -102,13 +115,16 @@ async function route(request, env, url, ctx) {
 
   // everything below is admin
   const one = pathname.match(/^\/messages\/(\d+)$/);
+  const replyTo = pathname.match(/^\/messages\/(\d+)\/reply$/);
   const admin =
     ((pathname === '/admin/messages' || pathname === '/admin/wall') && method === 'GET') ||
-    (method === 'DELETE' && (one || pathname === '/messages' || pathname === '/wall'));
+    (method === 'DELETE' && (one || pathname === '/messages' || pathname === '/wall')) ||
+    (method === 'PUT' && replyTo);
   if (admin) {
     if (!(await allow(env.ADMIN_LIMIT, ip))) return json({ error: 'slow-down' }, 429);
     if (!(await isAdmin(request, env))) return json({ error: 'unauthorised' }, 401);
 
+    if (replyTo) return setReply(request, env, Number(replyTo[1]));
     if (pathname === '/admin/wall') {
       const { results } = await env.DB.prepare(
         'SELECT id, x, y, color, created, substr(ip_hash, 1, 8) AS poster FROM pixels ORDER BY id DESC LIMIT ?',
@@ -127,18 +143,27 @@ async function route(request, env, url, ctx) {
     }
     if (method === 'GET') {
       const { results } = await env.DB.prepare(
-        'SELECT id, name, message, created, substr(ip_hash, 1, 8) AS poster FROM messages ORDER BY id DESC LIMIT ?',
+        `SELECT m.id, m.name, m.message, m.created, substr(m.ip_hash, 1, 8) AS poster, r.reply, r.created AS replied
+         FROM messages m LEFT JOIN replies r ON r.message_id = m.id ORDER BY m.id DESC LIMIT ?`,
       ).bind(LIST_MAX).all();
       return json({ messages: results });
     }
+    // a message's reply goes with it
     if (one) {
-      const { meta } = await env.DB.prepare('DELETE FROM messages WHERE id = ?').bind(Number(one[1])).run();
-      return json({ deleted: meta.changes });
+      const id = Number(one[1]);
+      const [, gone] = await env.DB.batch([
+        env.DB.prepare('DELETE FROM replies WHERE message_id = ?').bind(id),
+        env.DB.prepare('DELETE FROM messages WHERE id = ?').bind(id),
+      ]);
+      return json({ deleted: gone.meta.changes });
     }
     const poster = url.searchParams.get('poster') ?? '';
     if (!/^[0-9a-f]{8}$/.test(poster)) return json({ error: 'bad-request' }, 400);
-    const { meta } = await env.DB.prepare('DELETE FROM messages WHERE substr(ip_hash, 1, 8) = ?').bind(poster).run();
-    return json({ deleted: meta.changes });
+    const [, gone] = await env.DB.batch([
+      env.DB.prepare('DELETE FROM replies WHERE message_id IN (SELECT id FROM messages WHERE substr(ip_hash, 1, 8) = ?)').bind(poster),
+      env.DB.prepare('DELETE FROM messages WHERE substr(ip_hash, 1, 8) = ?').bind(poster),
+    ]);
+    return json({ deleted: gone.meta.changes });
   }
 
   return json({ error: 'not found' }, 404);
@@ -185,6 +210,31 @@ async function post(request, env, ip, isForm, ctx) {
   // tell zain, without holding up the reply (a failed ping never fails the post)
   ctx?.waitUntil(notify(env, row, hash));
   return reply(isForm, env, { ok: true, message: row }, 201);
+}
+
+// zain's reply under a message (admin only): cleaned like a message, same
+// length cap; an empty reply removes it
+async function setReply(request, env, id) {
+  let body;
+  try {
+    body = JSON.parse(await request.text());
+  } catch {
+    return json({ error: 'bad-request' }, 400);
+  }
+  const text = clean(body?.reply, true);
+  if ([...text].length > MESSAGE_MAX) return json({ error: 'too-long' }, 400);
+  const exists = await env.DB.prepare('SELECT 1 FROM messages WHERE id = ?').bind(id).first();
+  if (!exists) return json({ error: 'not found' }, 404);
+  if (!text) {
+    await env.DB.prepare('DELETE FROM replies WHERE message_id = ?').bind(id).run();
+    return json({ ok: true, reply: null });
+  }
+  const row = await env.DB.prepare(
+    `INSERT INTO replies (message_id, reply) VALUES (?1, ?2)
+     ON CONFLICT (message_id) DO UPDATE SET reply = ?2, created = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+     RETURNING reply, created`,
+  ).bind(id, text).first();
+  return json({ ok: true, reply: row.reply, replied: row.created });
 }
 
 // a discord ping for each new message (DISCORD_WEBHOOK secret; skipped if
@@ -349,7 +399,7 @@ function corsHeaders(request, env) {
   if (!origin || !origins(env).includes(origin)) return {};
   return {
     'access-control-allow-origin': origin,
-    'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
+    'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'access-control-allow-headers': 'content-type, authorization',
     'access-control-max-age': '86400',
     vary: 'origin',
