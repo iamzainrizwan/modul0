@@ -130,3 +130,10 @@ html[data-broken] body::after {
   91%, 100% { clip-path: inset(100% 0 0 0); }
 }
 @media (prefers-reduced-motion: reduce) { .terminal .sl pre, html[data-broken] .terminal, html[data-broken] body::after { animation: none; } html[data-broken] body::after { display: none; } }
+
+/* neofetch: the logo beside the facts, stacked on phones */
+.terminal .neo { display: flex; flex-wrap: wrap; gap: 0.75em 3ch; align-items: flex-start; }
+.terminal .neo-logo { line-height: 1.15; padding-top: 0.2em; }
+.terminal .neo-swatch { display: inline-flex; }
+.terminal .neo-swatch i { display: inline-block; width: 2ch; height: 1em; border: 1px solid var(--line-strong); border-left: none; }
+.terminal .neo-swatch i:first-child { border-left: 1px solid var(--line-strong); }

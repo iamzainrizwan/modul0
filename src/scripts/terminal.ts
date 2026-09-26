@@ -10,6 +10,8 @@ export type Fs = {
   whoami: string;
   birth: string;
   base: string;
+  // the build: commit, repo, recent history (src/data/build.ts)
+  build?: { short: string; url: string; repo: string; log: { sha: string; date: string; subject: string }[] };
 };
 
 const DIRS = ['projects', 'blog'] as const;
@@ -28,6 +30,8 @@ const COMMANDS: [string, string, string?][] = [
   ['expr a % b', 'the remainder of a / b', 'expr 17 % 5'],
   ['man modul0', "why it's called that"],
   ['grep [text]', 'search every file', 'grep alexandria'],
+  ['neofetch', 'system info, sort of'],
+  ['git log', 'what changed on the site lately'],
   ['curl modul0.dev/cv.txt', 'the cv as plain text (works from your own terminal too)', 'curl modul0.dev/cv.txt'],
   ['tail -f status.log', "what i'm working on right now"],
   ['pgrep -a zain', 'recent achievements'],
@@ -69,6 +73,23 @@ const TRAIN = `      ____
 |  __  |   modul0 ${op('%')} |
 |_|__|_|_____________|
   O  O    O O   O O`;
+
+// neofetch's logo: the % mark (squares top left and bottom right, the slash
+// between them), same shape as the favicon
+const logo = () => {
+  const sq = (s: string) => `<span class="accent">${s}</span>`;
+  // 14 columns: squares in two corners, the slash stepping two columns a row
+  const rows = [
+    `${sq('████')}        ██`,
+    `${sq('████')}      ██  `,
+    `        ██    `,
+    `      ██      `,
+    `    ██        `,
+    `  ██      ${sq('████')}`,
+    `██        ${sq('████')}`,
+  ];
+  return rows.join('\n');
+};
 
 // `rm -rf /`: what it deletes on the way down (then it all comes back)
 const DOOMED = ['/home/zain/projects', '/home/zain/homelab', '/home/zain/cv', '/home/zain', '/'];
@@ -391,6 +412,54 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
         else if (host === 'alexandria') out = "PING alexandria: it doesn't answer strangers.";
         else if (['modul0.dev', 'modul0', 'localhost', '127.0.0.1'].includes(host)) out = `64 bytes from ${escape(host)}: time=0ms. you're already here.`;
         else out = error(`ping: ${escape(host)}: this is a website. it can't send icmp.`);
+        break;
+      }
+      case 'neofetch': {
+        const row = (k: string, v: string) => `<span class="accent">${k.padEnd(9)}</span>${v}`;
+        const b = fs.build;
+        const info = [
+          '<b>zain</b>@<b>modul0</b>',
+          '-----------',
+          row('os', 'modul0.dev (astro + react, static)'),
+          row('host', 'github pages'),
+          row('kernel', b?.short ? `<a href="${b.url}" rel="noopener">${b.short}</a>` : 'dev'),
+          row('uptime', uptimeText(fs.birth)),
+          row('shell', 'this one. type help'),
+          row('study', 'cs @ kcl, year 2'),
+          row('stack', 'python, go, typescript, java, c#'),
+          row('homelab', 'alexandria (ubuntu server), valhalla (blade 14)'),
+          row('theme', getTheme()),
+          '',
+          '<span class="neo-swatch"><i style="background:var(--void)"></i><i style="background:var(--line-strong)"></i><i style="background:var(--muted)"></i><i style="background:var(--purple-deep)"></i><i style="background:var(--purple)"></i><i style="background:var(--white)"></i></span>',
+        ];
+        out = `<div class="neo"><pre class="neo-logo" aria-hidden="true">${logo()}</pre><pre>${info.join('\n')}</pre></div>`;
+        break;
+      }
+      case 'git': {
+        const b = fs.build;
+        const sub = args[0];
+        if (sub === 'log') {
+          const n = Number((args.find((a) => /^-n?\d+$/.test(a)) ?? '').replace(/^-n?/, '')) || Number(args[args.indexOf('-n') + 1]) || 10;
+          const log = (b?.log ?? []).slice(0, Math.min(n, 15));
+          if (!log.length) out = '<span class="dim">no history in this build (a local dev server, probably)</span>';
+          else
+            out = log
+              .map((c) => {
+                const s = c.subject.length > 110 ? c.subject.slice(0, 110) + '...' : c.subject;
+                return `<div><a href="${b!.repo}/commit/${c.sha}" rel="noopener">${c.sha.slice(0, 7)}</a> <span class="dim">${c.date}</span> ${escape(s)}</div>`;
+              })
+              .join('');
+        } else if (sub === 'status') {
+          out = "<pre>on branch main\nyour branch is up to date with 'origin/main'.\n\nnothing to commit, working tree clean</pre>";
+        } else if (sub === 'push') {
+          out = error('remote: permission to iamzainrizwan/modul0.git denied to guest.');
+        } else if (sub === 'blame') {
+          out = "zain. it's always zain.";
+        } else if (sub === 'clone') {
+          out = `the source is public: <a href="${b?.repo ?? 'https://github.com/iamzainrizwan/modul0'}" rel="noopener">github.com/iamzainrizwan/modul0</a>`;
+        } else {
+          out = `usage: git [log | status]<br>try <a class="run" href="#" data-cmd="git log">git log</a>`;
+        }
         break;
       }
       case 'history':

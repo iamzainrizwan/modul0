@@ -1,5 +1,6 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { files, projects, whoami, birth } from './fs';
+import { build } from './build';
 
 export type Post = { title: string; date: string; description: string; html: string };
 
@@ -21,7 +22,8 @@ export async function buildFs() {
       html: p.rendered?.html ?? '',
     };
   }
-  return { files, projects, blog, whoami, birth, base: import.meta.env.BASE_URL };
+  const { short, url, repo, log } = build;
+  return { files, projects, blog, whoami, birth, base: import.meta.env.BASE_URL, build: { short, url, repo, log } };
 }
 
 export const longDate = (d: Date) =>
