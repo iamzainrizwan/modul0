@@ -254,6 +254,8 @@ const sections = [
         for (const a of [...document.documentElement.attributes]) {
           if (a.name === 'data-motion' || a.name === 'data-theme' || a.name.startsWith('data-mx-')) next.setAttribute(a.name, a.value);
         }
+        // and the browser bar's colour: the new page's head says black
+        e.newDocument.querySelector('meta[name="theme-color"]')?.setAttribute('content', getTheme() === 'light' ? '#ffffff' : '#000000');
       });
 
       // the footer's "updated" stamp reads as time ago (the date without js).

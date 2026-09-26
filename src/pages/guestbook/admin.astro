@@ -201,6 +201,9 @@ const base = import.meta.env.BASE_URL;
       form.querySelector('[data-forget]')!.addEventListener('click', () => {
         store.clear();
         input.value = '';
+        // the wall list is admin-only: it goes with the token
+        wallList.replaceChildren();
+        wallClear.hidden = true;
         say('Token forgotten.');
       });
     }

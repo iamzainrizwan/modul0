@@ -47,3 +47,15 @@ CREATE TABLE IF NOT EXISTS replies (
   reply TEXT NOT NULL,
   created TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
+
+-- the wall as it stands, in one row, so reading it costs one row instead of
+-- a scan of every placement: cells (32*32 digits) and moves (the replay, 3
+-- base-32 chars a placement, the newest 20,000). a new pixel updates it in
+-- place; an admin undo or clear rebuilds it from pixels.
+CREATE TABLE IF NOT EXISTS wall_state (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  cells TEXT NOT NULL,
+  moves TEXT NOT NULL
+);
+-- the wall's site-wide daily cap counts by day
+CREATE INDEX IF NOT EXISTS pixels_created ON pixels (created);

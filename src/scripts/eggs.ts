@@ -69,7 +69,9 @@ let lastTip = '';
 export function tip(): [string, string] {
   const got = foundEggs();
   let left = TIPS.filter(([id]) => !got.has(id));
-  if (!left.length) return got.size >= EGGS.length ? ['all eggs found. show off', 'eggs'] : ['some eggs are quieter. try eggs', 'eggs'];
+  // counted against EGGS, so a stale id from an old version doesn't count
+  const all = EGGS.every(([id]) => got.has(id));
+  if (!left.length) return all ? ['all eggs found. show off', 'eggs'] : ['some eggs are quieter. try eggs', 'eggs'];
   if (left.length > 1) left = left.filter(([id]) => id !== lastTip);
   const [id, text, cmd] = left[Math.floor(Math.random() * left.length)];
   lastTip = id;
@@ -236,12 +238,15 @@ function takeKeys(stop: () => void, onKey?: (e: KeyboardEvent) => boolean) {
   return () => window.removeEventListener('keydown', h, true);
 }
 
+// ends a running egg (the drop-down calls it when it closes)
+export type Stop = (stopped?: boolean) => void;
+
 // runs `frame` every `ms` until it returns false or someone stops it
 function loop(ctx: Ctx, ms: number, frame: (n: number) => boolean | void, done: (stopped: boolean) => void, onKey?: (e: KeyboardEvent) => boolean) {
   ctx.busy(true);
   let n = 0;
   let over = false;
-  const finish = (stopped: boolean) => {
+  const finish: Stop = (stopped = true) => {
     if (over) return;
     over = true;
     clearInterval(timer);
@@ -256,10 +261,10 @@ function loop(ctx: Ctx, ms: number, frame: (n: number) => boolean | void, done: 
   return finish;
 }
 
-export function yes(ctx: Ctx, word: string) {
+export function yes(ctx: Ctx, word: string): Stop {
   const el = ctx.print('<pre class="yes"></pre>').querySelector('pre')!;
   let lines = 0;
-  loop(
+  return loop(
     ctx,
     30,
     () => {
@@ -276,10 +281,10 @@ export function yes(ctx: Ctx, word: string) {
   );
 }
 
-export function forkbomb(ctx: Ctx) {
+export function forkbomb(ctx: Ctx): Stop {
   const el = ctx.print('<pre></pre>').querySelector('pre')!;
   let procs = 1;
-  loop(
+  return loop(
     ctx,
     ctx.reduced() ? 1 : 70,
     () => {
@@ -296,7 +301,7 @@ export function forkbomb(ctx: Ctx) {
   );
 }
 
-export function hack(ctx: Ctx, target: string, esc: Esc) {
+export function hack(ctx: Ctx, target: string, esc: Esc): Stop {
   const steps = ['bypassing the firewall', 'decrypting the mainframe', 'downloading more ram', 'reversing the polarity', 'enhancing'];
   const el = ctx.print(`<pre>target: ${esc(target || 'the mainframe')}\n</pre>`).querySelector('pre')!;
   const head = el.textContent!;
@@ -304,7 +309,7 @@ export function hack(ctx: Ctx, target: string, esc: Esc) {
     const done = steps.map((s, k) => (k < Math.floor(i / 10) ? `[##########] ${s}` : k === Math.floor(i / 10) ? `[${'#'.repeat(i % 10).padEnd(10, '.')}] ${s}` : ''));
     return head + done.filter(Boolean).join('\n');
   };
-  loop(
+  return loop(
     ctx,
     ctx.reduced() ? 1 : 28,
     (i) => {
@@ -324,7 +329,7 @@ export function hack(ctx: Ctx, target: string, esc: Esc) {
 }
 
 const RAIN = 'abcdefghijklmnopqrstuvwxyz0123456789%#/<>{}[]$&*+=';
-export function cmatrix(ctx: Ctx) {
+export function cmatrix(ctx: Ctx): Stop {
   const rows = 14;
   const cols = Math.max(20, Math.min(ctx.cols(), 120));
   const el = ctx.print('<pre class="rain" aria-hidden="true"></pre>').querySelector('pre')!;
@@ -345,7 +350,7 @@ export function cmatrix(ctx: Ctx) {
     }
     el.innerHTML = s;
   };
-  loop(
+  return loop(
     ctx,
     75,
     (n) => {
@@ -365,7 +370,7 @@ export function cmatrix(ctx: Ctx) {
 }
 
 // snake: arrows, wasd or hjkl; space pauses; swipe on a touch screen
-export function snake(ctx: Ctx) {
+export function snake(ctx: Ctx): Stop {
   const W = 18, H = 12;
   const res = ctx.print(`<div class="t-snake"><div class="t-snake-board" style="--w:${W};--h:${H}"></div><div class="t-snake-status"></div></div>`);
   const board = res.querySelector<HTMLElement>('.t-snake-board')!;
@@ -390,6 +395,7 @@ export function snake(ctx: Ctx) {
   let paused = false;
   let dead = false;
   const place = () => {
+    if (body.length >= W * H) return; // a full board: nowhere left (and no infinite loop)
     do food = { x: Math.floor(Math.random() * W), y: Math.floor(Math.random() * H) };
     while (body.some((b) => b.x === food.x && b.y === food.y));
   };
@@ -425,7 +431,7 @@ export function snake(ctx: Ctx) {
   draw();
   ctx.scroll();
   let tick = 0;
-  loop(
+  return loop(
     ctx,
     20,
     () => {

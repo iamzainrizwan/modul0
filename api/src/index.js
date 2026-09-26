@@ -44,6 +44,7 @@ const SIZE = 32;
 const COLORS = 3;
 const WALL_SITE_DAY = 1000; // placements a day for everyone, so a botnet can't repaint it all
 const HISTORY_MAX = 20000; // placements the replay gets (the newest, if there are more)
+const PLACE_MAX = 256; // bytes: a placement is {x, y, color}
 
 export default {
   async fetch(request, env, ctx) {
@@ -93,7 +94,7 @@ async function route(request, env, url, ctx) {
 
   if ((pathname === '/wall' || pathname === '/wall.svg') && method === 'GET') {
     if (!(await allow(env.READ_LIMIT, ip))) return json({ error: 'slow-down' }, 429);
-    const cells = await wall(env);
+    const { cells } = await wallState(env);
     if (pathname === '/wall.svg') {
       return new Response(svg(cells), { headers: { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=60' } });
     }
@@ -102,10 +103,8 @@ async function route(request, env, url, ctx) {
 
   if (pathname === '/wall/history' && method === 'GET') {
     if (!(await allow(env.READ_LIMIT, ip))) return json({ error: 'slow-down' }, 429);
-    // three base-32 characters a placement (x, y, colour), oldest first
-    const { results } = await env.DB.prepare('SELECT x, y, color FROM pixels ORDER BY id DESC LIMIT ?').bind(HISTORY_MAX).all();
-    const moves = results.reverse().map((p) => p.x.toString(32) + p.y.toString(32) + p.color.toString(32)).join('');
-    return json({ size: SIZE, moves }, 200, { 'cache-control': 'public, max-age=60' });
+    const { moves } = await wallState(env);
+    return json({ size: SIZE, moves, max: HISTORY_MAX }, 200, { 'cache-control': 'public, max-age=60' });
   }
 
   if (pathname === '/wall' && method === 'POST') {
@@ -134,11 +133,13 @@ async function route(request, env, url, ctx) {
     if (pathname === '/wall') {
       if (url.searchParams.get('all') === '1') {
         const { meta } = await env.DB.prepare('DELETE FROM pixels').run();
+        await rebuildWall(env);
         return json({ deleted: meta.changes });
       }
       const poster = url.searchParams.get('poster') ?? '';
       if (!/^[0-9a-f]{8}$/.test(poster)) return json({ error: 'bad-request' }, 400);
       const { meta } = await env.DB.prepare('DELETE FROM pixels WHERE substr(ip_hash, 1, 8) = ?').bind(poster).run();
+      await rebuildWall(env);
       return json({ deleted: meta.changes });
     }
     if (method === 'GET') {
@@ -217,7 +218,9 @@ async function post(request, env, ip, isForm, ctx) {
 async function setReply(request, env, id) {
   let body;
   try {
-    body = JSON.parse(await request.text());
+    const raw = await request.text();
+    if (raw.length > BODY_MAX) return json({ error: 'too-long' }, 413);
+    body = JSON.parse(raw);
   } catch {
     return json({ error: 'bad-request' }, 400);
   }
@@ -294,15 +297,28 @@ function reply(isForm, env, data, status) {
   return new Response(null, { status: 303, headers: { location: to.toString() } });
 }
 
-// the wall as SIZE*SIZE digits, row by row: the newest placement in each cell
-async function wall(env) {
-  const cells = Array(SIZE * SIZE).fill('0');
-  const { results } = await env.DB.prepare(
-    'SELECT x, y, color FROM pixels WHERE id IN (SELECT MAX(id) FROM pixels GROUP BY x, y)',
-  ).all();
-  for (const p of results) cells[p.y * SIZE + p.x] = String(p.color);
-  return cells.join('');
+// the wall as it stands: cells, SIZE*SIZE digits row by row, and moves, the
+// replay (3 base-32 chars a placement: x, y, colour; oldest first). read from
+// the one wall_state row; built from pixels the first time, or after an admin
+// undo or clear. a full scan, so only then
+async function wallState(env) {
+  const row = await env.DB.prepare('SELECT cells, moves FROM wall_state WHERE id = 1').first();
+  return row ?? rebuildWall(env);
 }
+
+async function rebuildWall(env) {
+  const cells = Array(SIZE * SIZE).fill('0');
+  const [latest, recent] = await env.DB.batch([
+    env.DB.prepare('SELECT x, y, color FROM pixels WHERE id IN (SELECT MAX(id) FROM pixels GROUP BY x, y)'),
+    env.DB.prepare('SELECT x, y, color FROM pixels ORDER BY id DESC LIMIT ?').bind(HISTORY_MAX),
+  ]);
+  for (const p of latest.results) cells[p.y * SIZE + p.x] = String(p.color);
+  const state = { cells: cells.join(''), moves: recent.results.reverse().map(move).join('') };
+  await env.DB.prepare('INSERT OR REPLACE INTO wall_state (id, cells, moves) VALUES (1, ?, ?)').bind(state.cells, state.moves).run();
+  return state;
+}
+
+const move = (p) => p.x.toString(32) + p.y.toString(32) + p.color.toString(32);
 
 // seconds until this visitor's next pixel: one per utc day
 async function wallWait(env, ip) {
@@ -315,10 +331,13 @@ async function wallWait(env, ip) {
 }
 
 async function place(request, env, ip) {
-  if (Number(request.headers.get('content-length') ?? 0) > 256) return json({ error: 'too-long' }, 413);
+  if (Number(request.headers.get('content-length') ?? 0) > PLACE_MAX) return json({ error: 'too-long' }, 413);
   let body;
   try {
-    body = JSON.parse(await request.text());
+    // the header can be missing (a chunked body), so check what actually came
+    const raw = await request.text();
+    if (raw.length > PLACE_MAX) return json({ error: 'too-long' }, 413);
+    body = JSON.parse(raw);
   } catch {
     return json({ error: 'bad-request' }, 400);
   }
@@ -332,8 +351,9 @@ async function place(request, env, ip) {
   const everyone = await env.DB.prepare('SELECT COUNT(*) AS n FROM pixels WHERE created >= ?').bind(today).first();
   if (everyone.n >= WALL_SITE_DAY) return json({ error: 'wall-busy' }, 429);
   // painting a cell the colour it already is would waste the day's pixel
-  const current = await env.DB.prepare('SELECT color FROM pixels WHERE x = ? AND y = ? ORDER BY id DESC LIMIT 1').bind(x, y).first();
-  if ((current?.color ?? 0) === color) return json({ error: 'same' }, 409);
+  const { cells } = await wallState(env);
+  const i = y * SIZE + x;
+  if (cells[i] === String(color)) return json({ error: 'same' }, 409);
 
   // the once-a-day check again inside the insert, so two requests racing
   // each other can't both land
@@ -342,7 +362,13 @@ async function place(request, env, ip) {
     'INSERT INTO pixels (x, y, color, ip_hash) SELECT ?1, ?2, ?3, ?4 WHERE NOT EXISTS (SELECT 1 FROM pixels WHERE ip_hash = ?4 AND created >= ?5)',
   ).bind(x, y, color, hash, today).run();
   if (!meta.changes) return json({ error: 'one-a-day', wait: await wallWait(env, ip) }, 429);
-  return json({ ok: true, cells: await wall(env), wait: await wallWait(env, ip) }, 201);
+  // the wall row, updated in one statement so two people placing at once
+  // can't overwrite each other's cell; the replay keeps its newest moves
+  await env.DB.prepare(
+    'UPDATE wall_state SET cells = substr(cells, 1, ?1) || ?2 || substr(cells, ?1 + 2), moves = substr(moves || ?3, -?4) WHERE id = 1',
+  ).bind(i, String(color), move({ x, y, color }), HISTORY_MAX * 3).run();
+  const after = cells.slice(0, i) + color + cells.slice(i + 1);
+  return json({ ok: true, cells: after, wait: await wallWait(env, ip) }, 201);
 }
 
 // the wall as an image, drawn for black like the 404 snake: purple and white on #000

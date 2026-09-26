@@ -1,7 +1,7 @@
 import { listing, postView } from './render';
 import { uptimeRows, uptimeText } from './uptime';
 import { getTheme, setTheme } from './theme';
-import { EGGS, markEgg, foundEggs, resetEggs, eggsReport, quick, MAN_MAN, yes, forkbomb, hack, cmatrix, snake, tip, type Ctx } from './eggs';
+import { EGGS, markEgg, foundEggs, resetEggs, eggsReport, quick, MAN_MAN, yes, forkbomb, hack, cmatrix, snake, tip, type Ctx, type Stop } from './eggs';
 
 type Post = { title: string; date: string; description: string; html: string };
 export type Fs = {
@@ -193,11 +193,15 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
   }
 
   // what the long eggs get to work with
+  // the long egg running now, if any: one at a time, and it stops when the
+  // drop-down closes
+  let egg: Stop | null = null;
   const ctx: Ctx = {
     print: (html) => print(html, undefined, '', 'entry'),
     busy: (on) => {
       form.hidden = on;
       if (!on) {
+        egg = null;
         promptText.textContent = prompt();
         input.focus({ preventScroll: true });
       }
@@ -352,19 +356,23 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
 
   function run(raw: string) {
     const promptAt = prompt();
+    // the prompt's hidden while something runs (an egg, rm -rf /, a reboot):
+    // clicks on tips and old "play again" links wait their turn
+    if (form.hidden) return;
     const line = raw.trim();
     if (line) history.push(line);
     historyIdx = history.length;
     if (vim) return vimKeys(line, raw, promptAt);
     if (/^:\(\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;\s*:$/.test(line)) {
       print('', raw, promptAt);
-      return forkbomb(ctx);
+      egg = forkbomb(ctx);
+      return;
     }
     const [command, ...args] = line.split(/\s+/);
-    const egg = quick(line, command, args, escape, error);
-    if (egg) {
-      print(egg[1], raw, promptAt);
-      found(egg[0]);
+    const one = quick(line, command, args, escape, error);
+    if (one) {
+      print(one[1], raw, promptAt);
+      found(one[0]);
       return;
     }
     // an egg the switch below finds, counted once its output is up
@@ -573,17 +581,22 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
         break;
       case 'yes':
         print('', raw, promptAt);
-        return yes(ctx, escape(args.join(' ') || 'y'));
+        // textContent, so no escaping (it would show as &lt;)
+        egg = yes(ctx, args.join(' ') || 'y');
+        return;
       case 'hack':
         print('', raw, promptAt);
-        return hack(ctx, args.join(' '), escape);
+        egg = hack(ctx, args.join(' '), escape);
+        return;
       case 'cmatrix':
       case 'matrix':
         print('', raw, promptAt);
-        return cmatrix(ctx);
+        egg = cmatrix(ctx);
+        return;
       case 'snake':
         print('', raw, promptAt);
-        return snake(ctx);
+        egg = snake(ctx);
+        return;
       case 'reboot': {
         print('<span class="dim">broadcast message from zain@modul0: the system is going down for reboot NOW!</span>', raw, promptAt);
         found('reboot');
@@ -730,6 +743,8 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
 
   return {
     focus: () => input.focus({ preventScroll: true }),
+    // end whatever long egg is running (the drop-down closing)
+    stop: () => egg?.(),
     // run a command as if typed (the drop-down's tip)
     run: (cmd: string) => {
       run(cmd);

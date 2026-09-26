@@ -40,9 +40,11 @@ Messages go live straight away, so the worker caps everything
   (zain, admin, modul0...)
 - invisible and text-direction characters stripped, zalgo trimmed
 - the visit counter moves once per visitor per day
-- the pixel wall: one pixel per visitor per UTC day (enforced inside the
-  insert, so racing requests can't both land), 1,000 a day for the whole
-  wall, no painting a cell the colour it already is, 5 attempts a minute
+- the pixel wall: one pixel per IP per UTC day (so a shared network, like
+  campus wifi, shares one; enforced inside the insert, so racing requests
+  can't both land), 1,000 a day for the whole wall, no painting a cell the
+  colour it already is, 5 attempts a minute. Reading the wall costs one row
+  (`wall_state`), not a scan, so polling tabs can't run down the free tier
 - IPs are never stored, only a salted hash
 
 If spam still gets through, the next step is Cloudflare Turnstile (a free,

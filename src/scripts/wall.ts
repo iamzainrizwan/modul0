@@ -7,8 +7,10 @@ const NAMES = ['blank', 'purple', 'ink'];
 
 type Cell = { x: number; y: number };
 
+// rounded up to the minute first, so 59m59s reads 1h 0m, never 60m
 const until = (s: number) => {
-  const h = Math.floor(s / 3600), m = Math.ceil((s % 3600) / 60);
+  const mins = Math.ceil(s / 60);
+  const h = Math.floor(mins / 60), m = mins % 60;
   return h ? `${h}h ${m}m` : `${m}m`;
 };
 
@@ -174,8 +176,10 @@ export function setupWall(root: HTMLElement) {
     try {
       const res = await fetch(`${api}/wall/history`);
       if (!res.ok) throw new Error();
-      const { moves } = (await res.json()) as { moves: string };
+      const { moves, max } = (await res.json()) as { moves: string; max?: number };
       const n = moves.length / 3;
+      // a long-lived wall only keeps its newest placements for the replay
+      if (max && n >= max) say(`Replaying the newest ${max.toLocaleString('en-GB')} pixels.`);
       if (!n) {
         again.textContent = 'replay';
         return say('Nothing to replay yet.');

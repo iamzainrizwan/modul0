@@ -55,7 +55,11 @@ export default function QuakeTerminal({ fs }: { fs: Fs }) {
         engine.current?.type(pending.current);
         pending.current = null;
       }
-    } else if (opener.current instanceof HTMLElement) {
+    } else {
+      // an egg left running would keep the keyboard after the terminal's gone
+      engine.current?.stop();
+    }
+    if (!open && opener.current instanceof HTMLElement) {
       opener.current.focus({ preventScroll: true });
     }
   }, [open]);
