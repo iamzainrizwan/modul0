@@ -18,6 +18,15 @@ const base = import.meta.env.BASE_URL;
     <title>Terminal - Zain Rizwan</title>
     <meta name="description" content="Zain Rizwan, the terminal version." />
     <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site).toString()} />
+    <meta property="og:site_name" content="modul0" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Terminal - Zain Rizwan" />
+    <meta property="og:description" content="Zain Rizwan, the terminal version." />
+    <meta property="og:url" content={new URL(Astro.url.pathname, Astro.site).toString()} />
+    <meta property="og:image" content={new URL(`${base}og.png?v=2`, Astro.site)} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="627" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href={`${base}favicon.svg`} type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

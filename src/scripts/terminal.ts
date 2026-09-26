@@ -407,7 +407,8 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
       }
       case 'cd': {
         const r = resolve(args[0] ?? '~');
-        if (!r || r[1]) out = error(`cd: ${escape(args[0])}: not a directory`);
+        const exists = r && r[1] && dirEntries(r[0]).includes(r[1]);
+        if (!r || r[1]) out = error(`cd: ${escape(args[0])}: ${exists ? 'not a directory' : 'no such file or directory'}`);
         else cwd = r[0];
         break;
       }
@@ -671,7 +672,8 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
       const slash = last.lastIndexOf('/');
       const dirPart = last.slice(0, slash + 1);
       const r = resolve(dirPart || '.');
-      candidates = r && !r[1] ? dirEntries(r[0]).map((e) => dirPart + e) : [];
+      // cd only goes into directories
+      candidates = r && !r[1] ? dirEntries(r[0]).filter((e) => words[0] !== 'cd' || e.endsWith('/')).map((e) => dirPart + e) : [];
     }
     const matches = candidates.filter((c) => c.startsWith(last));
     if (matches.length === 1) {

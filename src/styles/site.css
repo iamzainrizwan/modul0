@@ -197,7 +197,7 @@ main { min-width: 0; padding: 0 clamp(1.25rem, 4vw, 3.5rem); }
   .rail > * { padding-left: 16px; padding-right: 16px; }
   .rail-name { font-size: 1.45rem; padding-top: 0.7rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--line); }
   .rail-study, .rail-facts, .rail-links, .rail-terminal { display: none; }
-  .theme-toggle { position: absolute; top: 0.5rem; right: 16px; margin: 0; font-size: 0.66rem; }
+  .theme-toggle { position: absolute; top: 0.5rem; right: 16px; margin: 0; padding: 0; font-size: 0.66rem; }
   .theme-toggle > span { padding: 0.2rem 0.45rem; }
   .tree { display: flex; align-items: center; overflow-x: auto; scrollbar-width: none; padding: 0; border: none; }
   .tree::-webkit-scrollbar { display: none; }
@@ -733,6 +733,11 @@ section.hero { margin-top: 0; border-top: none; }
 .gb-token fieldset { grid-template-columns: auto auto; }
 .gb-token .gb-field { grid-column: 1 / -1; }
 .gb-admin { margin-top: 3rem; }
+
+/* collapsed only with js (html.js, the pre-paint script): without it every
+   detail shows and the buttons that would toggle them don't */
+html.js .js-collapsed { display: none; }
+html:not(.js) .js-only { display: none; }
 
 /* the ? keys list (Site.astro): a dialog in the terminal's clothes */
 .keys { width: min(34rem, calc(100vw - 40px)); max-height: calc(100dvh - 40px); overflow-y: auto; padding: 0; color: var(--text); background: var(--void); border: var(--rule); box-shadow: 8px 8px 0 var(--purple); font-family: var(--mono); font-size: 0.85rem; }

@@ -118,6 +118,8 @@ const sections = [
       // boot animation runs, so the page never flashes underneath either.
       // both fail open after a few seconds if the scripts never load.
       var root = document.documentElement;
+      // js is here: things that collapse (project details) may start collapsed
+      root.classList.add('js');
       // page keys (j/k, /, ?, `), unless this browser turned them off
       try {
         if (localStorage.getItem('modul0-keys') === 'off') root.dataset.keys = 'off';
@@ -230,6 +232,7 @@ const sections = [
           .then(function (d) {
             try { sessionStorage.setItem('modul0-counted', '1'); } catch (e) {}
             var n = Number(d.views).toLocaleString('en-GB');
+            window.__modul0Views = n;
             document.querySelectorAll('[data-views-n]').forEach(function (el) { el.textContent = n; });
             document.querySelectorAll('[data-views]').forEach(function (el) { el.hidden = false; });
           })
@@ -254,10 +257,17 @@ const sections = [
       // the motion settings (the pre-paint script sets those at runtime): carry
       // them over, and mark the swap so that script skips the boot
       document.addEventListener('astro:before-preparation', () => ((window as any).__modul0Nav = true));
+      // the footer comes fresh with each page: put the visit count back in it
+      document.addEventListener('astro:page-load', () => {
+        const n = (window as any).__modul0Views;
+        if (!n) return;
+        document.querySelectorAll('[data-views-n]').forEach((el) => (el.textContent = n));
+        document.querySelectorAll<HTMLElement>('[data-views]').forEach((el) => (el.hidden = false));
+      });
       document.addEventListener('astro:before-swap', (e: any) => {
         const next = e.newDocument.documentElement as HTMLElement;
         for (const a of [...document.documentElement.attributes]) {
-          if (a.name === 'data-motion' || a.name === 'data-theme' || a.name === 'data-keys' || a.name.startsWith('data-mx-')) next.setAttribute(a.name, a.value);
+          if (a.name === 'data-motion' || a.name === 'data-theme' || a.name === 'data-keys' || a.name === 'class' || a.name.startsWith('data-mx-')) next.setAttribute(a.name, a.value);
         }
         // and the browser bar's colour: the new page's head says black
         e.newDocument.querySelector('meta[name="theme-color"]')?.setAttribute('content', getTheme() === 'light' ? '#ffffff' : '#000000');

@@ -52,17 +52,18 @@ function Featured({ p }: { p: Project }) {
         {p.details.slice(0, PREVIEW).map((d) => (
           <li key={d} dangerouslySetInnerHTML={html(d)} />
         ))}
-        {/* the extra lines print one after another; collapsing is instant */}
-        {all &&
-          p.details.slice(PREVIEW).map((d, i) => (
-            <li key={d} className="print" style={{ '--i': i } as CSSProperties} dangerouslySetInnerHTML={html(d)} />
-          ))}
+        {/* the extra lines print one after another; collapsing is instant.
+            always rendered: .js-collapsed only hides them when js is running
+            (html.js, set before paint), so without js every line is there */}
+        {p.details.slice(PREVIEW).map((d, i) => (
+          <li key={d} className={all ? 'print' : 'print js-collapsed'} style={{ '--i': i } as CSSProperties} dangerouslySetInnerHTML={html(d)} />
+        ))}
       </ul>
       <footer className="feature-foot">
         <Stack items={p.stack} />
         <div className="feature-actions">
           {extra > 0 && (
-            <button type="button" className="text-btn" aria-expanded={all} aria-controls={listId} onClick={() => setAll(!all)}>
+            <button type="button" className="text-btn js-only" aria-expanded={all} aria-controls={listId} onClick={() => setAll(!all)}>
               {all ? 'Show less' : `Show ${extra} more`}
             </button>
           )}
@@ -89,8 +90,8 @@ function ArchiveCard({ p, i, wipe }: { p: Project; i: number; wipe: boolean }) {
       </div>
       <p className="card-tagline">{p.tagline}</p>
       <p className="card-summary" dangerouslySetInnerHTML={html(p.summary)} />
-      {open && (
-        <ul id={id} className="details details-small">
+      {expandable && (
+        <ul id={id} className={open ? 'details details-small' : 'details details-small js-collapsed'}>
           {p.details.map((d, i) => (
             <li key={d} className="print" style={{ '--i': i } as CSSProperties} dangerouslySetInnerHTML={html(d)} />
           ))}
@@ -101,7 +102,7 @@ function ArchiveCard({ p, i, wipe }: { p: Project; i: number; wipe: boolean }) {
         {(expandable || p.repo || p.context) && (
           <span className="card-actions">
             {expandable && (
-              <button type="button" className="text-btn" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
+              <button type="button" className="text-btn js-only" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
                 {open ? 'Less' : 'Details'}
               </button>
             )}
