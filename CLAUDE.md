@@ -84,7 +84,12 @@ those. When sources disagree, ask; don't pick one.
   `echo $SHELL`, `man man`, `git push`/`blame`, `reboot` (replays the boot on
   a real load of home) and `shutdown`, each counted with `found(id)`. A new
   egg goes in `EGGS` too. Keep their jokes free of facts about Zain's setup
-  that nothing sources.
+  that nothing sources. `TIPS` there are the nudges: one you haven't found,
+  new every time the drop-down opens (in its title bar, click runs it; the
+  title hides under 420px to make room) and at the end of `/terminal/`'s boot.
+  Loud eggs only; the quiet ones stay unhinted. `help` is two pages
+  (`COMMANDS`, then `MORE` for `help more`): keep the first page to the way
+  around, and don't let it grow past about ten.
 - Page keys (Site.astro): `j`/`k` jump between headings, `gg`/`G`, and `/`
   opens the terminal on `grep ` (`modul0:terminal` with `detail.input`), `?`
   opens `dialog.keys` (every key; hints at the hidden commands without naming

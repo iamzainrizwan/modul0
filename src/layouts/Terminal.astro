@@ -50,7 +50,7 @@ const base = import.meta.env.BASE_URL;
     <script type="application/json" id="fs" set:html={JSON.stringify(fs).replace(/</g, '\\u003c')} />
     <script>
       import { boot } from '../scripts/terminal';
-      boot(document.querySelector('.terminal')!, JSON.parse(document.getElementById('fs')!.textContent!));
+      boot(document.querySelector('.terminal')!, JSON.parse(document.getElementById('fs')!.textContent!), { tip: true });
     </script>
   </body>
 </html>

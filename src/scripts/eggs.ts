@@ -43,6 +43,39 @@ export const EGGS: [id: string, name: string][] = [
   ['shutdown', 'shutdown'],
 ];
 
+// what the terminal suggests each time it opens: [egg, the nudge, what it
+// runs]. the loud ones only; the subtle eggs (:wq, .secrets, $SHELL...) are
+// left for people to find
+const TIPS: [string, string, string][] = [
+  ['forkbomb', 'try to fork bomb me', ':(){ :|:& };:'],
+  ['rm', 'go on, rm -rf /', 'rm -rf /'],
+  ['snake', 'try snake', 'snake'],
+  ['sandwich', 'try sudo make me a sandwich', 'sudo make me a sandwich'],
+  ['vim', 'try vim. good luck leaving', 'vim'],
+  ['hack', 'try hack nasa', 'hack nasa'],
+  ['matrix', 'try cmatrix', 'cmatrix'],
+  ['cowsay', 'try cowsay hi', 'cowsay hi'],
+  ['fortune', 'try fortune', 'fortune'],
+  ['dotfiles', 'try ls -a', 'ls -a'],
+  ['reboot', 'try reboot', 'reboot'],
+  ['sl', 'try sl (not ls)', 'sl'],
+  ['yes', 'try yes', 'yes'],
+  ['coffee', 'try brew coffee', 'brew coffee'],
+];
+
+// a nudge toward an egg you haven't found yet: [text, command]. never the
+// same one twice running, while there's a choice
+let lastTip = '';
+export function tip(): [string, string] {
+  const got = foundEggs();
+  let left = TIPS.filter(([id]) => !got.has(id));
+  if (!left.length) return got.size >= EGGS.length ? ['all eggs found. show off', 'eggs'] : ['some eggs are quieter. try eggs', 'eggs'];
+  if (left.length > 1) left = left.filter(([id]) => id !== lastTip);
+  const [id, text, cmd] = left[Math.floor(Math.random() * left.length)];
+  lastTip = id;
+  return [text, cmd];
+}
+
 const KEY = 'modul0-eggs';
 export function foundEggs(): Set<string> {
   try {

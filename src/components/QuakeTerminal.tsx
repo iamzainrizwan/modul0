@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { boot, type Fs } from '../scripts/terminal';
+import { tip as pickTip } from '../scripts/eggs';
 
 // drop-down terminal available on every page: ` toggles it, esc or `exit`
 // closes it. the engine is the same one /terminal/ uses.
@@ -12,6 +13,9 @@ export default function QuakeTerminal({ fs }: { fs: Fs }) {
   const opener = useRef<Element | null>(null);
   // text to put on the command line once it's open (the page's / key)
   const pending = useRef<string | null>(null);
+  // a new easter-egg nudge in the title bar every time it opens (none until
+  // the first open, so the server render and hydration agree)
+  const [tip, setTip] = useState<[string, string] | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -38,6 +42,7 @@ export default function QuakeTerminal({ fs }: { fs: Fs }) {
 
   useEffect(() => {
     if (open) {
+      setTip(pickTip());
       opener.current = document.activeElement;
       // first open boots the engine (boot lines 30ms apart, so it's typeable
       // almost at once); later opens keep the session. focus straight away:
@@ -69,6 +74,12 @@ export default function QuakeTerminal({ fs }: { fs: Fs }) {
       >
         <div className="quake-bar">
           <span className="quake-title">zain@modul0: ~</span>
+          {tip && (
+            <button type="button" className="quake-tip" onClick={() => engine.current?.run(tip[1])} title={`runs ${tip[1]}`}>
+              <span aria-hidden="true">tip: </span>
+              {tip[0]}
+            </button>
+          )}
           <span className="quake-hint">
             <kbd>esc</kbd> or <kbd>`</kbd> to close
           </span>

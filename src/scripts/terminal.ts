@@ -1,7 +1,7 @@
 import { listing, postView } from './render';
 import { uptimeRows, uptimeText } from './uptime';
 import { getTheme, setTheme } from './theme';
-import { EGGS, markEgg, foundEggs, resetEggs, eggsReport, quick, MAN_MAN, yes, forkbomb, hack, cmatrix, snake, type Ctx } from './eggs';
+import { EGGS, markEgg, foundEggs, resetEggs, eggsReport, quick, MAN_MAN, yes, forkbomb, hack, cmatrix, snake, tip, type Ctx } from './eggs';
 
 type Post = { title: string; date: string; description: string; html: string };
 export type Fs = {
@@ -135,6 +135,9 @@ type Options = {
   scroller?: HTMLElement;
   // ms between the boot lines; default 150
   bootDelay?: number;
+  // end the boot with an easter-egg tip (/terminal/: the drop-down shows its
+  // tip in the title bar instead, new each time it opens)
+  tip?: boolean;
 };
 
 // mounts the terminal inside `terminal`, which must contain the markup from
@@ -717,11 +720,21 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
   }
 
   const delay = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : (opts.bootDelay ?? 150);
-  BOOT.forEach((line, i) => setTimeout(() => print(line, undefined, '', i === BOOT.length - 1 ? 'entry' : 'entry boot'), i * delay));
-  setTimeout(ready, BOOT.length * delay);
+  const lines = [...BOOT];
+  if (opts.tip) {
+    const [text, cmd] = tip();
+    lines.push(`<span class="dim">tip:</span> <a class="run" href="#" data-cmd="${escape(cmd)}">${escape(text)}</a>`);
+  }
+  lines.forEach((line, i) => setTimeout(() => print(line, undefined, '', i === lines.length - 1 ? 'entry' : 'entry boot'), i * delay));
+  setTimeout(ready, lines.length * delay);
 
   return {
     focus: () => input.focus({ preventScroll: true }),
+    // run a command as if typed (the drop-down's tip)
+    run: (cmd: string) => {
+      run(cmd);
+      input.focus({ preventScroll: true });
+    },
     // put text on the command line, ready to finish and run (the page's / key)
     type: (text: string) => {
       input.value = text;

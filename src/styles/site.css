@@ -967,7 +967,13 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
   color: var(--void);
 }
 .quake-title { color: var(--void); }
-.quake-hint { margin-left: auto; }
+.quake-hint { margin-left: auto; white-space: nowrap; }
+/* the easter-egg nudge: a new one every open, click to run it */
+.quake-tip { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 0.35rem; border: none; background: none; color: var(--void); font: inherit; font-weight: 400; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.quake-tip:hover { background: var(--void); color: var(--purple); text-decoration: none; }
+.quake-title { white-space: nowrap; }
+/* narrow: the tip is worth more than the title */
+@media (max-width: 420px) { .quake-title { display: none; } .quake-tip { padding-left: 0; } }
 .quake-hint kbd { color: var(--void); border-color: var(--void); }
 .quake-close {
   padding: 0 0.4rem;
