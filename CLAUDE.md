@@ -73,10 +73,18 @@ those. When sources disagree, ask; don't pick one.
   mark in blocks beside sourced facts) and `git log` (the build's real last
   15 commits, from `build.log` in `src/data/build.ts`; ci checks out 20 deep
   for it, keep `fetch-depth` in deploy.yml and test.yml). Easter eggs, not
-  in `help`: `rm -rf /` (sets `html[data-broken]`: the page tears, a fixed
-  `body::after` cover blacks out and lifts, then "restored in Ns", the real
-  downtime), `sl`, `vim` (stuck until `:q`), `nano`, `ping`. Keep their
-  jokes free of facts about Zain's setup that nothing sources.
+  in `help`, live in `src/scripts/eggs.ts`: `EGGS` is the list `eggs` tallies
+  (per browser, "+1 egg · n/N" on a first find), `quick()` the one-liners
+  (sudo, make, cowsay, fortune, ssh, brew coffee, weather, `%`, `:wq`), and
+  the long ones animate in the output and take the keyboard until ctrl+c,
+  q or esc: `yes`, the fork bomb, `hack`, `cmatrix`, `snake` (best score per
+  browser). The engine keeps `rm -rf /` (sets `html[data-broken]`: the page
+  tears, a fixed `body::after` cover blacks out and lifts, then "restored in
+  Ns", the real downtime), `sl`, `vim` (stuck until `:q`), `ls -a` / `.secrets`,
+  `echo $SHELL`, `man man`, `git push`/`blame`, `reboot` (replays the boot on
+  a real load of home) and `shutdown`, each counted with `found(id)`. A new
+  egg goes in `EGGS` too. Keep their jokes free of facts about Zain's setup
+  that nothing sources.
 - Page keys (Site.astro): `j`/`k` jump between headings, `gg`/`G`, and `/`
   opens the terminal on `grep ` (`modul0:terminal` with `detail.input`), `?`
   opens `dialog.keys` (every key; hints at the hidden commands without naming

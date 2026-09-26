@@ -1,6 +1,7 @@
 import { listing, postView } from './render';
 import { uptimeRows, uptimeText } from './uptime';
 import { getTheme, setTheme } from './theme';
+import { EGGS, markEgg, foundEggs, resetEggs, eggsReport, quick, MAN_MAN, yes, forkbomb, hack, cmatrix, snake, type Ctx } from './eggs';
 
 type Post = { title: string; date: string; description: string; html: string };
 export type Fs = {
@@ -150,7 +151,7 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
 
   const prompt = () => (vim ? '~' : `zain@modul0:~${cwd ? '/' + cwd : ''}$`);
 
-  function print(html: string, command?: string, promptAt = prompt(), cls = 'entry') {
+  function print(html: string, command?: string, promptAt = prompt(), cls = 'entry'): HTMLElement {
     const entry = document.createElement('div');
     entry.className = cls;
     if (command !== undefined) {
@@ -166,9 +167,45 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
       entry.append(res);
     }
     output.append(entry);
+    scroll();
+    return entry.querySelector<HTMLElement>('.response') ?? entry;
+  }
+
+  function scroll() {
     if (opts.scroller) opts.scroller.scrollTop = opts.scroller.scrollHeight;
     else form.scrollIntoView({ block: 'end' });
   }
+
+  // an easter egg found: tallied per browser (eggs.ts), announced the first time
+  function found(id: string) {
+    if (!markEgg(id)) return;
+    const n = EGGS.filter(([e]) => foundEggs().has(e)).length;
+    print(`<span class="egg-new">+1 egg · ${n}/${EGGS.length}</span> <span class="dim">type <a class="run" href="#" data-cmd="eggs">eggs</a> for the tally</span>`, undefined, '', 'entry');
+  }
+
+  // what the long eggs get to work with
+  const ctx: Ctx = {
+    print: (html) => print(html, undefined, '', 'entry'),
+    busy: (on) => {
+      form.hidden = on;
+      if (!on) {
+        promptText.textContent = prompt();
+        input.focus({ preventScroll: true });
+      }
+    },
+    reduced,
+    cols: () => {
+      const probe = document.createElement('span');
+      probe.textContent = 'M'.repeat(20);
+      probe.style.visibility = 'hidden';
+      output.append(probe);
+      const w = probe.getBoundingClientRect().width / 20;
+      probe.remove();
+      return Math.floor(output.clientWidth / (w || 10));
+    },
+    found,
+    scroll,
+  };
 
   // "blog/foo.md", "../about.txt", "~/projects" -> [dir, name]; name '' means the dir itself
   function resolve(path = ''): [Dir, string] | null {
@@ -281,6 +318,7 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
       delete document.documentElement.dataset.broken;
       // the real downtime, measured
       print(`restored from backup in ${((performance.now() - down) / 1000).toFixed(1)}s. told you: things that don't break.`);
+      found('rm');
       form.hidden = false;
       input.focus({ preventScroll: true });
     }, DOOMED.length * d + (reduced() ? 0 : 1300));
@@ -293,6 +331,9 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
       print('<span class="dim">you escaped vim. put that on the cv.</span>', raw, promptAt);
     } else if (line === ':w' || line === ':w!') {
       print(error("E45: 'readonly' option is set"), raw, promptAt);
+    } else if (line === 'exit' || line === 'quit') {
+      print(`${error(`E492: Not an editor command: ${escape(line)}`)}<br><span class="dim">that's the joke. it's :q</span>`, raw, promptAt);
+      found('vim-exit');
     } else {
       print(`${error(`E492: Not an editor command: ${escape(line)}`)}<br><span class="dim">(try :q)</span>`, raw, promptAt);
     }
@@ -305,7 +346,19 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
     if (line) history.push(line);
     historyIdx = history.length;
     if (vim) return vimKeys(line, raw, promptAt);
+    if (/^:\(\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;\s*:$/.test(line)) {
+      print('', raw, promptAt);
+      return forkbomb(ctx);
+    }
     const [command, ...args] = line.split(/\s+/);
+    const egg = quick(line, command, args, escape, error);
+    if (egg) {
+      print(egg[1], raw, promptAt);
+      found(egg[0]);
+      return;
+    }
+    // an egg the switch below finds, counted once its output is up
+    let hit = '';
     let out = '';
     switch (command) {
       case '':
@@ -316,9 +369,16 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
       case 'whoami':
         out = fs.whoami;
         break;
-      case 'ls':
-        out = ls(args.find((a) => !a.startsWith('-')));
+      case 'ls': {
+        const path = args.find((a) => !a.startsWith('-'));
+        out = ls(path);
+        // -a at home shows the dotfiles
+        if (args.some((a) => /^-\w*a/.test(a)) && (resolve(path)?.join('') ?? 'x') === '') {
+          out = `<div class="ls"><span class="dim">.</span><span class="dim">..</span><a class="run" href="#" data-cmd="cat .secrets">.secrets</a><a class="run" href="#" data-cmd="cat .plan">.plan</a></div>${out}`;
+          hit = 'dotfiles';
+        }
         break;
+      }
       case 'cd': {
         const r = resolve(args[0] ?? '~');
         if (!r || r[1]) out = error(`cd: ${escape(args[0])}: not a directory`);
@@ -329,7 +389,11 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
         out = `/home/zain${cwd ? '/' + cwd : ''}`;
         break;
       case 'cat':
-        out = cat(args[0]);
+        if (/(^|\/)\.secrets$/.test(args[0] ?? '')) {
+          out = 'nice try.';
+          hit = 'secrets';
+        } else if (/(^|\/)\.plan$/.test(args[0] ?? '')) out = 'world domination. then a nap.';
+        else out = cat(args[0]);
         break;
       case 'blog':
         out = listing(fs.blog, fs.base, cwd === 'blog' ? '' : cwd ? '../blog/' : 'blog/');
@@ -357,6 +421,10 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
       case 'man':
         if (!args[0]) out = "what manual page do you want?<br>try <a class=\"run\" href=\"#\" data-cmd=\"man modul0\">man modul0</a>";
         else if (args[0] === 'modul0') out = MAN_MODUL0;
+        else if (args[0] === 'man') {
+          out = MAN_MAN;
+          hit = 'man-man';
+        }
         else out = error(`no manual entry for ${escape(args[0])}`);
         break;
       case 'theme': {
@@ -392,6 +460,7 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
         break;
       }
       case 'sl':
+        hit = 'sl';
         out = reduced()
           ? `<pre>${TRAIN}</pre><span class="dim">you meant ls.</span>`
           : `<div class="sl" role="img" aria-label="a steam train goes past"><pre>${TRAIN}</pre></div>`;
@@ -400,16 +469,21 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
       case 'vim':
       case 'nvim':
         vim = true;
+        hit = 'vim';
         out = `<pre>${'~\n'.repeat(5)}<span class="dim">"${escape(args[0] ?? '[No Name]')}" [readonly]</span>\n<span class="accent">-- NORMAL --</span></pre>`;
         break;
       case 'nano':
       case 'emacs':
+        hit = 'nano';
         out = `${escape(command)}: not installed. there's <a class="run" href="#" data-cmd="vim">vim</a>, though.`;
         break;
       case 'ping': {
         const host = (args.find((a) => !a.startsWith('-')) ?? '').toLowerCase();
         if (!host) out = error('ping: usage error: destination address required');
-        else if (host === 'alexandria') out = "PING alexandria: it doesn't answer strangers.";
+        else if (host === 'alexandria') {
+          out = "PING alexandria: it doesn't answer strangers.";
+          hit = 'ping';
+        }
         else if (['modul0.dev', 'modul0', 'localhost', '127.0.0.1'].includes(host)) out = `64 bytes from ${escape(host)}: time=0ms. you're already here.`;
         else out = error(`ping: ${escape(host)}: this is a website. it can't send icmp.`);
         break;
@@ -453,8 +527,10 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
           out = "<pre>on branch main\nyour branch is up to date with 'origin/main'.\n\nnothing to commit, working tree clean</pre>";
         } else if (sub === 'push') {
           out = error('remote: permission to iamzainrizwan/modul0.git denied to guest.');
+          hit = 'git-push';
         } else if (sub === 'blame') {
           out = "zain. it's always zain.";
+          hit = 'git-blame';
         } else if (sub === 'clone') {
           out = `the source is public: <a href="${b?.repo ?? 'https://github.com/iamzainrizwan/modul0'}" rel="noopener">github.com/iamzainrizwan/modul0</a>`;
         } else {
@@ -465,14 +541,59 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
       case 'history':
         out = `<pre>${history.map((h, i) => `${String(i + 1).padStart(4)}  ${escape(h)}`).join('\n')}</pre>`;
         break;
-      case 'echo':
-        out = escape(args.join(' '));
+      case 'echo': {
+        // a few variables, the rest echo as typed
+        const vars: Record<string, string> = { $SHELL: '/bin/modul0', $USER: 'guest', $HOME: '/home/zain', $PWD: `/home/zain${cwd ? '/' + cwd : ''}` };
+        out = args.map((a) => vars[a] ?? escape(a)).join(' ');
+        if (args.includes('$SHELL')) hit = 'shell';
         break;
+      }
+      case 'eggs':
+        if (args[0] === '--reset') {
+          resetEggs();
+          out = '<span class="dim">tally cleared. happy hunting.</span>';
+        } else out = eggsReport(escape);
+        break;
+      case 'yes':
+        print('', raw, promptAt);
+        return yes(ctx, escape(args.join(' ') || 'y'));
+      case 'hack':
+        print('', raw, promptAt);
+        return hack(ctx, args.join(' '), escape);
+      case 'cmatrix':
+      case 'matrix':
+        print('', raw, promptAt);
+        return cmatrix(ctx);
+      case 'snake':
+        print('', raw, promptAt);
+        return snake(ctx);
+      case 'reboot':
+        print('<span class="dim">broadcast message from zain@modul0: the system is going down for reboot NOW!</span>', raw, promptAt);
+        found('reboot');
+        form.hidden = true;
+        // a real load of home with the boot unplayed, so it plays again
+        setTimeout(() => {
+          try {
+            sessionStorage.removeItem('modul0-booted');
+          } catch {}
+          location.href = fs.base;
+        }, reduced() ? 0 : 800);
+        return;
+      case 'shutdown':
+      case 'poweroff':
+      case 'halt':
+        print('the system is going down for poweroff NOW!', raw, promptAt);
+        form.hidden = true;
+        setTimeout(() => {
+          print("<span class=\"dim\">...nah. uptime's the whole point.</span>");
+          found('shutdown');
+          form.hidden = false;
+          promptText.textContent = prompt();
+          input.focus({ preventScroll: true });
+        }, reduced() ? 0 : 1300);
+        return;
       case 'date':
         out = new Date().toString();
-        break;
-      case 'sudo':
-        out = error('zain is not in the sudoers file. this incident will be reported.');
         break;
       case 'exit':
         if (opts.onExit) {
@@ -496,6 +617,7 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
     }
     print(out, raw, promptAt);
     promptText.textContent = prompt();
+    if (hit) found(hit);
     // the train leaves; what's left is the joke
     const sl = output.lastElementChild?.querySelector('.sl');
     sl?.addEventListener('animationend', () => (sl.outerHTML = '<span class="dim">the train left. you meant ls.</span>'), { once: true });
