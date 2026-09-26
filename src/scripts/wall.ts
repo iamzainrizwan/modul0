@@ -248,7 +248,8 @@ export function setupWall(root: HTMLElement) {
   // the theme toggle recolours it; other people's pixels arrive once a minute
   // while the page is open (the router keeps this script alive, so stop once
   // the wall has been swapped out)
-  new ResizeObserver(fit).observe(root);
+  const ro = new ResizeObserver(fit);
+  ro.observe(root);
   const onTheme = () => (root.isConnected ? draw() : window.removeEventListener('modul0:theme', onTheme));
   window.addEventListener('modul0:theme', onTheme);
   const tick = window.setInterval(() => {
@@ -256,6 +257,19 @@ export function setupWall(root: HTMLElement) {
     if (document.visibilityState === 'visible') load().catch(() => {});
     else label();
   }, 60_000);
+
+  // the router swapping the page out: let the old wall go (the observer and
+  // listeners would otherwise keep its canvas alive for the whole session)
+  document.addEventListener(
+    'astro:before-swap',
+    () => {
+      ro.disconnect();
+      clearInterval(tick);
+      clearInterval(replay);
+      window.removeEventListener('modul0:theme', onTheme);
+    },
+    { once: true },
+  );
 
   load().catch(() => {
     if (meta) meta.textContent = 'offline';

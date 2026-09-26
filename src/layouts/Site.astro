@@ -3,7 +3,6 @@ import '../styles/tokens.css';
 import '../styles/terminal.css';
 import '../styles/site.css';
 import { person, links } from '../data/profile';
-import { buildFs } from '../data/buildFs';
 import BootSequence from '../components/BootSequence';
 import QuakeTerminal from '../components/QuakeTerminal';
 import SectionNav from '../components/SectionNav';
@@ -43,7 +42,6 @@ const {
 } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site).toString();
 const base = import.meta.env.BASE_URL;
-const fs = await buildFs();
 // this page's share card (src/data/og.ts); home keeps the hand-made og.png
 const card = await cardFor(Astro.url.pathname);
 const ogImage = new URL(card ? `${base}og/${card.slug}.png` : `${base}og.png?v=2`, Astro.site);
@@ -202,7 +200,7 @@ const sections = [
       </main>
     </div>
 
-    <QuakeTerminal client:idle fs={fs} transition:persist="quake" />
+    <QuakeTerminal client:idle src={`${base}fs.json`} transition:persist="quake" />
     <!-- every key the site answers to, on ? (the script below). a native
          dialog: esc and the x close it, focus comes back on its own -->
     <dialog class="keys" aria-labelledby="keys-h" transition:persist="keys">
@@ -347,6 +345,11 @@ const sections = [
           else localStorage.removeItem('modul0-keys');
         } catch {}
         keysLabel();
+      });
+
+      // pointing at a terminal link starts loading it, so the first open is quick
+      document.addEventListener('pointerover', (e) => {
+        if ((e.target as HTMLElement).closest?.('[data-open-terminal]')) window.dispatchEvent(new Event('modul0:warm'));
       });
 
       // terminal links open the drop-down once it's hydrated, else fall back to /terminal/

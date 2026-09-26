@@ -82,7 +82,7 @@ export default function SectionNav({ items, base, initial }: { items: Item[]; ba
   const here = (i: Item) => (current === i.id ? (i.id === page ? 'page' : 'location') : undefined);
   const link = (i: Item, proxy = false) => (
     <li key={i.id}>
-      <a href={i.href ?? `${base}#${i.id}`} aria-current={here(i)} className={proxy ? 'tree-proxy' : undefined} data-astro-prefetch="viewport">
+      <a href={i.href ?? `${base}#${i.id}`} aria-current={here(i)} className={proxy ? 'tree-proxy' : undefined}>
         {label(i.label)}
       </a>
     </li>
@@ -95,7 +95,7 @@ export default function SectionNav({ items, base, initial }: { items: Item[]; ba
         {items.map((i) =>
           i.children ? (
             <li key={i.id} className={`tree-group${current === i.id || i.children.some((c) => c.id === current) ? ' is-open' : ''}`}>
-              <a className="tree-dir" href={i.href ?? `${base}#${i.children[0].id}`} aria-current={here(i)} data-astro-prefetch="viewport">
+              <a className="tree-dir" href={i.href ?? `${base}#${i.children[0].id}`} aria-current={here(i)}>
                 {label(i.label)}
               </a>
               {/* while the folder itself is current, its first child stands in for it where the folder is hidden */}

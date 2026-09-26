@@ -35,8 +35,11 @@ those. When sources disagree, ask; don't pick one.
 - `src/data/fs.ts` - the terminal's files, same facts in a lowercase voice.
   Deliberately separate from profile.ts: update both when facts change.
 - `src/data/buildFs.ts` - `getPosts()` (drafts shown in dev only) and
-  `buildFs()`, which serialises fs.ts + rendered posts into each page for the
-  client-side terminal.
+  `buildFs()`, fs.ts + rendered posts + the build log for the client-side
+  terminal. The drop-down fetches it as `/fs.json` (`src/pages/fs.json.ts`)
+  and dynamic-imports the engine and eggs on its first open (hovering a
+  terminal link warms it): none of it is on the page until then. Only
+  `/terminal/` inlines it. Keep it that way; it was 28-38% of every page.
 - `src/layouts/Site.astro` - the one site layout: sticky rail (file-tree nav,
   now/uptime/visits, links, terminal button) + content. `boot` prop plays the
   boot animation (home only); `section` highlights a nav item on non-home
@@ -102,6 +105,19 @@ those. When sources disagree, ask; don't pick one.
   bare domain stays html. `src/data/build.ts` - commit sha and commit time, read
   from git at build: the footer's "updated 3h ago · sha" (commit time, not
   build time, or the daily snake rebuild would make it always fresh).
+- No-JS collapsing: the pre-paint script sets `html.js`. Things that start
+  collapsed (project details) are always rendered and hidden with
+  `.js-collapsed` (only under `html.js`); their toggles are `.js-only`. Never
+  render content only when a React state says so. Scroll reveal hides with
+  opacity (not visibility) so hidden content stays focusable and readable,
+  and focus reveals it.
+- Accessibility rules from the QA pass: the terminal output is a live
+  region, so anything that animates in it (egg frames) is `aria-hidden` and
+  only its first and last lines are read; tickers inside it get
+  `aria-live="off"`. Page keys can be turned off (`html[data-keys=off]`,
+  the ? list and the footer), and never fire in inputs, the wall canvas or
+  `[role=application]`. Purple bars get ink focus rings. Nothing loops
+  forever on its own (the homelab diagrams play a pass, then on hover/focus).
 - `src/scripts/uptime.ts` - the uptime maths, shared by the rail's `Uptime`
   island (a `<details>` that opens into the remainders) and the terminal.
 - The % motif: `ModMark.astro` (two squares + slash; squares use `--mark-sq`,
@@ -127,8 +143,13 @@ those. When sources disagree, ask; don't pick one.
   `guestbook/admin/` (delete with the worker's `ADMIN_TOKEN`). The page also
   has the pixel wall (`src/scripts/wall.ts`, worker `/wall`): 32x32, one pixel
   a day per visitor, drawn on a canvas from the theme tokens at whole device
-  pixels per cell; without js it's the worker's `/wall.svg`. "replay" redraws
-  it from `/wall/history` (3 base-32 chars a placement). Admin undoes a
+  pixels per cell; without js it's the worker's `/wall.svg` (in `<noscript>`,
+  so it isn't fetched twice). "replay" redraws it from `/wall/history` (3
+  base-32 chars a placement). The worker keeps the finished wall and the
+  replay in one `wall_state` row, updated in the same statement as each
+  placement and rebuilt after an admin undo/clear: reading the wall must
+  stay one row, never a scan (D1 free tier; workers.dev can't edge-cache). It
+  cleans up its observer and timers on `astro:before-swap`. Admin undoes a
   poster or clears it. Zain can reply to a message from the admin page
   (`replies` table, joined into `/messages`, shown under it as "↳ zain");
   deleting a message deletes its reply.
