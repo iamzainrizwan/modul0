@@ -41,7 +41,7 @@ const MORE: [string, string, string?][] = [
   ['expr a % b', 'the remainder of a / b', 'expr 17 % 5'],
   ['neofetch', 'system info, sort of'],
   ['git log', 'what changed on the site lately'],
-  ['curl modul0.dev/cv.txt', 'the cv as plain text (works from your own terminal too)', 'curl modul0.dev/cv.txt'],
+  ['curl -L modul0.dev/cv.txt', 'the cv as plain text (works from your own terminal too)', 'curl -L modul0.dev/cv.txt'],
   ['theme [light|dark]', 'switch the colours', 'theme'],
   ['history', 'commands you\'ve run'],
 ];
@@ -466,7 +466,7 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
             .catch(() => print(error("curl: (7) couldn't connect. the file's at modul0.dev/cv.txt")));
           return;
         }
-        out = `${url ? error(`curl: ${escape(url)}: not from in here`) : error('curl: try a url')}<br>try <a class="run" href="#" data-cmd="curl modul0.dev/cv.txt">curl modul0.dev/cv.txt</a>, here or in a real terminal`;
+        out = `${url ? error(`curl: ${escape(url)}: not from in here`) : error('curl: try a url')}<br>try <a class="run" href="#" data-cmd="curl -L modul0.dev/cv.txt">curl -L modul0.dev/cv.txt</a>, here or in a real terminal (the -L follows the redirect to https)`;
         break;
       }
       case 'rm': {

@@ -69,7 +69,7 @@ those. When sources disagree, ask; don't pick one.
   (`src/layouts/Terminal.astro`). `src/scripts/render.ts` - blog html inside it.
   Beyond the fs commands it has `expr` (bigint `+ - * / %`, also bare `17 % 5`),
   `man modul0` (why the name: Zain's own words, keep them), `uptime -v`,
-  `grep` (every file), `curl modul0.dev/cv.txt`, `theme`, `neofetch` (the %
+  `grep` (every file), `curl -L modul0.dev/cv.txt`, `theme`, `neofetch` (the %
   mark in blocks beside sourced facts) and `git log` (the build's real last
   15 commits, from `build.log` in `src/data/build.ts`; ci checks out 20 deep
   for it, keep `fetch-depth` in deploy.yml and test.yml). Easter eggs, not
@@ -96,8 +96,10 @@ those. When sources disagree, ask; don't pick one.
   them). Off while typing, with modifiers, or with the terminal or the list
   open. New keys go in that list too.
 - `src/pages/cv.txt.ts` - the cv as plain text from profile.ts (76 columns),
-  for `curl modul0.dev/cv.txt`. GitHub Pages can't sniff curl, so the bare
-  domain stays html. `src/data/build.ts` - commit sha and commit time, read
+  for `curl -L modul0.dev/cv.txt`: always advertise the `-L`, since a bare
+  domain means plain http, and Pages (https enforced) answers that with a 301
+  that curl doesn't follow on its own. Pages can't sniff curl either, so the
+  bare domain stays html. `src/data/build.ts` - commit sha and commit time, read
   from git at build: the footer's "updated 3h ago · sha" (commit time, not
   build time, or the daily snake rebuild would make it always fresh).
 - `src/scripts/uptime.ts` - the uptime maths, shared by the rail's `Uptime`

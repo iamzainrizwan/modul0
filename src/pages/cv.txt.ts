@@ -1,4 +1,4 @@
-// the cv as plain text, for `curl modul0.dev/cv.txt` (and the terminal's
+// the cv as plain text, for `curl -L modul0.dev/cv.txt` (and the terminal's
 // curl). built from profile.ts like everything else, so the same facts;
 // links become their text, wrapped to 76 columns.
 import type { APIRoute } from 'astro';
