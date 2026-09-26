@@ -18,28 +18,32 @@ export type Fs = {
 const DIRS = ['projects', 'blog'] as const;
 type Dir = '' | (typeof DIRS)[number];
 
-// [label, description, what clicking it in `help` runs (default: the label)]
+// [label, description, what clicking it in `help` runs (default: the label)].
+// `help` shows the first page, the way around; `help more` the rest. tab
+// completion knows both
 const COMMANDS: [string, string, string?][] = [
-  ['help', 'list of available commands'],
+  ['help [more]', 'this list (more: the rest of it)', 'help more'],
   ['whoami', 'who i am'],
   ['ls [dir]', 'list files'],
   ['cd [dir]', 'change directory'],
   ['cat [file]', 'output file contents'],
-  ['open [post]', 'go to a post\'s own page'],
   ['blog', 'list blog posts'],
+  ['open [post]', 'go to a post\'s own page'],
+  ['grep [text]', 'search every file', 'grep alexandria'],
+  ['man modul0', "why it's called that"],
+  ['clear', 'clear screen'],
+  ['exit', 'back to the normal site'],
+];
+const MORE: [string, string, string?][] = [
+  ['tail -f status.log', "what i'm working on right now"],
+  ['pgrep -a zain', 'recent achievements'],
   ['uptime [-v]', 'time since i was born (-v shows the maths)', 'uptime -v'],
   ['expr a % b', 'the remainder of a / b', 'expr 17 % 5'],
-  ['man modul0', "why it's called that"],
-  ['grep [text]', 'search every file', 'grep alexandria'],
   ['neofetch', 'system info, sort of'],
   ['git log', 'what changed on the site lately'],
   ['curl modul0.dev/cv.txt', 'the cv as plain text (works from your own terminal too)', 'curl modul0.dev/cv.txt'],
-  ['tail -f status.log', "what i'm working on right now"],
-  ['pgrep -a zain', 'recent achievements'],
   ['theme [light|dark]', 'switch the colours', 'theme'],
   ['history', 'commands you\'ve run'],
-  ['clear', 'clear screen'],
-  ['exit', 'back to the normal site'],
 ];
 
 const BOOT = [
@@ -366,9 +370,16 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
     switch (command) {
       case '':
         break;
-      case 'help':
-        out = `<div class="cols">${COMMANDS.map(([c, d, r]) => `<a class="run" href="#" data-cmd="${r ?? c.split(' [')[0]}">${op(c)}</a><span class="dim">${d}</span>`).join('')}</div>`;
+      case 'help': {
+        const more = args[0] === 'more';
+        const rows = (more ? MORE : COMMANDS).map(([c, d, r]) => `<a class="run" href="#" data-cmd="${r ?? c.split(' [')[0]}">${op(c)}</a><span class="dim">${d}</span>`);
+        out = `<div class="cols">${rows.join('')}</div>${
+          more
+            ? '<span class="dim">back to the first page: <a class="run" href="#" data-cmd="help">help</a></span>'
+            : `<span class="dim">${MORE.length} more: <a class="run" href="#" data-cmd="help more">help more</a></span>`
+        }`;
         break;
+      }
       case 'whoami':
         out = fs.whoami;
         break;
@@ -638,7 +649,7 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
     const last = words[words.length - 1];
     let candidates: string[];
     if (words.length === 1) {
-      candidates = [...new Set(COMMANDS.map(([c]) => c.split(' ')[0]))];
+      candidates = [...new Set([...COMMANDS, ...MORE].map(([c]) => c.split(' ')[0]))];
     } else {
       const slash = last.lastIndexOf('/');
       const dirPart = last.slice(0, slash + 1);
