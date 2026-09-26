@@ -104,16 +104,18 @@ kbd {
   color: var(--soft);
   text-decoration: none;
 }
-.tree li a::before { content: '├─ '; color: var(--line-strong); }
-.tree li:last-child a::before { content: '└─ '; }
+/* the second content gives them empty alt text, so a screen reader reads
+   "about", not "box drawings light vertical and right about" */
+.tree li a::before { content: '├─ '; content: '├─ ' / ''; color: var(--line-strong); }
+.tree li:last-child a::before { content: '└─ '; content: '└─ ' / ''; }
 .tree li a:hover { background: var(--white); color: var(--void); }
 .tree li a:hover::before { color: var(--void); }
 .tree li a[aria-current] { background: var(--purple); color: var(--void); font-weight: 600; }
 .tree li a[aria-current]::before { color: var(--void); }
 /* folders (cv/): children draw under the folder's own branch */
 .tree .tree-group > ul { margin: 0; }
-.tree .tree-group li a::before { content: '│  ├─ '; }
-.tree .tree-group li:last-child a::before { content: '│  └─ '; }
+.tree .tree-group li a::before { content: '│  ├─ '; content: '│  ├─ ' / ''; }
+.tree .tree-group li:last-child a::before { content: '│  └─ '; content: '│  └─ ' / ''; }
 .tree-group.is-open > .tree-dir { color: var(--text); }
 @media (min-width: 1001px) { .tree-group:not(.is-open) > ul { display: none; } }
 
@@ -458,9 +460,13 @@ section.hero { margin-top: 0; border-top: none; }
   flex-direction: column;
   gap: 0.3rem;
   padding: 0.9rem;
-  animation: lit 6s steps(1, end) infinite;
+  animation: lit 6s steps(1, end) 1;
   animation-delay: calc(var(--i) * 0.45s);
 }
+/* one pass on load (under 5s of flashing), then again while you're on it:
+   nothing moves forever on its own */
+.steps:hover .step, .steps:focus-within .step,
+.steps:hover :is(.step-n, .step-title, .step-text), .steps:focus-within :is(.step-n, .step-title, .step-text) { animation-iteration-count: infinite; }
 .step + .step { border-left: var(--rule); }
 .step-n { font-family: var(--mono); font-size: 0.74rem; font-weight: 700; color: var(--purple); }
 .step-title { margin-top: 0.2rem; font-family: var(--serif); font-size: 1.15rem; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; }
@@ -473,7 +479,7 @@ section.hero { margin-top: 0; border-top: none; }
 /* the text inside flips with the box, or the purple number and grey text
    vanish into the flash. same timing, each back to its own colour (--ink) */
 .step-n, .step-title, .step-text {
-  animation: lit-ink 6s steps(1, end) infinite;
+  animation: lit-ink 6s steps(1, end) 1;
   animation-delay: calc(var(--i) * 0.45s);
 }
 .step-n { --ink: var(--purple); }
@@ -509,8 +515,9 @@ section.hero { margin-top: 0; border-top: none; }
   width: 10px;
   height: 10px;
   background: var(--purple);
-  animation: packet 2.4s steps(8, end) infinite;
+  animation: packet 2.4s steps(8, end) 2;
 }
+.loop:hover .loop-link span, .loop:focus-within .loop-link span { animation-iteration-count: infinite; }
 @keyframes packet { from { left: 0; } to { left: calc(100% - 10px); } }
 @media (max-width: 560px) {
   .loop { flex-direction: column; }
@@ -741,6 +748,7 @@ html[data-theme='light'] .keys::backdrop { background: conic-gradient(#0000 0 25
 .keys-list > div { display: contents; }
 .keys-list dt { white-space: nowrap; }
 .keys-list dd { margin: 0; color: var(--soft); }
+.keys-toggle { margin: 0.75rem 1rem 0; color: var(--muted); line-height: 1.5; }
 .keys-more { margin: 0.75rem 1rem 1rem; padding-top: 0.75rem; border-top: 1px solid var(--line); color: var(--muted); line-height: 1.5; }
 .keys-more code { color: var(--purple); }
 @media (max-width: 640px) { .keys { font-size: 0.72rem; } .keys-list { column-gap: 1rem; } }
@@ -808,7 +816,7 @@ html[data-theme='light'] .keys::backdrop { background: conic-gradient(#0000 0 25
 @media (max-width: 520px) { .contact { grid-template-columns: 1fr; gap: 0; } .contact dd { margin-bottom: 0.9rem; } }
 /* the smallest phones: the long contact urls and the three hero buttons still fit */
 @media (max-width: 380px) {
-  .contact dd { font-size: 1.02rem; overflow-wrap: normal; }
+  .contact dd { font-size: 1.02rem; overflow-wrap: break-word; }
   .cta .btn { padding-left: 0.25rem; padding-right: 0.25rem; font-size: 0.7rem; white-space: nowrap; }
 }
 
@@ -954,7 +962,7 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
   60% { clip-path: inset(0 20% 0 0); }
   80%, 100% { clip-path: inset(0); }
 }
-@media (prefers-reduced-motion: reduce) { .quake.is-open, .quake.is-open > * { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .quake.is-open, .quake.is-open > *, .quake.is-open > .quake-bar, .quake.is-open > .quake-scroll { animation: none; } }
 .quake-bar {
   display: flex;
   align-items: center;
@@ -971,6 +979,8 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 /* the easter-egg nudge: a new one every open, click to run it */
 .quake-tip { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 0.35rem; border: none; background: none; color: var(--void); font: inherit; font-weight: 400; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .quake-tip:hover { background: var(--void); color: var(--purple); text-decoration: none; }
+/* on a purple bar a purple ring vanishes: these get an ink one, inset */
+.quake-tip:focus-visible, .quake-close:focus-visible, .keys-close:focus-visible { outline: 3px solid var(--void); outline-offset: -3px; }
 .quake-title { white-space: nowrap; }
 /* narrow: the tip is worth more than the title */
 @media (max-width: 420px) { .quake-title { display: none; } .quake-tip { padding-left: 0; } }
@@ -997,6 +1007,8 @@ html[data-broken] .shell { animation: brk 1.3s step-end both; }
 
 /* even out line lengths so headings and facts never strand one word */
 .hero-h, .section-h, .feature-name, .card-name, .tl-role, .award-what, .page-title, .article h1, .article h2, .open p { text-wrap: balance; }
+/* and never wider than the screen, even with a reader's own letter spacing */
+.section-h, .page-title { overflow-wrap: break-word; }
 @media (max-width: 480px) {
   .facts { grid-template-columns: 1fr; }
   .facts > div + div { border-left: none; border-top: var(--rule); }
@@ -1182,8 +1194,10 @@ html[data-motion='smooth'] .print { animation: fade 0.22s ease both; animation-d
 @keyframes cut-out { from { opacity: 1; } 99% { opacity: 1; } to { opacity: 0; } }
 
 /* scroll reveal: .px hides until .px-in
-   (a script in Site.astro adds .px-ready, so without js nothing is hidden) */
-.px-ready .px:not(.px-in) { visibility: hidden; }
+   (a script in Site.astro adds .px-ready, so without js nothing is hidden).
+   opacity, not visibility: it stays in the accessibility tree, find-in-page
+   and the tab order (focus reveals it, motion.ts) */
+.px-ready .px:not(.px-in) { opacity: 0; }
 .px-in { animation: var(--tx-in) var(--tx-dur) var(--tx-ease) both; animation-delay: calc(var(--i, 0) * var(--tx-stagger)); }
 
 /* lines of detail print one after another, like terminal output */
@@ -1211,9 +1225,11 @@ html[data-motion='instant'] .print { animation: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .px-ready .px:not(.px-in) { visibility: visible; }
+  .px-ready .px:not(.px-in) { opacity: 1; }
   .px-in, .print, .card-in { animation: none; }
-  html[data-mx-cursor] a:hover { animation: none; background-size: 100% 100%; color: var(--void); }
+  /* the same selectors as the sweep, or they outrank this */
+  html[data-mx-cursor] a:not(.btn, .teaser, .glance-row, .head-link):hover,
+  html[data-mx-cursor] .tree li a:hover { animation: none; background-size: 100% 100%; color: var(--void); }
 }
 
 /* ---------- motion panel (test site only) ---------- */

@@ -20,7 +20,8 @@ export default function QuakeTerminal({ fs }: { fs: Fs }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const typing = (e.target as HTMLElement).closest('input, textarea, [contenteditable]');
-      if (e.key === '`' && !e.ctrlKey && !e.metaKey && !e.altKey && (!typing || open)) {
+      const off = document.documentElement.dataset.keys === 'off' && !open;
+      if (e.key === '`' && !off && !e.ctrlKey && !e.metaKey && !e.altKey && (!typing || open)) {
         e.preventDefault();
         setOpen((o) => !o);
       } else if (e.key === 'Escape' && open) {
@@ -99,7 +100,7 @@ export default function QuakeTerminal({ fs }: { fs: Fs }) {
                 <span className="t-prompt-text">zain@modul0:~$</span>
                 <span className="sr-only">command</span>
               </label>
-              <input className="t-cmd" type="text" enterKeyHint="send" autoComplete="off" autoCapitalize="off" spellCheck={false} />
+              <input className="t-cmd" type="text" aria-label="command" enterKeyHint="send" autoComplete="off" autoCapitalize="off" spellCheck={false} />
             </form>
           </div>
         </div>

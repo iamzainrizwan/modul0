@@ -118,6 +118,10 @@ const sections = [
       // boot animation runs, so the page never flashes underneath either.
       // both fail open after a few seconds if the scripts never load.
       var root = document.documentElement;
+      // page keys (j/k, /, ?, `), unless this browser turned them off
+      try {
+        if (localStorage.getItem('modul0-keys') === 'off') root.dataset.keys = 'off';
+      } catch (e) {}
       // theme: dark unless this browser chose light (src/scripts/theme.ts)
       try {
         if (localStorage.getItem('modul0-theme') === 'light') {
@@ -182,9 +186,9 @@ const sections = [
 
       <main id="main">
         <slot />
-        <footer class="site-footer">
+        <footer class="site-footer" role="contentinfo">
           <p>
-            Built with Astro and React, deployed by GitHub Actions. There's a terminal hidden in here: <span class="kbd-hint">press <kbd>`</kbd>&nbsp;on any page, or </span><a href={`${base}terminal/`} data-open-terminal data-astro-reload>open it</a>. <span class="kbd-hint">The page takes vim keys too: <kbd>j</kbd>&nbsp;and <kbd>k</kbd>&nbsp;jump between sections, <kbd>/</kbd>&nbsp;searches, <kbd>?</kbd>&nbsp;lists the rest. </span>The <a href="https://github.com/iamzainrizwan/modul0/releases/tag/v0-handwritten">first version</a> of this site was hand-written.
+            Built with Astro and React, deployed by GitHub Actions. There's a terminal hidden in here: <span class="kbd-hint">press <kbd>`</kbd>&nbsp;on any page, or </span><a href={`${base}terminal/`} data-open-terminal data-astro-reload>open the terminal</a>. <span class="kbd-hint">The page takes vim keys too: <kbd>j</kbd>&nbsp;and <kbd>k</kbd>&nbsp;jump between sections, <kbd>/</kbd>&nbsp;searches, <kbd>?</kbd>&nbsp;lists the rest (<button type="button" class="text-btn" data-keys-toggle>turn them off</button>). </span>The <a href="https://github.com/iamzainrizwan/modul0/releases/tag/v0-handwritten">first version</a> of this site was hand-written.
           </p>
           <p class="footer-sign">
             <ModMark /> modul0.dev<span data-views hidden> · <span data-views-n></span> visits</span>
@@ -212,6 +216,7 @@ const sections = [
         <div><dt><kbd>?</kbd></dt><dd>this list</dd></div>
         <div><dt><kbd>esc</kbd></dt><dd>close whatever's open</dd></div>
       </dl>
+      <p class="keys-toggle"><button type="button" class="text-btn" data-keys-toggle>turn page keys off</button> <span>(single-letter keys can clash with screen readers and your own shortcuts)</span></p>
       <p class="keys-more">In the terminal, <code>help</code> lists the commands. Not all of them: try what you'd try on a real one, and <code>eggs</code> keeps score.</p>
     </dialog>
     {testSite && <MotionPanel />}
@@ -252,7 +257,7 @@ const sections = [
       document.addEventListener('astro:before-swap', (e: any) => {
         const next = e.newDocument.documentElement as HTMLElement;
         for (const a of [...document.documentElement.attributes]) {
-          if (a.name === 'data-motion' || a.name === 'data-theme' || a.name.startsWith('data-mx-')) next.setAttribute(a.name, a.value);
+          if (a.name === 'data-motion' || a.name === 'data-theme' || a.name === 'data-keys' || a.name.startsWith('data-mx-')) next.setAttribute(a.name, a.value);
         }
         // and the browser bar's colour: the new page's head says black
         e.newDocument.querySelector('meta[name="theme-color"]')?.setAttribute('content', getTheme() === 'light' ? '#ffffff' : '#000000');
@@ -276,7 +281,9 @@ const sections = [
       let lastG = 0;
       document.addEventListener('keydown', (e) => {
         if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
-        if ((e.target as HTMLElement).closest?.('input, textarea, select, [contenteditable]')) return;
+        if (document.documentElement.dataset.keys === 'off') return;
+        // not while typing, or while something that takes keys of its own has focus (the wall)
+        if ((e.target as HTMLElement).closest?.('input, textarea, select, [contenteditable], canvas, [role=application]')) return;
         if (document.querySelector('.quake.is-open')) return;
         const keys = document.querySelector<HTMLDialogElement>('dialog.keys')!;
         if (keys.open) {
@@ -307,6 +314,29 @@ const sections = [
           e.preventDefault();
           window.dispatchEvent(new CustomEvent('modul0:terminal', { detail: { input: 'grep ' } }));
         }
+      });
+
+      // page keys on/off, per browser: from the ? list or the footer (the
+      // footer's swapped with each page, so its label is set on each load)
+      const keysLabel = () => {
+        const off = document.documentElement.dataset.keys === 'off';
+        for (const b of document.querySelectorAll<HTMLButtonElement>('[data-keys-toggle]')) {
+          b.textContent = b.closest('.keys') ? `turn page keys ${off ? 'on' : 'off'}` : `turn them ${off ? 'on' : 'off'}`;
+        }
+      };
+      keysLabel();
+      document.addEventListener('astro:page-load', keysLabel);
+      document.addEventListener('click', (e) => {
+        if (!(e.target as HTMLElement).closest('[data-keys-toggle]')) return;
+        const html = document.documentElement;
+        const off = html.dataset.keys !== 'off';
+        if (off) html.dataset.keys = 'off';
+        else delete html.dataset.keys;
+        try {
+          if (off) localStorage.setItem('modul0-keys', 'off');
+          else localStorage.removeItem('modul0-keys');
+        } catch {}
+        keysLabel();
       });
 
       // terminal links open the drop-down once it's hydrated, else fall back to /terminal/

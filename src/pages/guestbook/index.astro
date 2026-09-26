@@ -43,7 +43,7 @@ import { api } from '../../data/api';
           {/* the wall as an image, for no js only: with js the canvas draws it, so
                don't fetch it twice */}
           <noscript><img class="wall-img" src={`${api}/wall.svg`} width="512" height="512" alt="The pixel wall as it is right now" loading="lazy" /></noscript>
-          <canvas class="wall-canvas" width="512" height="512" tabindex="0" role="img" aria-label="The pixel wall, 32 by 32. Arrow keys pick a cell, Enter places your pixel." hidden></canvas>
+          <canvas class="wall-canvas" width="512" height="512" tabindex="0" role="application" aria-roledescription="pixel wall" aria-label="The pixel wall, 32 by 32. Arrow keys pick a cell, Enter places your pixel." hidden></canvas>
         </div>
         <form class="wall-controls" hidden>
           <fieldset>

@@ -123,6 +123,11 @@ function page() {
   }
   for (const el of labels) if (!onScreen(el)) seen.observe(el);
   html.classList.add('px-ready');
+  // tabbing to something still waiting to reveal reveals it
+  if (reveal && !(window as any).__modul0Reveal) {
+    (window as any).__modul0Reveal = true;
+    document.addEventListener('focusin', (e) => (e.target as HTMLElement).closest?.('.px')?.classList.add('px-in'));
+  }
 
   // headings on screen at load decode; behind the boot sequence, wait for it first
   const now = () => labels.filter(onScreen).forEach((el, i) => decode(el, 150 + i * 120));

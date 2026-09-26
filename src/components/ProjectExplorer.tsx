@@ -39,7 +39,7 @@ function Featured({ p }: { p: Project }) {
     <article className="feature" id={`project-${p.slug}`}>
       <header className="feature-head">
         <div>
-          <h3 className="feature-name">{p.name}</h3>
+          <h2 className="feature-name">{p.name}</h2>
           <p className="feature-tagline">{p.tagline}</p>
         </div>
         <div className="feature-meta">
@@ -84,7 +84,7 @@ function ArchiveCard({ p, i, wipe }: { p: Project; i: number; wipe: boolean }) {
   return (
     <li className={wipe ? 'card card-in' : 'card'} id={`project-${p.slug}`} style={{ '--i': i } as CSSProperties}>
       <div className="card-head">
-        <h4 className="card-name">{p.name}</h4>
+        <h3 className="card-name">{p.name}</h3>
         <span className="year">{p.year}</span>
       </div>
       <p className="card-tagline">{p.tagline}</p>
@@ -169,7 +169,7 @@ export default function ProjectExplorer({ featured, archive, areas }: { featured
 
       <div className="archive">
         <div className="archive-head">
-          <h3 className="sub-h">Everything else</h3>
+          <h2 className="sub-h">Everything else</h2>
           <div className="filters" role="group" aria-label="Filter projects by area">
             {(['All', ...areas] as const).map((a) => {
               const n = a === 'All' ? archive.length : count(a);
@@ -182,6 +182,7 @@ export default function ProjectExplorer({ featured, archive, areas }: { featured
             })}
           </div>
         </div>
+        <p className="sr-only" aria-live="polite">{area === 'All' ? `Showing all ${shown.length} projects` : `Showing ${shown.length} ${area} projects`}</p>
         <ul className="cards">
           {shown.map((p, i) => (
             <ArchiveCard key={`${round}-${p.slug}`} p={p} i={i} wipe={round > 0} />

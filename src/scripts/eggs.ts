@@ -262,7 +262,9 @@ function loop(ctx: Ctx, ms: number, frame: (n: number) => boolean | void, done: 
 }
 
 export function yes(ctx: Ctx, word: string): Stop {
-  const el = ctx.print('<pre class="yes"></pre>').querySelector('pre')!;
+  // frames are aria-hidden: the terminal's output is a live region, and a
+  // screen reader shouldn't read every one of them
+  const el = ctx.print('<pre class="yes" aria-hidden="true"></pre>').querySelector('pre')!;
   let lines = 0;
   return loop(
     ctx,
@@ -282,7 +284,7 @@ export function yes(ctx: Ctx, word: string): Stop {
 }
 
 export function forkbomb(ctx: Ctx): Stop {
-  const el = ctx.print('<pre></pre>').querySelector('pre')!;
+  const el = ctx.print('<pre aria-hidden="true"></pre>').querySelector('pre')!;
   let procs = 1;
   return loop(
     ctx,
@@ -303,7 +305,7 @@ export function forkbomb(ctx: Ctx): Stop {
 
 export function hack(ctx: Ctx, target: string, esc: Esc): Stop {
   const steps = ['bypassing the firewall', 'decrypting the mainframe', 'downloading more ram', 'reversing the polarity', 'enhancing'];
-  const el = ctx.print(`<pre>target: ${esc(target || 'the mainframe')}\n</pre>`).querySelector('pre')!;
+  const el = ctx.print(`<pre aria-hidden="true">target: ${esc(target || 'the mainframe')}\n</pre>`).querySelector('pre')!;
   const head = el.textContent!;
   const bar = (i: number) => {
     const done = steps.map((s, k) => (k < Math.floor(i / 10) ? `[##########] ${s}` : k === Math.floor(i / 10) ? `[${'#'.repeat(i % 10).padEnd(10, '.')}] ${s}` : ''));
@@ -321,7 +323,9 @@ export function hack(ctx: Ctx, target: string, esc: Esc): Stop {
       if (stopped) return;
       el.insertAdjacentHTML('beforeend', '\n<span class="op">ACCESS GRANTED</span>');
       window.setTimeout(() => {
-        el.lastElementChild!.outerHTML = '<span class="error">access denied. this is a portfolio.</span>';
+        el.lastElementChild!.remove();
+        // its own line, outside the hidden frames, so it's the one that's read
+        ctx.print('<span class="error">access denied. this is a portfolio.</span>');
         ctx.found('hack');
       }, ctx.reduced() ? 0 : 700);
     },
@@ -372,7 +376,7 @@ export function cmatrix(ctx: Ctx): Stop {
 // snake: arrows, wasd or hjkl; space pauses; swipe on a touch screen
 export function snake(ctx: Ctx): Stop {
   const W = 18, H = 12;
-  const res = ctx.print(`<div class="t-snake"><div class="t-snake-board" style="--w:${W};--h:${H}"></div><div class="t-snake-status"></div></div>`);
+  const res = ctx.print(`<div class="t-snake"><div class="t-snake-board" style="--w:${W};--h:${H}" aria-hidden="true"></div><div class="t-snake-status"></div></div>`);
   const board = res.querySelector<HTMLElement>('.t-snake-board')!;
   const status = res.querySelector<HTMLElement>('.t-snake-status')!;
   const cells = Array.from({ length: W * H }, () => board.appendChild(document.createElement('i')));
@@ -403,7 +407,9 @@ export function snake(ctx: Ctx): Stop {
     cells.forEach((c) => (c.className = ''));
     body.forEach((b, i) => (cells[b.y * W + b.x].className = i ? 's' : 'h'));
     cells[food.y * W + food.x].className = 'f';
-    status.textContent = paused ? 'paused · space to go on' : `score ${score} · best ${best} · arrows/wasd/hjkl · q quits`;
+    // only when it changes: it's in the live region
+    const text = paused ? 'paused · space to go on' : `score ${score} · best ${best} · arrows/wasd/hjkl · q quits`;
+    if (status.textContent !== text) status.textContent = text;
   };
   const steer = (x: number, y: number) => {
     const last = turns[turns.length - 1] ?? dir;

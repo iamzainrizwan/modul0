@@ -277,7 +277,8 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
       const el = terminal.querySelector('.uptime');
       if (el) el.textContent = fmt();
     }, 1000);
-    return `<span class="uptime">${fmt()}</span>`;
+    // it ticks every second: not announced each time (it's in the live region)
+    return `<span class="uptime" aria-live="off">${fmt()}</span>`;
   }
 
   // every unit is a remainder of the one above it
@@ -693,7 +694,7 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
   });
 
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Tab') {
+    if (e.key === 'Tab' && !e.shiftKey && input.value.trim()) {
       e.preventDefault();
       complete();
     } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
