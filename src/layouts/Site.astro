@@ -177,7 +177,7 @@ const sections = [
         <slot />
         <footer class="site-footer">
           <p>
-            Built with Astro and React, deployed by GitHub Actions. There's a terminal hidden in here: <span class="kbd-hint">press <kbd>`</kbd>&nbsp;on any page, or </span><a href={`${base}terminal/`} data-open-terminal data-astro-reload>open it</a>. <span class="kbd-hint">The page takes vim keys too: <kbd>j</kbd>&nbsp;and <kbd>k</kbd>&nbsp;jump between sections, <kbd>/</kbd>&nbsp;searches. </span>The <a href="https://github.com/iamzainrizwan/modul0/releases/tag/v0-handwritten">first version</a> of this site was hand-written.
+            Built with Astro and React, deployed by GitHub Actions. There's a terminal hidden in here: <span class="kbd-hint">press <kbd>`</kbd>&nbsp;on any page, or </span><a href={`${base}terminal/`} data-open-terminal data-astro-reload>open it</a>. <span class="kbd-hint">The page takes vim keys too: <kbd>j</kbd>&nbsp;and <kbd>k</kbd>&nbsp;jump between sections, <kbd>/</kbd>&nbsp;searches, <kbd>?</kbd>&nbsp;lists the rest. </span>The <a href="https://github.com/iamzainrizwan/modul0/releases/tag/v0-handwritten">first version</a> of this site was hand-written.
           </p>
           <p class="footer-sign">
             <ModMark /> modul0.dev<span data-views hidden> · <span data-views-n></span> visits</span>
@@ -193,6 +193,23 @@ const sections = [
     </div>
 
     <QuakeTerminal client:idle fs={fs} transition:persist="quake" />
+    <!-- every key the site answers to, on ? (the script below). a native
+         dialog: esc and the x close it, focus comes back on its own -->
+    <dialog class="keys" aria-labelledby="keys-h" transition:persist="keys">
+      <div class="keys-bar">
+        <h2 id="keys-h">keys</h2>
+        <form method="dialog"><button class="keys-close" aria-label="Close">×</button></form>
+      </div>
+      <dl class="keys-list">
+        <div><dt><kbd>`</kbd></dt><dd>open or close the terminal</dd></div>
+        <div><dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>next or previous section</dd></div>
+        <div><dt><kbd>g</kbd><kbd>g</kbd> <kbd>G</kbd></dt><dd>top or bottom of the page</dd></div>
+        <div><dt><kbd>/</kbd></dt><dd>search everything (a grep in the terminal)</dd></div>
+        <div><dt><kbd>?</kbd></dt><dd>this list</dd></div>
+        <div><dt><kbd>esc</kbd></dt><dd>close whatever's open</dd></div>
+      </dl>
+      <p class="keys-more">In the terminal, <code>help</code> lists the commands. Not all of them: try what you'd try on a real one.</p>
+    </dialog>
     {testSite && <MotionPanel />}
     <script is:inline define:vars={{ api }}>
       // the view counter: one visit per browser session, shown in the rail and footer
@@ -255,7 +272,16 @@ const sections = [
         if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
         if ((e.target as HTMLElement).closest?.('input, textarea, select, [contenteditable]')) return;
         if (document.querySelector('.quake.is-open')) return;
-        if (e.key === 'j' || e.key === 'k') {
+        const keys = document.querySelector<HTMLDialogElement>('dialog.keys')!;
+        if (keys.open) {
+          // the terminal takes over from the list
+          if (e.key === '`') keys.close();
+          return;
+        }
+        if (e.key === '?') {
+          e.preventDefault();
+          keys.showModal();
+        } else if (e.key === 'j' || e.key === 'k') {
           const pad = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
           const heads = [...document.querySelectorAll<HTMLElement>('main :is(h1, h2, h3)')].filter((h) => h.offsetParent !== null);
           const top = (h: HTMLElement) => h.getBoundingClientRect().top - pad;
