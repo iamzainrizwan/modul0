@@ -171,9 +171,11 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
     return entry.querySelector<HTMLElement>('.response') ?? entry;
   }
 
+  // to the bottom. on /terminal/ that's the prompt, or the output while an
+  // egg has the prompt hidden (scrolling to a hidden element does nothing)
   function scroll() {
     if (opts.scroller) opts.scroller.scrollTop = opts.scroller.scrollHeight;
-    else form.scrollIntoView({ block: 'end' });
+    else (form.hidden ? output : form).scrollIntoView({ block: 'end' });
   }
 
   // an easter egg found: tallied per browser (eggs.ts), announced the first time
@@ -205,6 +207,7 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
     },
     found,
     scroll,
+    room: () => (opts.scroller ? opts.scroller.clientHeight : innerHeight),
   };
 
   // "blog/foo.md", "../about.txt", "~/projects" -> [dir, name]; name '' means the dir itself
@@ -390,9 +393,9 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
         break;
       case 'cat':
         if (/(^|\/)\.secrets$/.test(args[0] ?? '')) {
-          out = 'nice try.';
+          out = 'im lowk hungry rn';
           hit = 'secrets';
-        } else if (/(^|\/)\.plan$/.test(args[0] ?? '')) out = 'world domination. then a nap.';
+        } else if (/(^|\/)\.plan$/.test(args[0] ?? '')) out = 'sleep';
         else out = cat(args[0]);
         break;
       case 'blog':
@@ -567,18 +570,24 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
       case 'snake':
         print('', raw, promptAt);
         return snake(ctx);
-      case 'reboot':
+      case 'reboot': {
         print('<span class="dim">broadcast message from zain@modul0: the system is going down for reboot NOW!</span>', raw, promptAt);
         found('reboot');
         form.hidden = true;
-        // a real load of home with the boot unplayed, so it plays again
-        setTimeout(() => {
+        // a countdown, so the egg's there to see; then a real load of home
+        // with the boot unplayed, so it plays again
+        const count = print('rebooting in 3...');
+        let n = 3;
+        const tick = setInterval(() => {
+          if (--n > 0) return void (count.textContent = `rebooting in ${n}...`);
+          clearInterval(tick);
           try {
             sessionStorage.removeItem('modul0-booted');
           } catch {}
           location.href = fs.base;
-        }, reduced() ? 0 : 800);
+        }, 1000);
         return;
+      }
       case 'shutdown':
       case 'poweroff':
       case 'halt':

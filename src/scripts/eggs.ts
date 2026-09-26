@@ -180,6 +180,7 @@ export type Ctx = {
   cols: () => number; // how many characters fit across the output
   found: (id: string) => void;
   scroll: () => void;
+  room: () => number; // the visible height of the terminal, px
 };
 
 // the keyboard, for as long as one of these runs. ctrl+c, q or esc stops
@@ -251,6 +252,7 @@ export function forkbomb(ctx: Ctx) {
     () => {
       procs *= 2;
       el.textContent = `forking... ${procs.toLocaleString('en-GB')} processes`;
+      ctx.scroll();
       return procs < 65536;
     },
     () => {
@@ -319,6 +321,7 @@ export function cmatrix(ctx: Ctx) {
         if (Math.random() < 0.3) grid[Math.floor(Math.random() * rows)][x] = glyph();
       }
       draw();
+      if (n === 0) ctx.scroll();
       return !ctx.reduced() && n < 70;
     },
     () => {
@@ -331,10 +334,17 @@ export function cmatrix(ctx: Ctx) {
 // snake: arrows, wasd or hjkl; space pauses; swipe on a touch screen
 export function snake(ctx: Ctx) {
   const W = 18, H = 12;
-  const res = ctx.print(`<div class="snake"><div class="snake-board" style="--w:${W};--h:${H}"></div><div class="snake-status"></div></div>`);
-  const board = res.querySelector<HTMLElement>('.snake-board')!;
-  const status = res.querySelector<HTMLElement>('.snake-status')!;
+  const res = ctx.print(`<div class="t-snake"><div class="t-snake-board" style="--w:${W};--h:${H}"></div><div class="t-snake-status"></div></div>`);
+  const board = res.querySelector<HTMLElement>('.t-snake-board')!;
+  const status = res.querySelector<HTMLElement>('.t-snake-status')!;
   const cells = Array.from({ length: W * H }, () => board.appendChild(document.createElement('i')));
+  // as big as fits: the width there is, and the height the terminal shows
+  // less room for the command above and the status and egg note below, so
+  // the whole board is on screen without scrolling
+  const em = parseFloat(getComputedStyle(board).fontSize) || 16;
+  const across = res.clientWidth || 27 * em;
+  const tall = ctx.room() - 7 * em;
+  board.style.width = `${Math.floor(Math.max(9 * em, Math.min(across, 27 * em, (tall * W) / H)))}px`;
   let best = 0;
   try {
     best = Number(localStorage.getItem('modul0-snake')) || 0;
@@ -380,6 +390,7 @@ export function snake(ctx: Ctx) {
   board.style.touchAction = 'none';
   ctx.found('snake');
   draw();
+  ctx.scroll();
   let tick = 0;
   loop(
     ctx,
