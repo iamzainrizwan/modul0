@@ -69,14 +69,19 @@ those. When sources disagree, ask; don't pick one.
   (`src/layouts/Terminal.astro`). `src/scripts/render.ts` - blog html inside it.
   Beyond the fs commands it has `expr` (bigint `+ - * / %`, also bare `17 % 5`),
   `man modul0` (why the name: Zain's own words, keep them), `uptime -v`,
-  `grep` (every file), `curl modul0.dev/cv.txt` and `theme`. Easter eggs, not
+  `grep` (every file), `curl modul0.dev/cv.txt`, `theme`, `neofetch` (the %
+  mark in blocks beside sourced facts) and `git log` (the build's real last
+  15 commits, from `build.log` in `src/data/build.ts`; ci checks out 20 deep
+  for it, keep `fetch-depth` in deploy.yml and test.yml). Easter eggs, not
   in `help`: `rm -rf /` (sets `html[data-broken]`: the page tears, a fixed
   `body::after` cover blacks out and lifts, then "restored in Ns", the real
   downtime), `sl`, `vim` (stuck until `:q`), `nano`, `ping`. Keep their
   jokes free of facts about Zain's setup that nothing sources.
 - Page keys (Site.astro): `j`/`k` jump between headings, `gg`/`G`, and `/`
-  opens the terminal on `grep ` (`modul0:terminal` with `detail.input`). Off
-  while typing, with modifiers, or with the terminal open.
+  opens the terminal on `grep ` (`modul0:terminal` with `detail.input`), `?`
+  opens `dialog.keys` (every key; hints at the hidden commands without naming
+  them). Off while typing, with modifiers, or with the terminal or the list
+  open. New keys go in that list too.
 - `src/pages/cv.txt.ts` - the cv as plain text from profile.ts (76 columns),
   for `curl modul0.dev/cv.txt`. GitHub Pages can't sniff curl, so the bare
   domain stays html. `src/data/build.ts` - commit sha and commit time, read
@@ -107,8 +112,11 @@ those. When sources disagree, ask; don't pick one.
   `guestbook/admin/` (delete with the worker's `ADMIN_TOKEN`). The page also
   has the pixel wall (`src/scripts/wall.ts`, worker `/wall`): 32x32, one pixel
   a day per visitor, drawn on a canvas from the theme tokens at whole device
-  pixels per cell; without js it's the worker's `/wall.svg`. Admin undoes a
-  poster or clears it.
+  pixels per cell; without js it's the worker's `/wall.svg`. "replay" redraws
+  it from `/wall/history` (3 base-32 chars a placement). Admin undoes a
+  poster or clears it. Zain can reply to a message from the admin page
+  (`replies` table, joined into `/messages`, shown under it as "↳ zain");
+  deleting a message deletes its reply.
   `src/scripts/guestbook.ts` renders messages with textContent only. Messages
   go live straight away (Zain's call), so the worker caps every abuse path
   (listed in `api/README.md`); admin can delete one message or everything
@@ -156,6 +164,11 @@ Every page gets a canonical URL and og tags from Site.astro (`noindex` pages,
 the guestbook admin and 404, get no canonical). `src/pages/sitemap.xml.ts`
 and `robots.txt.ts` are generated at build (add new top-level pages to
 `PAGES` in the sitemap; posts are picked up automatically).
+Share cards: `src/data/og.ts` lists each page's card (its own title and
+description) plus one per post; `src/pages/og/[slug].png.ts` renders them at
+build with satori + resvg in the style of the hand-made `public/og.png`
+(fonts from `@fontsource`, not Google Fonts). Home, 404 and admin keep
+`og.png`. A new top-level page gets an entry in `PAGES` there too.
 `src/data/seo.ts` builds the schema.org JSON-LD (Person, ProfilePage and
 WebSite on home, BlogPosting on posts) from profile.ts, so it follows the
 accuracy rule: don't add facts there that profile.ts doesn't have.

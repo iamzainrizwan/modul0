@@ -11,6 +11,7 @@ import Uptime from '../components/Uptime';
 import ModMark from '../components/ModMark.astro';
 import { api } from '../data/api';
 import { build } from '../data/build';
+import { cardFor } from '../data/og';
 import { ldJson } from '../data/seo';
 import { defaults as motion, testSite } from '../data/motion';
 import MotionPanel from '../components/MotionPanel.astro';
@@ -43,6 +44,12 @@ const {
 const canonical = new URL(Astro.url.pathname, Astro.site).toString();
 const base = import.meta.env.BASE_URL;
 const fs = await buildFs();
+// this page's share card (src/data/og.ts); home keeps the hand-made og.png
+const card = await cardFor(Astro.url.pathname);
+const ogImage = new URL(card ? `${base}og/${card.slug}.png` : `${base}og.png?v=2`, Astro.site);
+const ogAlt = card
+  ? `${card.title}, modul0.dev: ${card.description}`
+  : "Zain Rizwan, modul0.dev: I like breaking things (CTFs) and building things that don't break.";
 
 // the tree mirrors home: files (about, contact) scroll to a home section,
 // directories open their full page. home has a teaser for each directory with
@@ -84,10 +91,10 @@ const sections = [
     {published && <meta property="article:published_time" content={published.toISOString()} />}
     {published && <meta property="article:author" content={person.name} />}
     <meta property="og:url" content={canonical} />
-    <meta property="og:image" content={new URL(`${base}og.png?v=2`, Astro.site)} />
+    <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="627" />
-    <meta property="og:image:alt" content="Zain Rizwan, modul0.dev: I like breaking things (CTFs) and building things that don't break." />
+    <meta property="og:image:alt" content={ogAlt} />
     <meta name="twitter:card" content="summary_large_image" />
     {jsonld && <script type="application/ld+json" set:html={ldJson(jsonld)} />}
     <link rel="icon" href={`${base}favicon.svg`} type="image/svg+xml" />
