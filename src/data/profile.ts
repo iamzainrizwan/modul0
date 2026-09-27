@@ -251,7 +251,11 @@ export const archive: Project[] = [
     statusText: 'Coursework',
     stack: ['AVR assembly'],
     areas: ['Embedded'],
-    details: [],
+    details: [
+      'Four routines on a loop: numbers in binary, my initials as alphabet positions (Z = 26, R = 18), Morse code, and a ping-pong light bounced across the LEDs with logical shifts.',
+      'Morse for every count from 1 to 50: ZAI on odd counts, IAZ on even ones (parity by masking the low bit), plus a 5 on multiples of five, found by repeated subtraction since the AVR has no divide instruction.',
+      'All timing from nested busy-wait loops counted in clock cycles at 16 MHz, no timers or libraries, with dots, dashes and gaps at the standard 1:3:7 Morse ratios.',
+    ],
   },
   {
     slug: 'rl-unity',
