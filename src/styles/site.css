@@ -112,6 +112,11 @@ kbd {
 .tree li a:hover::before { color: var(--void); }
 .tree li a[aria-current] { background: var(--purple); color: var(--void); font-weight: 600; }
 .tree li a[aria-current]::before { color: var(--void); }
+/* home's section numbers, flush right like line numbers (desktop only) */
+.tree-n { float: right; margin-left: 0.75rem; color: var(--purple); }
+.tree li a:hover .tree-n { color: inherit; }
+.tree li a[aria-current] .tree-n { color: var(--void); }
+@media (max-width: 1000px) { .tree-n { display: none; } }
 /* folders (cv/): children draw under the folder's own branch */
 .tree .tree-group > ul { margin: 0; }
 .tree .tree-group li a::before { content: '│  ├─ '; content: '│  ├─ ' / ''; }
@@ -1268,7 +1273,8 @@ main { counter-reset: sec; }
 @media (prefers-reduced-motion: reduce) { .btn:active, .teaser:active { transform: none; } }
 
 /* ---------- the rail's visit remainder ---------- */
-.vmod { display: block; margin-top: 0.2rem; padding: 0; border: none; background: none; color: var(--purple); font: inherit; text-align: left; }
+.rail-facts dd:has(.vmod) { white-space: nowrap; }
+.vmod { padding: 0; border: none; background: none; color: var(--purple); font: inherit; text-align: left; }
 .vmod .op { margin-left: 0; }
 .vmod:hover, .vmod:focus-visible { background: var(--purple); color: var(--void); }
 .vmod:hover .op, .vmod:focus-visible .op { background: var(--void); color: var(--purple); }

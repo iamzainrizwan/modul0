@@ -65,6 +65,8 @@ those. When sources disagree, ask; don't pick one.
   own). Only facts the site already has.
   Every `.section-head` on a page gets an outlined numeral (a css counter,
   `01`...; alt text `''` so it isn't read), and the digit keys jump to them.
+  The rail's tree shows home's numbers flush right (`n` on each item in
+  Site.astro's `sections`, about is 00; desktop only, cv's children unnumbered).
   Content links to a section (`#project-x`, `#leadership`, `#failure-drill`)
   are rewritten to the page it lives on by `route()` in `src/data/inline.ts`.
 - `src/components/` - React islands: `BootSequence` (first visit per session;

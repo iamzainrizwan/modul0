@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 // sections is current. an item with href is a page, not a home section.
 // it lives in the rail, which the router keeps across page changes, so after
 // each swap (astro:page-load) it works out the new page from the url.
-type Item = { id: string; label: string; href?: string; children?: Item[] };
+// n: its number on home (the section numerals), shown on desktop
+type Item = { id: string; label: string; href?: string; n?: number; children?: Item[] };
 
 export default function SectionNav({ items, base, initial }: { items: Item[]; base: string; initial?: string }) {
   const [current, setCurrent] = useState(initial ?? items[0]?.id);
@@ -73,17 +74,18 @@ export default function SectionNav({ items, base, initial }: { items: Item[]; ba
     };
   }, [items, swaps]);
 
-  const label = (l: string) => (
+  const label = (l: string, n?: number) => (
     <>
       {l.replace(/\/$/, '')}
       {l.endsWith('/') && <span className="tree-slash">/</span>}
+      {n !== undefined && <span className="tree-n" aria-hidden="true">{String(n).padStart(2, '0')}</span>}
     </>
   );
   const here = (i: Item) => (current === i.id ? (i.id === page ? 'page' : 'location') : undefined);
   const link = (i: Item, proxy = false) => (
     <li key={i.id}>
       <a href={i.href ?? `${base}#${i.id}`} aria-current={here(i)} className={proxy ? 'tree-proxy' : undefined}>
-        {label(i.label)}
+        {label(i.label, i.n)}
       </a>
     </li>
   );
@@ -96,7 +98,7 @@ export default function SectionNav({ items, base, initial }: { items: Item[]; ba
           i.children ? (
             <li key={i.id} className={`tree-group${current === i.id || i.children.some((c) => c.id === current) ? ' is-open' : ''}`}>
               <a className="tree-dir" href={i.href ?? `${base}#${i.children[0].id}`} aria-current={here(i)}>
-                {label(i.label)}
+                {label(i.label, i.n)}
               </a>
               {/* while the folder itself is current, its first child stands in for it where the folder is hidden */}
               <ul>{i.children.map((c, n) => link(c, n === 0 && current === i.id))}</ul>

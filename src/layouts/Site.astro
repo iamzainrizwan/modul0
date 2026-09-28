@@ -54,20 +54,23 @@ const ogAlt = card
 // the same id, so the highlight follows you down home too. cv/ is a folder on
 // desktop (its children only show while you're in it); on narrow screens the
 // folder flattens away and its children sit in the grid like everything else.
+// n: home's section numbers (the outlined 01, 02... over each teaser; about
+// is the top, 0), shown in the tree on desktop. the digit keys jump to them
 const sections = [
-  { id: 'about', label: 'about' },
-  { id: 'projects', label: 'projects/', href: `${base}projects/` },
-  { id: 'homelab', label: 'homelab/', href: `${base}homelab/` },
+  { id: 'about', label: 'about', n: 0 },
+  { id: 'projects', label: 'projects/', href: `${base}projects/`, n: 1 },
+  { id: 'homelab', label: 'homelab/', href: `${base}homelab/`, n: 2 },
   {
     id: 'cv',
     label: 'cv/',
     href: `${base}cv/`,
+    n: 3,
     children: ['experience', 'education', 'leadership', 'awards', 'skills'].map((id) => ({ id, label: id, href: `${base}cv/#${id}` })),
   },
-  { id: 'productions', label: 'productions/', href: `${base}productions/` },
-  { id: 'writing', label: 'writing/', href: `${base}blog/` },
-  { id: 'guestbook', label: 'guestbook/', href: `${base}guestbook/` },
-  { id: 'contact', label: 'contact' },
+  { id: 'productions', label: 'productions/', href: `${base}productions/`, n: 4 },
+  { id: 'writing', label: 'writing/', href: `${base}blog/`, n: 5 },
+  { id: 'guestbook', label: 'guestbook/', href: `${base}guestbook/`, n: 6 },
+  { id: 'contact', label: 'contact', n: 7 },
 ];
 ---
 
