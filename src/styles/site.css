@@ -1237,6 +1237,86 @@ html[data-motion='instant'] .print { animation: none; }
   html[data-mx-cursor] .tree li a:hover { animation: none; background-size: 100% 100%; color: var(--void); }
 }
 
+/* ---------- section numbers ----------
+   every .section-head on a page counts up: a big outlined numeral over the
+   heading. the digit keys jump to them (0 is the top). the alt text ("")
+   keeps screen readers from reading it; browsers without it skip the number */
+main { counter-reset: sec; }
+.section-head { counter-increment: sec; }
+.section-head::before {
+  content: counter(sec, decimal-leading-zero) / '';
+  flex-basis: 100%;
+  margin-bottom: 0.35rem;
+  font-family: var(--serif);
+  font-size: clamp(3rem, 7vw, 5.25rem);
+  font-weight: 800;
+  line-height: 0.8;
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--purple);
+}
+
+/* ---------- press ----------
+   anything that lifts off its shadow on hover drops back into it on a click,
+   at once. on touch, where nothing lifts, it just sinks by the shadow's width */
+@media (hover: hover) {
+  .btn:active, .teaser:active { transform: none; box-shadow: none; transition: none; }
+}
+@media (hover: none) {
+  .btn:active, .teaser:active { transform: translate(3px, 3px); transition: none; }
+}
+@media (prefers-reduced-motion: reduce) { .btn:active, .teaser:active { transform: none; } }
+
+/* ---------- the rail's visit remainder ---------- */
+.vmod { display: block; margin-top: 0.2rem; padding: 0; border: none; background: none; color: var(--purple); font: inherit; text-align: left; }
+.vmod .op { margin-left: 0; }
+.vmod:hover, .vmod:focus-visible { background: var(--purple); color: var(--void); }
+.vmod:hover .op, .vmod:focus-visible .op { background: var(--void); color: var(--purple); }
+
+/* ---------- ticker (home, under the hero) ---------- */
+.ticker { display: flex; margin-top: 2.5rem; border: var(--rule); background: var(--purple); color: var(--void); font-family: var(--mono); font-size: 0.8rem; }
+.ticker-view { flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.ticker-view::-webkit-scrollbar { display: none; }
+.ticker.is-running .ticker-view { overflow: hidden; }
+.ticker-track { display: flex; width: max-content; margin: 0; padding: 0.6rem 0.9rem; list-style: none; white-space: nowrap; }
+.ticker-track li + li::before { content: '%' / ''; margin: 0 0.9rem; padding: 0 0.3em; background: var(--void); color: var(--purple); font-weight: 700; }
+.ticker b { margin-right: 0.35em; font-weight: 700; }
+.ticker a { color: var(--void); text-decoration-thickness: 2px; }
+.ticker a:hover, .ticker a:focus-visible, html[data-mx-cursor] .ticker a:hover { animation: none; background: var(--void); color: var(--purple); }
+.ticker a:focus-visible { outline: 2px solid var(--void); outline-offset: 2px; }
+.ticker-replay { flex: none; padding: 0 0.8rem; border: none; border-left: 2px solid var(--white); background: var(--void); color: var(--purple); font: inherit; font-weight: 700; }
+.ticker-replay:hover, .ticker-replay:focus-visible { background: var(--white); color: var(--void); }
+
+/* ---------- square pointer (extra: data-mx-pointer) ----------
+   css cursor images, so it's the real pointer, drawn by the system: no lag,
+   no js. default is an ink square lifted off a purple shadow; over anything
+   clickable it presses down into where the shadow was and turns purple (the
+   hotspot stays put, so it lands 3px down-right of it); over text, a square
+   i-beam. the theme swaps the images (--cur*). inputs, the wall and the
+   terminal keep the system's own. fine pointers only */
+@media (pointer: fine) {
+  html[data-mx-pointer] {
+    --cur: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='21' height='21' shape-rendering='crispEdges'><rect x='4' y='4' width='15' height='15' fill='%23000'/><rect x='5' y='5' width='13' height='13' fill='%23a769ff'/><rect x='1' y='1' width='15' height='15' fill='%23000'/><rect x='2' y='2' width='13' height='13' fill='%23fff'/></svg>") 2 2, default;
+    --cur-link: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='21' height='21' shape-rendering='crispEdges'><rect x='4' y='4' width='15' height='15' fill='%23000'/><rect x='5' y='5' width='13' height='13' fill='%23fff'/><rect x='7' y='7' width='9' height='9' fill='%23a769ff'/></svg>") 2 2, pointer;
+    --cur-text: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='13' height='23' shape-rendering='crispEdges'><rect x='0' y='0' width='13' height='5' fill='%23000'/><rect x='4' y='0' width='5' height='23' fill='%23000'/><rect x='0' y='18' width='13' height='5' fill='%23000'/><rect x='1' y='1' width='11' height='3' fill='%23fff'/><rect x='5' y='1' width='3' height='21' fill='%23fff'/><rect x='1' y='19' width='11' height='3' fill='%23fff'/></svg>") 6 11, text;
+  }
+  html[data-mx-pointer][data-theme='light'] {
+    --cur: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='21' height='21' shape-rendering='crispEdges'><rect x='4' y='4' width='15' height='15' fill='%23fff'/><rect x='5' y='5' width='13' height='13' fill='%236a2bd9'/><rect x='1' y='1' width='15' height='15' fill='%23fff'/><rect x='2' y='2' width='13' height='13' fill='%23000'/></svg>") 2 2, default;
+    --cur-link: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='21' height='21' shape-rendering='crispEdges'><rect x='4' y='4' width='15' height='15' fill='%23fff'/><rect x='5' y='5' width='13' height='13' fill='%23000'/><rect x='7' y='7' width='9' height='9' fill='%236a2bd9'/></svg>") 2 2, pointer;
+    --cur-text: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='13' height='23' shape-rendering='crispEdges'><rect x='0' y='0' width='13' height='5' fill='%23fff'/><rect x='4' y='0' width='5' height='23' fill='%23fff'/><rect x='0' y='18' width='13' height='5' fill='%23fff'/><rect x='1' y='1' width='11' height='3' fill='%23000'/><rect x='5' y='1' width='3' height='21' fill='%23000'/><rect x='1' y='19' width='11' height='3' fill='%23000'/></svg>") 6 11, text;
+  }
+  html[data-mx-pointer] { cursor: var(--cur); }
+  html[data-mx-pointer] :is(p, li, dd, dt, h1, h2, h3, h4, blockquote, figcaption, time, td, th, pre, code, kbd) { cursor: var(--cur-text); }
+  html[data-mx-pointer] :is(a[href], button, summary, label, select, [role='button'], input:is([type='checkbox'], [type='radio'], [type='submit'])):not(:disabled) { cursor: var(--cur-link); }
+  /* the text inside a link or a button still points */
+  html[data-mx-pointer] :is(a[href], button, summary, label, [role='button']) * { cursor: inherit; }
+  html[data-mx-pointer] :is(input:not([type='checkbox'], [type='radio'], [type='submit']), textarea, [contenteditable]) { cursor: text; }
+  html[data-mx-pointer] :disabled { cursor: not-allowed; }
+  html[data-mx-pointer] :is(.quake, .quake *) { cursor: auto; }
+  html[data-mx-pointer] .quake :is(a[href], button) { cursor: pointer; }
+  html[data-mx-pointer] .wall-canvas { cursor: crosshair; }
+}
+
 /* ---------- motion panel (test site only) ---------- */
 .mpanel { position: fixed; right: 12px; bottom: 12px; z-index: 950; font-family: var(--mono); font-size: 0.72rem; color: var(--text); background: var(--void); border: var(--rule); box-shadow: 4px 4px 0 var(--purple); }
 .mpanel summary { padding: 0.35rem 0.6rem; cursor: pointer; list-style: none; font-weight: 700; background: var(--purple); color: var(--void); }

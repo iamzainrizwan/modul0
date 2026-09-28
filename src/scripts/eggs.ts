@@ -34,6 +34,7 @@ export const EGGS: [id: string, name: string][] = [
   ['coffee', 'brew coffee'],
   ['weather', 'weather'],
   ['modulo', '%'],
+  ['mod', 'mod n'],
   ['yes', 'yes'],
   ['forkbomb', ':(){ :|:& };:'],
   ['hack', 'hack'],
@@ -61,6 +62,7 @@ const TIPS: [string, string, string][] = [
   ['sl', 'try sl (not ls)', 'sl'],
   ['yes', 'try yes', 'yes'],
   ['coffee', 'try brew coffee', 'brew coffee'],
+  ['mod', 'try mod 7', 'mod 7'],
 ];
 
 // a nudge toward an egg you haven't found yet: [text, command]. never the
@@ -328,6 +330,63 @@ export function hack(ctx: Ctx, target: string, esc: Esc): Stop {
         ctx.print('<span class="error">access denied. this is a portfolio.</span>');
         ctx.found('hack');
       }, ctx.reduced() ? 0 : 700);
+    },
+  );
+}
+
+// mod n: number a grid of cells 0, 1, 2... in reading order and fill every
+// one that n divides. each row starts (width % n) further along the cycle,
+// so the width picks the pattern: columns when n divides it, diagonals when
+// it's one off, something messier otherwise. drawn a row at a time
+export function mod(ctx: Ctx, arg: string, esc: Esc, error: (s: string) => string): Stop | null {
+  if (arg && !/^\d{1,4}$/.test(arg)) {
+    ctx.print(error(`mod: ${esc(arg)}: not a whole number`));
+    return null;
+  }
+  const n = arg ? Number(arg) : [3, 5, 6, 7, 9, 11, 13][Math.floor(Math.random() * 7)];
+  if (n === 0) {
+    ctx.print(error('mod: division by zero. the remainder of that is undefined, and so is my patience.'));
+    return null;
+  }
+  // two characters a cell, so the cells come out roughly square
+  const w = Math.max(8, Math.min(Math.floor(ctx.cols() / 2), 36));
+  const rows = 12;
+  const el = ctx.print(`<pre class="modgrid" aria-hidden="true"></pre>`).querySelector('pre')!;
+  const row = (y: number) => {
+    let s = '';
+    for (let x = 0; x < w; x++) s += (y * w + x) % n === 0 ? '<b>██</b>' : '<i>· </i>';
+    return s + '\n';
+  };
+  const shift = w % n;
+  const why =
+    n === 1
+      ? 'everything divides by 1.'
+      : shift === 0
+        ? `${w} % ${n} = 0: every row starts in step, so it lines up in columns.`
+        : shift === 1 || shift === n - 1
+          ? `${w} % ${n} = ${shift}: each row slips one cell, so it runs in diagonals.`
+          : `${w} % ${n} = ${shift}: each row starts ${shift} further round the cycle.`;
+  const finish = () => {
+    ctx.print(`every ${n === 1 ? '' : `${n}th `}cell of ${w} a row. <span class="dim">${why} try another n.</span>`);
+    ctx.found('mod');
+  };
+  if (ctx.reduced()) {
+    el.innerHTML = Array.from({ length: rows }, (_, y) => row(y)).join('');
+    finish();
+    return null;
+  }
+  return loop(
+    ctx,
+    40,
+    (y) => {
+      el.insertAdjacentHTML('beforeend', row(y));
+      if (y === 0) ctx.scroll();
+      return y < rows - 1;
+    },
+    (stopped) => {
+      if (stopped) el.insertAdjacentText('beforeend', '^C');
+      else finish();
+      ctx.scroll();
     },
   );
 }

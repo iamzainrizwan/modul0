@@ -57,6 +57,14 @@ those. When sources disagree, ask; don't pick one.
   `projects/` (ProjectExplorer), `homelab/`, `cv/` (experience, education,
   leadership, awards, skills), `productions/`, `blog/`, `guestbook/`.
   Teasers: `ProjectTeasers`, `CvGlance`, `GuestbookTeaser` (.astro).
+  `Ticker.astro` sits under the hero: a purple strip (now, last commit,
+  newest post, the drill, and live: your visit remainder, the newest
+  guestbook message from the teaser's fetch via `modul0:gb-latest`). It
+  steps across once when seen, then rests as a scrollable line; replay runs
+  it again, and pointing, tapping or focusing stops it (nothing loops on its
+  own). Only facts the site already has.
+  Every `.section-head` on a page gets an outlined numeral (a css counter,
+  `01`...; alt text `''` so it isn't read), and the digit keys jump to them.
   Content links to a section (`#project-x`, `#leadership`, `#failure-drill`)
   are rewritten to the page it lives on by `route()` in `src/data/inline.ts`.
 - `src/components/` - React islands: `BootSequence` (first visit per session;
@@ -81,7 +89,7 @@ those. When sources disagree, ask; don't pick one.
   (sudo, make, cowsay, fortune, ssh, brew coffee, weather, `%`, `:wq`), and
   the long ones animate in the output and take the keyboard until ctrl+c,
   q or esc: `yes`, the fork bomb, `hack`, `cmatrix`, `snake` (best score per
-  browser). The engine keeps `rm -rf /` (sets `html[data-broken]`: the page
+  browser), `mod n` (cells where n divides the index, a row at a time). The engine keeps `rm -rf /` (sets `html[data-broken]`: the page
   tears, a fixed `body::after` cover blacks out and lifts, then "restored in
   Ns", the real downtime), `sl`, `vim` (stuck until `:q`), `ls -a` / `.secrets`,
   `echo $SHELL`, `man man`, `git push`/`blame`, `reboot` (replays the boot on
@@ -96,7 +104,7 @@ those. When sources disagree, ask; don't pick one.
 - Page keys (Site.astro): `j`/`k` jump between headings, `gg`/`G`, and `/`
   opens the terminal on `grep ` (`modul0:terminal` with `detail.input`), `?`
   opens `dialog.keys` (every key; hints at the hidden commands without naming
-  them). Off while typing, with modifiers, or with the terminal or the list
+  them), `1`-`9` jump to the numbered sections and `0` to the top. Off while typing, with modifiers, or with the terminal or the list
   open. New keys go in that list too.
 - `src/pages/cv.txt.ts` - the cv as plain text from profile.ts (76 columns),
   for `curl -L modul0.dev/cv.txt`: always advertise the `-L`, since a bare
@@ -138,7 +146,10 @@ those. When sources disagree, ask; don't pick one.
   moderation and local dev in `api/README.md`), deployed by
   `.github/workflows/api.yml`. The site reads its url from `PUBLIC_API` at
   build time (`src/data/api.ts`; repo variable in CI); unset, the guestbook
-  shows as offline and the counter stays hidden. `src/pages/guestbook/`
+  shows as offline and the counter stays hidden (the test site shows a
+  labelled sample count instead). The rail's count also shows as a remainder
+  mod the day of the month (`≡ r (mod d)`), a button that types the `expr`
+  into the terminal. `src/pages/guestbook/`
   (posts work without js via a form post + 303 back to `#posted`),
   `guestbook/admin/` (delete with the worker's `ADMIN_TOKEN`). The page also
   has the pixel wall (`src/scripts/wall.ts`, worker `/wall`): 32x32, one pixel
@@ -177,7 +188,11 @@ Hover and terminal-drop timing come from the style too (`--hv`, `--qk-dur`;
 the drop is the "loader": the quake's title bar fills in five steps, then the
 body lands, 190ms; Zain's pick from five mockups, 2026-09-25). Extras stack via `data-mx-*`: reveal, cursor (block cursor
 sweeps hovered links), decode (two characters per heading flicker through
-glyphs, width-locked). Defaults in `src/data/motion.ts`; the head script in
+glyphs, width-locked), pointer (a square mouse pointer from css cursor
+images, fine pointers only: lifted off a purple shadow, pressed into it
+over anything clickable, a square i-beam over text; the terminal, inputs
+and the wall keep the system's). `.btn`/`.teaser` press back into their
+hover shadow on `:active`. Defaults in `src/data/motion.ts`; the head script in
 Site.astro sets the attributes before paint; `src/scripts/motion.ts` does
 the js half. Page changes are instant, prefetched loads with no animation:
 view transitions and a per-page arrival draw were both tried and dropped

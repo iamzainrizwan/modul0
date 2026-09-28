@@ -1,7 +1,7 @@
 import { listing, postView } from './render';
 import { uptimeRows, uptimeText } from './uptime';
 import { getTheme, setTheme } from './theme';
-import { EGGS, markEgg, foundEggs, resetEggs, eggsReport, quick, MAN_MAN, yes, forkbomb, hack, cmatrix, snake, tip, type Ctx, type Stop } from './eggs';
+import { EGGS, markEgg, foundEggs, resetEggs, eggsReport, quick, MAN_MAN, yes, forkbomb, hack, cmatrix, snake, mod, tip, type Ctx, type Stop } from './eggs';
 
 type Post = { title: string; date: string; description: string; html: string };
 export type Fs = {
@@ -598,6 +598,10 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
       case 'snake':
         print('', raw, promptAt);
         egg = snake(ctx);
+        return;
+      case 'mod':
+        print('', raw, promptAt);
+        egg = mod(ctx, args[0] ?? '', escape, error);
         return;
       case 'reboot': {
         print('<span class="dim">broadcast message from zain@modul0: the system is going down for reboot NOW!</span>', raw, promptAt);

@@ -135,7 +135,7 @@ const sections = [
         if (testSite) Object.assign(m, JSON.parse(localStorage.getItem('modul0-motion') || '{}'));
       } catch (e) {}
       root.dataset.motion = m.style;
-      ['reveal', 'cursor', 'decode'].forEach(function (x) {
+      ['reveal', 'cursor', 'decode', 'pointer'].forEach(function (x) {
         if (m[x]) root.setAttribute('data-mx-' + x, '');
       });
       try {
@@ -173,7 +173,7 @@ const sections = [
           </div>
           <div data-views hidden>
             <dt>visits</dt>
-            <dd class="mono" data-views-n></dd>
+            <dd class="mono"><span data-views-n></span> <button type="button" class="vmod" data-views-mod hidden></button></dd>
           </div>
         </dl>
         <ul class="rail-links">
@@ -211,6 +211,7 @@ const sections = [
       <dl class="keys-list">
         <div><dt><kbd>`</kbd></dt><dd>open or close the terminal</dd></div>
         <div><dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>next or previous section</dd></div>
+        <div><dt><kbd>0</kbd>-<kbd>9</kbd></dt><dd>jump to a numbered section (0 is the top)</dd></div>
         <div><dt><kbd>g</kbd><kbd>g</kbd> <kbd>G</kbd></dt><dd>top or bottom of the page</dd></div>
         <div><dt><kbd>/</kbd></dt><dd>search everything (a grep in the terminal)</dd></div>
         <div><dt><kbd>?</kbd></dt><dd>this list</dd></div>
@@ -220,8 +221,31 @@ const sections = [
       <p class="keys-more">In the terminal, <code>help</code> lists the commands. Not all of them: try what you'd try on a real one, and <code>eggs</code> keeps score.</p>
     </dialog>
     {testSite && <MotionPanel />}
-    <script is:inline define:vars={{ api }}>
-      // the view counter: one visit per browser session, shown in the rail and footer
+    <script is:inline define:vars={{ api, testSite }}>
+      // the view counter: one visit per browser session, shown in the rail and
+      // footer. the rail's also has it as a remainder: mod today's date (the
+      // day of the month, in your time), so it's a different sum every day
+      var showViews = function (raw) {
+        var n = Number(raw).toLocaleString('en-GB');
+        window.__modul0Views = n;
+        document.querySelectorAll('[data-views-n]').forEach(function (el) { el.textContent = n; });
+        document.querySelectorAll('[data-views]').forEach(function (el) { el.hidden = false; });
+        var d = new Date().getDate();
+        var b = document.querySelector('[data-views-mod]');
+        b.innerHTML = '<span class="op">\u2261</span> ' + (raw % d) + ' (mod ' + d + ')';
+        b.dataset.expr = 'expr ' + raw + ' % ' + d;
+        b.title = 'mod today\'s date. check it in the terminal';
+        b.setAttribute('aria-label', n + ' mod ' + d + ' is ' + (raw % d) + '. Check it in the terminal');
+        b.hidden = false;
+        // home's ticker says it too
+        window.__modul0ViewsRem = '\u2261 ' + (raw % d) + ' (mod ' + d + ')';
+        document.querySelectorAll('[data-views-rem]').forEach(function (el) { el.textContent = window.__modul0ViewsRem; });
+      };
+      // the test site has no api: a made-up count, labelled, so the rail can be seen
+      if (!api && testSite) {
+        showViews(1284);
+        document.querySelector('.rail-facts [data-views] dt').textContent = 'visits (sample)';
+      }
       if (api) {
         var counted = false;
         try { counted = !!sessionStorage.getItem('modul0-counted'); } catch (e) {}
@@ -229,10 +253,7 @@ const sections = [
           .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
           .then(function (d) {
             try { sessionStorage.setItem('modul0-counted', '1'); } catch (e) {}
-            var n = Number(d.views).toLocaleString('en-GB');
-            window.__modul0Views = n;
-            document.querySelectorAll('[data-views-n]').forEach(function (el) { el.textContent = n; });
-            document.querySelectorAll('[data-views]').forEach(function (el) { el.hidden = false; });
+            showViews(Number(d.views));
           })
           .catch(function () {});
       }
@@ -261,6 +282,7 @@ const sections = [
         if (!n) return;
         document.querySelectorAll('[data-views-n]').forEach((el) => (el.textContent = n));
         document.querySelectorAll<HTMLElement>('[data-views]').forEach((el) => (el.hidden = false));
+        document.querySelectorAll('[data-views-rem]').forEach((el) => (el.textContent = (window as any).__modul0ViewsRem ?? ''));
       });
       document.addEventListener('astro:before-swap', (e: any) => {
         const next = e.newDocument.documentElement as HTMLElement;
@@ -310,6 +332,14 @@ const sections = [
           if (!next) return;
           e.preventDefault();
           next.scrollIntoView({ block: 'start' });
+        } else if (/^[0-9]$/.test(e.key)) {
+          // the numbered sections (the outlined 01, 02... over each heading); 0 is the top
+          const n = Number(e.key);
+          const heads = [...document.querySelectorAll<HTMLElement>('main .section-head')].filter((h) => h.offsetParent !== null);
+          if (n === 0) scrollTo(0, 0);
+          else if (heads[n - 1]) heads[n - 1].scrollIntoView({ block: 'start' });
+          else return;
+          e.preventDefault();
         } else if (e.key === 'G') {
           e.preventDefault();
           scrollTo(0, document.documentElement.scrollHeight);
@@ -345,6 +375,12 @@ const sections = [
           else localStorage.removeItem('modul0-keys');
         } catch {}
         keysLabel();
+      });
+
+      // the rail's visit remainder: the sum, typed into the terminal to check
+      document.querySelector('[data-views-mod]')!.addEventListener('click', (e) => {
+        const cmd = (e.currentTarget as HTMLElement).dataset.expr;
+        if (cmd && (window as any).__quakeReady) window.dispatchEvent(new CustomEvent('modul0:terminal', { detail: { input: cmd } }));
       });
 
       // pointing at a terminal link starts loading it, so the first open is quick

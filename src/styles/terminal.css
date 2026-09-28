@@ -137,6 +137,10 @@ html[data-broken] body::after {
 .terminal .rain b { color: var(--white); font-weight: 700; }
 .terminal .rain i { color: var(--purple); font-style: normal; }
 .terminal .rain s { color: var(--purple-deep); text-decoration: none; }
+/* mod n: filled cells in purple, the rest as faint dots */
+.terminal .modgrid { line-height: 1.1; overflow: hidden; }
+.terminal .modgrid b { color: var(--purple); font-weight: 400; }
+.terminal .modgrid i { color: var(--line-strong); font-style: normal; }
 .terminal .yes { max-height: 40vh; overflow: hidden; }
 /* a plain grid, not inline: the board's width is set by eggs.ts (to fit the
    screen), and a shrink-to-fit parent would collapse it until drawn */

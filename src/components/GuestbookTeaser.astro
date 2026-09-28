@@ -31,6 +31,9 @@ const base = import.meta.env.BASE_URL;
         .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
         .then(({ messages }) => {
           renderMessages(list, messages.slice(0, 3));
+          // the newest one goes in home's ticker too
+          (window as any).__modul0GbLatest = messages[0];
+          window.dispatchEvent(new Event('modul0:gb-latest'));
           if (meta) meta.textContent = `${messages.length} ${messages.length === 1 ? 'message' : 'messages'}`;
         })
         .catch(() => list.remove());

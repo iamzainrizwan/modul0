@@ -8,6 +8,7 @@ export type Motion = {
   reveal: boolean; // headings and cards reveal on first scroll into view
   cursor: boolean; // block-cursor hover on links
   decode: boolean; // two characters of each heading flicker through glyphs
+  pointer: boolean; // the mouse pointer is a square (css cursor images, fine pointers only)
 };
 
 export const styles: { id: MotionStyle; label: string }[] = [
@@ -21,8 +22,9 @@ export const extras: { id: Exclude<keyof Motion, 'style'>; label: string }[] = [
   { id: 'reveal', label: 'scroll reveal' },
   { id: 'cursor', label: 'block-cursor hover' },
   { id: 'decode', label: 'decode headings' },
+  { id: 'pointer', label: 'square pointer' },
 ];
 
-// chosen by zain on the test site, 2026-09-24
-export const defaults: Motion = { style: 'dither', reveal: true, cursor: true, decode: true };
+// chosen by zain on the test site, 2026-09-24 (pointer: on to try, 2026-09-28)
+export const defaults: Motion = { style: 'dither', reveal: true, cursor: true, decode: true, pointer: true };
 export const testSite = import.meta.env.PUBLIC_TEST === '1';

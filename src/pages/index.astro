@@ -5,6 +5,7 @@ import Productions from '../components/Productions.astro';
 import ProjectTeasers from '../components/ProjectTeasers.astro';
 import CvGlance from '../components/CvGlance.astro';
 import GuestbookTeaser from '../components/GuestbookTeaser.astro';
+import Ticker from '../components/Ticker.astro';
 import { person, links, featured, archive, homelab, productions } from '../data/profile';
 import { getPosts, longDate } from '../data/buildFs';
 import { inline } from '../data/inline';
@@ -39,6 +40,7 @@ const email = links[0];
       <div><dt>Society</dt><dd>Treasurer, KCL Cyber Security Society</dd></div>
       <div><dt>Last internship</dt><dd>Infrastructure / Cloud, Elecosoft</dd></div>
     </dl>
+    <Ticker />
   </section>
 
   <section id="projects" aria-labelledby="projects-h">
