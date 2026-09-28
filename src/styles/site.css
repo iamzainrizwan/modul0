@@ -1279,23 +1279,6 @@ main { counter-reset: sec; }
 .vmod:hover, .vmod:focus-visible { background: var(--purple); color: var(--void); }
 .vmod:hover .op, .vmod:focus-visible .op { background: var(--void); color: var(--purple); }
 
-/* ---------- ticker (home, under the hero) ---------- */
-.ticker { margin-top: 2.5rem; border: 2px solid var(--purple); background: var(--void); color: var(--purple); font-family: var(--mono); font-size: 0.8rem; }
-.ticker-view { overflow-x: auto; scrollbar-width: none; }
-.ticker-view::-webkit-scrollbar { display: none; }
-.ticker.is-running .ticker-view { overflow: hidden; }
-.ticker-strip { display: flex; width: max-content; }
-.ticker-track { display: flex; margin: 0; padding: 0.6rem 0.9rem; list-style: none; white-space: nowrap; }
-.ticker-track li + li::before, .ticker.is-running .ticker-track::after { content: '%' / ''; margin: 0 0.9rem; padding: 0 0.3em; background: var(--purple); color: var(--void); font-weight: 700; }
-/* while it loops, each copy ends on a % (the seam) and the padding goes */
-.ticker.is-running .ticker-track { padding: 0.6rem 0; }
-.ticker.is-running .ticker-track::after { margin-right: 0; }
-.ticker.is-running .ticker-track li:first-child::before { content: none; }
-.ticker.is-running .ticker-track li:first-child { margin-left: 0.9rem; }
-.ticker b { margin-right: 0.35em; font-weight: 700; }
-.ticker a { color: var(--purple); text-decoration-thickness: 2px; }
-.ticker a:hover, .ticker a:focus-visible, html[data-mx-cursor] .ticker a:hover { animation: none; background: var(--purple); color: var(--void); }
-
 /* ---------- square pointer (extra: data-mx-pointer) ----------
    css cursor images, so it's the real pointer, drawn by the system: no lag,
    no js. default is an ink square lifted off a purple shadow; over anything

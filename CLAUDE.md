@@ -57,14 +57,6 @@ those. When sources disagree, ask; don't pick one.
   `projects/` (ProjectExplorer), `homelab/`, `cv/` (experience, education,
   leadership, awards, skills), `productions/`, `blog/`, `guestbook/`.
   Teasers: `ProjectTeasers`, `CvGlance`, `GuestbookTeaser` (.astro).
-  `Ticker.astro` sits under the hero: purple on black (now, last commit,
-  newest post, the drill, and live: your visit remainder, the newest
-  guestbook message from the teaser's fetch via `modul0:gb-latest`). It
-  loops for good, a character a step (Zain's call, 2026-09-28: the one
-  exception to "nothing loops forever"), from the list plus an inert
-  aria-hidden copy. It holds still while hovered, pressed, focused (drops
-  to the plain scrollable line) or off screen, and never moves for reduced
-  motion. Only facts the site already has.
   Every `.section-head` on a page gets an outlined numeral (a css counter,
   `01`...; alt text `''` so it isn't read), and the digit keys jump to them.
   The rail's tree shows home's numbers flush right (`n` on each item in

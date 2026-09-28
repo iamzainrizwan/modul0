@@ -240,9 +240,6 @@ const sections = [
         b.title = 'mod today\'s date. check it in the terminal';
         b.setAttribute('aria-label', n + ' mod ' + d + ' is ' + (raw % d) + '. Check it in the terminal');
         b.hidden = false;
-        // home's ticker says it too
-        window.__modul0ViewsRem = '\u2261 ' + (raw % d) + ' (mod ' + d + ')';
-        document.querySelectorAll('[data-views-rem]').forEach(function (el) { el.textContent = window.__modul0ViewsRem; });
       };
       // the test site has no api: a made-up count, labelled, so the rail can be seen
       if (!api && testSite) {
@@ -285,7 +282,6 @@ const sections = [
         if (!n) return;
         document.querySelectorAll('[data-views-n]').forEach((el) => (el.textContent = n));
         document.querySelectorAll<HTMLElement>('[data-views]').forEach((el) => (el.hidden = false));
-        document.querySelectorAll('[data-views-rem]').forEach((el) => (el.textContent = (window as any).__modul0ViewsRem ?? ''));
       });
       document.addEventListener('astro:before-swap', (e: any) => {
         const next = e.newDocument.documentElement as HTMLElement;
