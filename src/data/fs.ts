@@ -66,6 +66,7 @@ export const projects: Record<string, string> = {
   '1337.md':
     "<b>1337</b> - neetcode spaced-repetition tracker. claude and i's - vibecoded, used daily. flask + react, daily digest emails.",
   'recurse.md': '<b>re::curse</b> - daily interview prep emails via gemini. questions at 11, solutions at 23.',
+  'cmatrix-saver.md': '<b>cmatrix-saver</b> - cmatrix screensaver for gnome on wayland. 5 min idle -> fullscreen kitty on every monitor, decrypt title, tmux status bar. any key closes it. <a href="https://github.com/iamzainrizwan/cmatrix-saver">repo</a>.',
   'sherpa.md': '<b>sherpa</b> - google student ai hackathon, team of 6. gemini career dashboard for students. i built the latex cv generator + the dashboard redesign.',
   'educhain.md': '<b>educhain</b> - easya x algorand hackathon. credential verification on algorand, with an nft per credential. first coding hackathon: i mostly learned the team\'s code and got it deployed. <a href="https://github.com/SCGR-1/Hackathon_10.18">repo</a>.',
   'modul0.md': '<b>modul0</b> - this site. astro + react. you found the terminal. named after the % operator: <a class="run" href="#" data-cmd="man modul0">man modul0</a>.',

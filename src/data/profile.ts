@@ -153,6 +153,23 @@ export const archive: Project[] = [
     ],
   },
   {
+    slug: 'cmatrix-saver',
+    name: 'cmatrix-saver',
+    year: '2026',
+    tagline: 'A cmatrix screensaver for GNOME on Wayland',
+    summary:
+      'GNOME on Wayland has no screensaver hooks, so this [polls Mutter’s idle time over D-Bus](https://github.com/iamzainrizwan/cmatrix-saver/blob/main/cmatrix-saver) and, after five minutes, opens fullscreen kitty + cmatrix on every monitor, with a fade-in, a [decrypt-style title](https://github.com/iamzainrizwan/cmatrix-saver/blob/main/cmatrix-saver-scene) and a tmux status bar.',
+    status: 'done',
+    statusText: 'Open source, MIT',
+    stack: ['Bash', 'kitty', 'tmux', 'D-Bus', 'systemd'],
+    areas: ['Apps'],
+    repo: 'https://github.com/iamzainrizwan/cmatrix-saver',
+    details: [
+      'Mutter ignores where native Wayland windows ask to go, so each monitor gets its own window under XWayland, positioned inside it and fullscreened there.',
+      'Any key or mouse movement closes it, and it won’t start while a video or presentation is inhibiting idle or the screen is locked.',
+    ],
+  },
+  {
     slug: 'sherpa',
     name: 'Sherpa',
     year: '2026',
