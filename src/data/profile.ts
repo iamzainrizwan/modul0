@@ -158,15 +158,18 @@ export const archive: Project[] = [
     year: '2026',
     tagline: 'A cmatrix screensaver for GNOME on Wayland',
     summary:
-      'GNOME on Wayland has no screensaver hooks, so this [polls Mutter’s idle time over D-Bus](https://github.com/iamzainrizwan/cmatrix-saver/blob/main/cmatrix-saver) and, after five minutes, opens fullscreen kitty + cmatrix on every monitor, with a fade-in, a [decrypt-style title](https://github.com/iamzainrizwan/cmatrix-saver/blob/main/cmatrix-saver-scene) and a tmux status bar.',
+      'GNOME on Wayland has no screensaver hooks, so this [polls Mutter’s idle time over D-Bus](https://github.com/iamzainrizwan/cmatrix-saver/blob/main/cmatrix-saver) and, after five minutes, opens fullscreen kitty on every monitor: a fade-in, a [decrypt-style title](https://github.com/iamzainrizwan/cmatrix-saver/blob/main/cmatrix-saver-scene), then cmatrix, pipes.sh or a [self-steering snake](https://github.com/iamzainrizwan/cmatrix-saver/blob/main/scenes/snake) under a tmux status bar.',
     status: 'done',
     statusText: 'Open source, MIT',
-    stack: ['Bash', 'kitty', 'tmux', 'D-Bus', 'systemd'],
+    stack: ['Bash', 'Python', 'kitty', 'tmux', 'D-Bus', 'systemd'],
     areas: ['Apps'],
     repo: 'https://github.com/iamzainrizwan/cmatrix-saver',
     details: [
       'Mutter ignores where native Wayland windows ask to go, so each monitor gets its own window under XWayland, positioned inside it and fullscreened there.',
-      'Any key or mouse movement closes it, and it won’t start while a video or presentation is inhibiting idle or the screen is locked.',
+      'A few keys control it (pause, speed, colour, next scene, music) and anything else closes it. Only the focused window gets keypresses, and moving focus would close it, so each key is applied to every monitor’s tmux server at once.',
+      'The snake heads for the nearest % only along a path that still leaves it a way back to its own tail, and otherwise goes wherever has the most room.',
+      'A [Claude Code hook](https://github.com/iamzainrizwan/cmatrix-saver/blob/main/sources/claude) feeds a strip along the top listing sessions that finished or need input since the saver came up. Scenes and notice sources are plain executables, so new ones drop in.',
+      'It won’t start while a video or presentation is inhibiting idle or the screen is locked.',
     ],
   },
   {
