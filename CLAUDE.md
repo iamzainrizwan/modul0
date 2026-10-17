@@ -19,10 +19,13 @@ shadows, solid purple blocks, no blur or glow.
 
 Recruiters read this. Every claim in `src/data/profile.ts` must trace to a
 source: the current CV (vault `cv/bsc/cv-master.tex`, never its `% DREAM`
-blocks or `cv/dream/`), LinkedIn, the GitHub profile README, a project's own
+blocks), LinkedIn, the GitHub profile README, a project's own
 README, or something Zain confirmed. The header comment in `profile.ts` lists
 conflicts Zain has already resolved (degree wording, Uber result, CTFs) - keep
 those. When sources disagree, ask; don't pick one.
+
+The downloadable CV PDF is on hold until Zain supplies a site-specific CV. Don't
+export `cv-master.tex` (it's a bullet store); the master is a source for facts only.
 
 ## Layout
 
@@ -255,6 +258,15 @@ and uses `trailingSlash: 'always'`, so internal links end in `/`.
 - UI changes need an explicit visual/alignment pass on screenshots (desktop,
   390px, 320px), not just functional checks.
 - Build urls from `import.meta.env.BASE_URL` / `fs.base`, never a hardcoded `/`.
+- Publishing and safety: never publish his K-number or student ID. Experiment on the
+  test site first, then he picks. Keep the mobile nav grid unchanged. No features that
+  invite pentesting (no public CTF), and nothing on alexandria is publicly reachable.
+- Terminal and site design: animations never dissolve text and nothing loops forever.
+  Square corners, serif and mono only, hard edges, no blur or glow.
+- Secrets: `ADMIN_TOKEN`, `IP_SALT` and `DISCORD_WEBHOOK` are set with
+  `wrangler secret put`; `CLOUDFLARE_API_TOKEN` and `ACCOUNT_ID` are GitHub repo secrets.
+  Local creds go in gitignored `priv/`. Site deploys don't touch D1 data. Pushing main
+  also triggers a daily 04:17 UTC rebuild.
 - No Claude co-author trailers in commits here.
 - Local build needs node >= 22.12 (system node may be older:
   `npx -y node@22 node_modules/.bin/astro dev`). If `npm i` downgrades astro
