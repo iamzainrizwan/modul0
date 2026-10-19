@@ -175,6 +175,25 @@ export const archive: Project[] = [
     ],
   },
   {
+    slug: 'cybersoc-ig',
+    name: 'cybersoc-ig',
+    year: '2026',
+    tagline: 'Instagram post templates for KCL CyberSoc',
+    summary:
+      'A [browser editor](https://iamzainrizwan.github.io/cybersoc-ig/) for KCL CyberSoc’s Instagram posts and stories in a black-on-white terminal style: pick a post or story and one of six layouts (an ASCII shield, a man page, nmap, xxd, a boot log, a git diff), fill in the event, and export a PNG ready to upload.',
+    status: 'live',
+    statusText: 'Live on GitHub Pages',
+    stack: ['JavaScript', 'HTML', 'CSS', 'Python', 'html-to-image'],
+    areas: ['Apps'],
+    repo: 'https://github.com/iamzainrizwan/cybersoc-ig',
+    details: [
+      'A small markup for headlines: [word] becomes a black inverted block and *word* goes bold. [Placeholders](https://github.com/iamzainrizwan/cybersoc-ig/blob/main/app.js) like {date} and {room} fill each layout’s own text from the event fields.',
+      'The headline is set as big as fits the width, then shrinks if the body overflows, and a warning shows if text is still cut off. Stories [keep clear of Instagram’s own header and reply bar](https://github.com/iamzainrizwan/cybersoc-ig/blob/main/canvas.css).',
+      '“Copy share link” puts the whole setup in the URL, so a teammate can open the exact post; the last edit is also kept in the browser.',
+      'Fonts are bundled so exports always match, and the ASCII shield is [generated from the society’s logo](https://github.com/iamzainrizwan/cybersoc-ig/blob/main/tools/ascii_shield.py) by a Python script. No build step.',
+    ],
+  },
+  {
     slug: 'sherpa',
     name: 'Sherpa',
     year: '2026',
