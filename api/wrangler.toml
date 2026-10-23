@@ -9,6 +9,9 @@ compatibility_date = "2026-09-01"
 ALLOWED_ORIGINS = "https://modul0.dev,http://localhost:4321"
 # where a no-js guestbook post is sent back to
 RETURN_URL = "https://modul0.dev/guestbook/"
+# where the admin's post editor commits (with the GITHUB_TOKEN secret)
+GITHUB_REPO = "iamzainrizwan/modul0"
+GITHUB_BRANCH = "main"
 
 [[d1_databases]]
 binding = "DB"
@@ -17,7 +20,8 @@ database_name = "modul0"
 database_id = "6b1a9a38-cfad-41b4-a68e-b13992bf7ab0"
 
 # secrets (not in this file): ADMIN_TOKEN, deletes messages;
-# IP_SALT, salts the ip hashes. set each with `npx wrangler secret put NAME`.
+# IP_SALT, salts the ip hashes; GITHUB_TOKEN, a fine-grained token with
+# contents read/write on the modul0 repo only, for the post editor. set each with `npx wrangler secret put NAME`.
 
 # per-ip rate limits (workers rate limiting: period is 10 or 60 seconds).
 # namespace ids are just unique numbers for this account.
@@ -42,6 +46,6 @@ namespace_id = "1005"
 simple = { limit = 5, period = 60 }
 
 [[ratelimits]]
-name = "ADMIN_LIMIT" # admin reads, deletes and wrong tokens
+name = "ADMIN_LIMIT" # admin reads, deletes, saves and wrong tokens (the token is too long to guess anyway)
 namespace_id = "1004"
-simple = { limit = 10, period = 60 }
+simple = { limit = 30, period = 60 }

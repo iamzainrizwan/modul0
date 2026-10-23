@@ -9,4 +9,6 @@ export default defineConfig({
   // they're on screen, so a click swaps pages without waiting on the network
   prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
   integrations: [react()],
+  // the guestbook admin grew into /admin/ (stats too); old bookmarks follow it
+  redirects: { '/guestbook/admin/': '/admin/' },
 });

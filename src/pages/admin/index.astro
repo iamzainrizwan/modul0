@@ -1,0 +1,510 @@
+---
+import Site from '../../layouts/Site.astro';
+import { api } from '../../data/api';
+const base = import.meta.env.BASE_URL;
+---
+
+<Site title="Admin" description="Site stats, posts and guestbook moderation." noindex>
+  <h1 class="page-title">Admin</h1>
+  <p class="section-lede">Visits, blog posts, guestbook messages and the wall. The token is the worker's <code>ADMIN_TOKEN</code> secret, and it's only kept in this browser.</p>
+  <form class="gb-form gb-token" data-api={api}>
+    <fieldset disabled={!api}>
+      <label class="gb-field">
+        <span>admin token</span>
+        <input name="token" type="password" autocomplete="current-password" required />
+      </label>
+      <button class="btn btn-primary" type="submit">Save token</button>
+      <button class="btn" type="button" data-forget>Forget token</button>
+    </fieldset>
+    <p class="gb-note gb-live" role="status" aria-live="polite">{api ? '' : "The guestbook's offline in this build."}</p>
+  </form>
+  <section class="gb stats" aria-labelledby="stats-h" data-stats hidden>
+    <header class="section-head">
+      <h2 id="stats-h" class="sub-h">Visits</h2>
+      <p class="stats-range" role="group" aria-label="Range">
+        <button type="button" class="text-btn" data-days="7">7d</button>
+        <button type="button" class="text-btn" data-days="30" aria-pressed="true">30d</button>
+        <button type="button" class="text-btn" data-days="90">90d</button>
+      </p>
+    </header>
+    <p class="stats-sum" data-stats-sum></p>
+    <div class="stats-chart" data-stats-chart></div>
+    <details class="stats-table">
+      <summary>by day, as a table</summary>
+      <table data-stats-daily><thead><tr><th>day</th><th>loads</th><th>visitors</th></tr></thead><tbody></tbody></table>
+    </details>
+    <div class="stats-tops">
+      <table data-stats-pages><caption>pages</caption><thead><tr><th>path</th><th>loads</th><th>visitors</th></tr></thead><tbody></tbody></table>
+      <table data-stats-refs><caption>referrers</caption><thead><tr><th>from</th><th>loads</th></tr></thead><tbody></tbody></table>
+      <table data-stats-countries><caption>countries</caption><thead><tr><th>where</th><th>visitors</th></tr></thead><tbody></tbody></table>
+    </div>
+    <details class="stats-table">
+      <summary data-stats-recent-sum>latest page loads</summary>
+      <ol class="gb-list stats-recent" data-stats-recent></ol>
+    </details>
+  </section>
+  <section class="gb posts" aria-labelledby="posts-h" data-posts hidden>
+    <header class="section-head">
+      <h2 id="posts-h" class="sub-h">Posts</h2>
+      <button type="button" class="text-btn" data-post-new>new post</button>
+    </header>
+    <p class="section-meta">Saving commits the post to <code>main</code>; the site redeploys in about two minutes. Drafts stay off the live site.</p>
+    <ol class="gb-list post-list" data-post-list></ol>
+    <form class="gb-form post-form" data-post-form hidden>
+      <fieldset>
+        <label class="gb-field">
+          <span>slug <em>the url: /blog/slug/</em></span>
+          <input name="slug" required pattern="[a-z0-9][a-z0-9\-]{0,80}" autocomplete="off" spellcheck="false" />
+        </label>
+        <label class="gb-field"><span>title</span><input name="title" required autocomplete="off" /></label>
+        <label class="gb-field"><span>date</span><input name="date" type="date" required /></label>
+        <label class="gb-field"><span>description</span><input name="description" required autocomplete="off" /></label>
+        <label class="post-draft"><input name="draft" type="checkbox" /> draft</label>
+        <label class="gb-field"><span>markdown</span><textarea name="body" rows="22" spellcheck="true"></textarea></label>
+        <p class="post-actions">
+          <button class="btn btn-primary" type="submit">Save</button>
+          <button class="btn" type="button" data-post-cancel>Cancel</button>
+        </p>
+      </fieldset>
+    </form>
+  </section>
+  <section class="gb" aria-labelledby="messages-admin-h">
+    <header class="section-head">
+      <h2 id="messages-admin-h" class="sub-h">Messages</h2>
+    </header>
+    <ol class="gb-list gb-admin" data-gb-list></ol>
+  </section>
+  <section class="gb" aria-labelledby="wall-admin-h">
+    <header class="section-head">
+      <h2 id="wall-admin-h" class="sub-h">Wall</h2>
+      <button type="button" class="text-btn" data-wall-clear hidden>clear the whole wall</button>
+    </header>
+    <ol class="gb-list wall-admin" data-wall-list></ol>
+  </section>
+  <noscript><p>This page needs JavaScript.</p></noscript>
+  <p class="back"><a href={`${base}guestbook/`}>Back to the guestbook</a></p>
+</Site>
+
+<script>
+  import { renderMessages, type Message } from '../../scripts/guestbook';
+  import { parse, serialise } from '../../scripts/frontmatter';
+
+  // the router swaps pages in without reloading, so this runs for every page
+  // it lands on (and once straight away); the marker stops a double setup
+  function setupAdmin() {
+    const KEY = 'modul0-admin';
+    const form = document.querySelector<HTMLFormElement>('.gb-token');
+    if (!form || form.dataset.ready) return;
+    form.dataset.ready = '1';
+    const api = form.dataset.api;
+    const input = form.querySelector<HTMLInputElement>('input[name=token]')!;
+    const list = document.querySelector<HTMLOListElement>('[data-gb-list]')!;
+    const live = form.querySelector<HTMLElement>('.gb-live')!;
+    let messages: Message[] = [];
+
+    const store = {
+      get: () => { try { return localStorage.getItem(KEY) ?? ''; } catch { return ''; } },
+      set: (v: string) => { try { localStorage.setItem(KEY, v); } catch {} },
+      clear: () => { try { localStorage.removeItem(KEY); } catch {} },
+    };
+
+    const say = (text: string, err = false) => {
+      live.textContent = text;
+      live.classList.toggle('gb-err', err);
+    };
+
+    const button = (text: string, onClick: () => void) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'text-btn';
+      b.textContent = text;
+      b.addEventListener('click', onClick);
+      return b;
+    };
+
+    // poster is a short tag of the salted ip hash: same tag, same sender
+    const show = () =>
+      renderMessages(list, messages, (m, li) => {
+        const row = document.createElement('p');
+        row.className = 'gb-del';
+        const n = messages.filter((x) => x.poster === m.poster).length;
+        row.append(button(`delete #${m.id}`, () => remove(m)));
+        row.append(button(m.reply ? 'edit reply' : 'reply', () => answer(m)));
+        if (m.poster) {
+          const tag = document.createElement('span');
+          tag.className = 'gb-poster';
+          tag.textContent = `poster ${m.poster}`;
+          row.append(tag);
+          if (n > 1) row.append(button(`delete all ${n} from ${m.poster}`, () => removePoster(m.poster!, n)));
+        }
+        li.append(row);
+      });
+
+    const token = () => input.value || store.get();
+
+    // with a token the admin list includes poster tags; without one, the public list
+    async function load() {
+      const t = token();
+      const res = t
+        ? await fetch(`${api}/admin/messages`, { headers: { authorization: `Bearer ${t}` } })
+        : await fetch(`${api}/messages`);
+      if (res.status === 401) {
+        say('Wrong token.', true);
+        return fetch(`${api}/messages`).then((r) => r.json()).then((d) => { messages = d.messages; show(); });
+      }
+      if (!res.ok) throw new Error();
+      messages = (await res.json()).messages;
+      show();
+    }
+
+    // the wall: recent placements (needs the token), undo a poster, or clear it
+    const wallList = document.querySelector<HTMLOListElement>('[data-wall-list]')!;
+    const wallClear = document.querySelector<HTMLButtonElement>('[data-wall-clear]')!;
+    type Pixel = { id: number; x: number; y: number; color: number; created: string; poster: string };
+    const COLOUR = ['erase', 'purple', 'ink'];
+    async function loadWall() {
+      const t = token();
+      if (!t) return;
+      const res = await fetch(`${api}/admin/wall`, { headers: { authorization: `Bearer ${t}` } });
+      if (!res.ok) return;
+      const pixels: Pixel[] = (await res.json()).pixels;
+      wallClear.hidden = false;
+      wallList.replaceChildren(
+        ...pixels.map((p) => {
+          const li = document.createElement('li');
+          const what = document.createElement('span');
+          what.textContent = `${COLOUR[p.color]} at ${p.x}, ${p.y}`;
+          const when = document.createElement('span');
+          when.className = 'gb-poster';
+          when.textContent = `${p.created.replace('T', ' ').slice(0, 16)} · poster ${p.poster}`;
+          const n = pixels.filter((q) => q.poster === p.poster).length;
+          li.append(what, when, button(`undo ${n === 1 ? 'it' : `all ${n}`} from ${p.poster}`, () => undoWall(p.poster)));
+          return li;
+        }),
+      );
+      if (!pixels.length) {
+        const li = document.createElement('li');
+        li.className = 'gb-empty';
+        li.textContent = 'Nothing on the wall yet.';
+        wallList.append(li);
+      }
+    }
+    async function wallDelete(query: string, done: string) {
+      const res = await fetch(`${api}/wall?${query}`, { method: 'DELETE', headers: { authorization: `Bearer ${token()}` } });
+      if (res.status === 401) return say('Wrong token.', true);
+      if (!res.ok) return say('That failed. Try again.', true);
+      const { deleted } = await res.json();
+      say(`${done} (${deleted} ${deleted === 1 ? 'pixel' : 'pixels'}).`);
+      loadWall();
+    }
+    const undoWall = (poster: string) => confirm(`Undo every pixel from poster ${poster}?`) && wallDelete(`poster=${poster}`, `Undid ${poster}`);
+    wallClear.addEventListener('click', () => confirm('Clear the whole wall? This can’t be undone.') && wallDelete('all=1', 'Cleared the wall'));
+
+    // visits: page loads over the chosen range (needs the token)
+    const stats = document.querySelector<HTMLElement>('[data-stats]')!;
+    const $ = <T extends Element>(sel: string) => stats.querySelector<T>(sel)!;
+    type Stats = {
+      days: number; views: number; hits: number; visitors: number;
+      daily: { day: string; hits: number; visitors: number }[];
+      pages: { path: string; hits: number; visitors: number }[];
+      refs: { ref: string; hits: number }[];
+      countries: { country: string; visitors: number }[];
+      recent: { at: string; path: string; ref: string | null; country: string | null; visitor: string }[];
+    };
+    let days = 30;
+    const fmt = (n: number) => n.toLocaleString('en-GB');
+    const cell = (text: string, bar?: number) => {
+      const td = document.createElement('td');
+      td.textContent = text;
+      // a bar behind the first number, as a share of the list's biggest
+      if (bar !== undefined) td.style.setProperty('--bar', `${Math.round(bar * 100)}%`);
+      return td;
+    };
+    const fill = (sel: string, rows: (string | number)[][], empty: string) => {
+      const body = $<HTMLTableElement>(sel).tBodies[0];
+      const max = Math.max(1, ...rows.map((r) => Number(r[1])));
+      body.replaceChildren(
+        ...rows.map((r) => {
+          const tr = document.createElement('tr');
+          tr.append(...r.map((v, i) => (typeof v === 'number' ? cell(fmt(v), i === 1 ? v / max : undefined) : cell(v))));
+          return tr;
+        }),
+      );
+      if (!rows.length) {
+        const tr = document.createElement('tr');
+        const td = cell(empty);
+        td.colSpan = 3;
+        tr.append(td);
+        body.append(tr);
+      }
+    };
+    async function loadStats() {
+      const t = token();
+      if (!t) return;
+      const res = await fetch(`${api}/admin/stats?days=${days}`, { headers: { authorization: `Bearer ${t}` } });
+      if (!res.ok) return;
+      const s: Stats = await res.json();
+      stats.hidden = false;
+      const n = (x: number, one: string, many: string) => `${fmt(x)} ${x === 1 ? one : many}`;
+      $('[data-stats-sum]').textContent =
+        `${n(s.hits, 'page load', 'page loads')} from ${n(s.visitors, 'visitor', 'visitors')} in ${s.days} days · ${n(s.views, 'visit', 'visits')} counted all time`;
+      $('[data-stats-recent-sum]').textContent = `latest ${n(s.recent.length, 'page load', 'page loads')}`;
+
+      // every day in the range, quiet ones too, oldest first
+      const byDay = new Map(s.daily.map((d) => [d.day, d]));
+      const all = Array.from({ length: s.days }, (_, i) => {
+        const day = new Date(Date.now() - (s.days - 1 - i) * 86400 * 1000).toISOString().slice(0, 10);
+        return byDay.get(day) ?? { day, hits: 0, visitors: 0 };
+      });
+      const top = Math.max(1, ...all.map((d) => d.hits));
+      const chart = $<HTMLElement>('[data-stats-chart]');
+      chart.replaceChildren(
+        ...all.map((d) => {
+          const bar = document.createElement('span');
+          bar.className = 'stats-bar';
+          bar.style.setProperty('--h', `${(d.hits / top) * 100}%`);
+          const label = `${d.day}: ${fmt(d.hits)} loads, ${fmt(d.visitors)} visitors`;
+          bar.title = label;
+          bar.dataset.tip = label;
+          return bar;
+        }),
+      );
+      chart.setAttribute('role', 'img');
+      chart.setAttribute('aria-label', `Page loads a day over ${s.days} days, peak ${fmt(top)}. The table below has each day.`);
+      fill('[data-stats-daily]', [...all].reverse().map((d) => [d.day, d.hits, d.visitors]), '');
+      fill('[data-stats-pages]', s.pages.map((p) => [p.path, p.hits, p.visitors]), 'No page loads yet.');
+      fill('[data-stats-refs]', s.refs.map((r) => [r.ref, r.hits]), 'No referrers yet.');
+      fill('[data-stats-countries]', s.countries.map((c) => [c.country, c.visitors]), 'Nothing yet.');
+
+      $('[data-stats-recent]').replaceChildren(
+        ...s.recent.map((h) => {
+          const li = document.createElement('li');
+          const what = document.createElement('span');
+          what.textContent = h.path;
+          const meta = document.createElement('span');
+          meta.className = 'gb-poster';
+          meta.textContent = [h.at.replace('T', ' ').slice(0, 16), h.ref && `from ${h.ref}`, h.country, `visitor ${h.visitor}`].filter(Boolean).join(' · ');
+          li.append(what, meta);
+          return li;
+        }),
+      );
+    }
+    stats.querySelectorAll<HTMLButtonElement>('[data-days]').forEach((b) =>
+      b.addEventListener('click', () => {
+        days = Number(b.dataset.days);
+        stats.querySelectorAll('[data-days]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        loadStats().catch(() => say('Couldn’t load the stats.', true));
+      }),
+    );
+
+    // posts: the markdown files in the repo, through the worker (which commits)
+    const postsBox = document.querySelector<HTMLElement>('[data-posts]')!;
+    const postList = postsBox.querySelector<HTMLOListElement>('[data-post-list]')!;
+    const postForm = postsBox.querySelector<HTMLFormElement>('[data-post-form]')!;
+    type RepoPost = { slug: string; sha: string; text: string };
+    let posts: RepoPost[] = [];
+    let editing: RepoPost | null = null; // null with the form open: a new post
+    let saved = ''; // the form as last loaded or saved, to spot unsaved changes
+    const field = (name: string) => postForm.elements.namedItem(name) as HTMLInputElement;
+    const formText = () =>
+      serialise({
+        ...parse(editing?.text ?? ''),
+        title: field('title').value.trim(),
+        date: field('date').value,
+        description: field('description').value.trim(),
+        draft: field('draft').checked,
+        body: (postForm.elements.namedItem('body') as HTMLTextAreaElement).value,
+      });
+    const dirty = () => !postForm.hidden && formText() !== saved;
+    const leave = () => !dirty() || confirm('Throw away the unsaved changes?');
+    window.addEventListener('beforeunload', (e) => { if (dirty()) e.preventDefault(); });
+
+    function showPosts() {
+      const sorted = posts.map((p) => ({ p, f: parse(p.text) })).sort((a, b) => b.f.date.localeCompare(a.f.date));
+      postList.replaceChildren(
+        ...sorted.map(({ p, f }) => {
+          const li = document.createElement('li');
+          const title = document.createElement('strong');
+          title.textContent = f.title || p.slug;
+          const meta = document.createElement('span');
+          meta.className = 'gb-poster';
+          meta.textContent = [f.date, p.slug, f.draft && 'draft'].filter(Boolean).join(' · ');
+          li.append(title, meta, button('edit', () => openPost(p)), button('delete', () => deletePost(p)));
+          return li;
+        }),
+      );
+      if (!posts.length) {
+        const li = document.createElement('li');
+        li.className = 'gb-empty';
+        li.textContent = 'No posts yet.';
+        postList.append(li);
+      }
+    }
+    function openPost(p: RepoPost | null) {
+      if (!leave()) return;
+      editing = p;
+      const f = parse(p?.text ?? '');
+      field('slug').value = p?.slug ?? '';
+      field('slug').readOnly = !!p;
+      field('title').value = f.title;
+      field('date').value = f.date || new Date().toISOString().slice(0, 10);
+      field('description').value = f.description;
+      field('draft').checked = p ? f.draft : true;
+      (postForm.elements.namedItem('body') as HTMLTextAreaElement).value = f.body;
+      postForm.hidden = false;
+      saved = formText();
+      (p ? field('title') : field('slug')).focus();
+    }
+    const closePost = () => { postForm.hidden = true; editing = null; };
+    async function loadPosts() {
+      const t = token();
+      if (!t) return;
+      const res = await fetch(`${api}/admin/posts`, { headers: { authorization: `Bearer ${t}` } });
+      postsBox.hidden = !res.ok && res.status !== 503;
+      if (res.status === 429) return say('Too many requests: wait a minute and reload.', true);
+      if (res.status === 503) return say('Posts need the worker’s GITHUB_TOKEN secret.', true);
+      if (!res.ok) return;
+      posts = (await res.json()).posts;
+      showPosts();
+    }
+    const postError = (e: string) =>
+      e === 'conflict' ? 'That post changed on GitHub since it loaded (or the slug is taken). Reload and try again.' : 'Saving failed. Try again.';
+    postForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const slug = field('slug').value;
+      if (!editing && posts.some((p) => p.slug === slug)) return say(`There's already a post called ${slug}.`, true);
+      const text = formText();
+      const res = await fetch(`${api}/admin/posts/${slug}`, {
+        method: 'PUT',
+        headers: { authorization: `Bearer ${token()}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ text, sha: editing?.sha }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) return say(res.status === 429 ? 'Too many requests: wait a minute.' : postError(d.error), true);
+      const post = { slug, sha: d.sha, text };
+      posts = [...posts.filter((p) => p.slug !== slug), post];
+      editing = post;
+      field('slug').readOnly = true;
+      saved = text;
+      showPosts();
+      say(`Saved ${slug}. ${parse(text).draft ? 'It’s a draft, so it stays off the live site.' : 'Live in about two minutes.'}`);
+    });
+    postsBox.querySelector('[data-post-new]')!.addEventListener('click', () => openPost(null));
+    postsBox.querySelector('[data-post-cancel]')!.addEventListener('click', () => leave() && closePost());
+    async function deletePost(p: RepoPost) {
+      if (!confirm(`Delete the post ${p.slug}? It comes back only from git history.`)) return;
+      const res = await fetch(`${api}/admin/posts/${p.slug}?sha=${p.sha}`, { method: 'DELETE', headers: { authorization: `Bearer ${token()}` } });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) return say(postError(d.error), true);
+      posts = posts.filter((x) => x !== p);
+      if (editing === p) closePost();
+      showPosts();
+      say(`Deleted ${p.slug}.`);
+    }
+
+    async function removePoster(poster: string, n: number) {
+      if (!confirm(`Delete all ${n} messages from poster ${poster}?`)) return;
+      const res = await fetch(`${api}/messages?poster=${poster}`, { method: 'DELETE', headers: { authorization: `Bearer ${token()}` } });
+      if (res.status === 401) return say('Wrong token.', true);
+      if (!res.ok) return say('Delete failed. Try again.', true);
+      const { deleted } = await res.json();
+      messages = messages.filter((x) => x.poster !== poster);
+      show();
+      say(`Deleted ${deleted} from ${poster}.`);
+    }
+
+    // your reply under a message: edit it in place, empty removes it
+    async function answer(m: Message) {
+      const t = token();
+      if (!t) return say('Enter the token first.', true);
+      const text = prompt(`Reply to ${m.name} (empty removes it):\n\n${m.message}`, m.reply ?? '');
+      if (text === null) return;
+      const res = await fetch(`${api}/messages/${m.id}/reply`, {
+        method: 'PUT',
+        headers: { authorization: `Bearer ${t}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ reply: text }),
+      });
+      if (res.status === 401) return say('Wrong token.', true);
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) return say(d.error === 'too-long' ? 'That’s over 500 characters.' : 'Reply failed. Try again.', true);
+      m.reply = d.reply;
+      m.replied = d.replied ?? null;
+      show();
+      say(d.reply ? `Replied to #${m.id}.` : `Removed the reply on #${m.id}.`);
+    }
+
+    async function remove(m: Message) {
+      const t = token();
+      if (!t) return say('Enter the token first.', true);
+      if (!confirm(`Delete #${m.id} from ${m.name}?\n\n${m.message}`)) return;
+      const res = await fetch(`${api}/messages/${m.id}`, { method: 'DELETE', headers: { authorization: `Bearer ${t}` } });
+      if (res.status === 401) return say('Wrong token.', true);
+      if (!res.ok) return say('Delete failed. Try again.', true);
+      messages = messages.filter((x) => x.id !== m.id);
+      show();
+      say(`Deleted #${m.id}.`);
+    }
+
+    if (api) {
+      input.value = store.get();
+      load().catch(() => say('Couldn’t load the messages.', true));
+      loadWall().catch(() => {});
+      loadStats().catch(() => {});
+      loadPosts().catch(() => {});
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        store.set(input.value);
+        say('Token saved in this browser.');
+        load().catch(() => say('Couldn’t load the messages.', true));
+        loadWall().catch(() => {});
+        loadStats().catch(() => {});
+        loadPosts().catch(() => {});
+      });
+      form.querySelector('[data-forget]')!.addEventListener('click', () => {
+        store.clear();
+        input.value = '';
+        // the wall list is admin-only: it goes with the token
+        wallList.replaceChildren();
+        wallClear.hidden = true;
+        stats.hidden = true;
+        postsBox.hidden = true;
+        closePost();
+        say('Token forgotten.');
+      });
+    }
+  }
+  setupAdmin();
+  document.addEventListener('astro:page-load', setupAdmin);
+</script>
+
+<style is:global>
+  .stats-range { display: flex; gap: 1rem; margin: 0; }
+  .stats-range [aria-pressed='true'] { background: var(--purple); color: var(--void); }
+  .stats-sum { font-family: var(--mono); font-size: 0.8rem; color: var(--soft); margin: 0 0 1rem; }
+  .stats-chart {
+    display: flex; align-items: flex-end; gap: 2px;
+    height: 8rem; max-width: 44rem;
+    border-bottom: 2px solid var(--white);
+  }
+  .stats-bar { flex: 1; min-width: 0; height: var(--h); background: var(--purple); }
+  .stats-bar:hover { background: var(--white); }
+  .stats-table { margin: 0.75rem 0 2rem; font-family: var(--mono); font-size: 0.78rem; }
+  .stats-table summary { cursor: pointer; color: var(--muted); }
+  .stats-tops { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1.5rem; align-items: start; max-width: 44rem; margin-bottom: 1rem; }
+  .stats table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 0.78rem; }
+  .stats caption { text-align: left; font-weight: 600; padding-bottom: 0.4rem; }
+  .stats th { text-align: left; color: var(--muted); font-weight: 400; border-bottom: 2px solid var(--white); padding: 0.2rem 0.5rem 0.2rem 0; }
+  .stats td { padding: 0.25rem 0.5rem 0.25rem 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+  .stats td:first-child { max-width: 16rem; }
+  .stats td[style] { padding-left: 0.4rem; background: linear-gradient(to right, color-mix(in srgb, var(--purple) 35%, transparent) var(--bar), transparent var(--bar)); }
+  .post-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 1.25rem; }
+  .post-list strong { font-family: var(--serif); font-size: 1.1rem; }
+  .post-form { max-width: 44rem; margin-top: 1.5rem; }
+  .post-form textarea { font-family: var(--mono); font-size: 0.85rem; line-height: 1.55; min-height: 24rem; }
+  .post-form input[readonly] { color: var(--muted); }
+  .post-draft { font-family: var(--mono); font-size: 0.8rem; display: flex; gap: 0.5rem; align-items: center; }
+  .post-draft input { accent-color: var(--purple); border-radius: 0; }
+  .post-actions { display: flex; flex-wrap: wrap; gap: 1rem; margin: 0; }
+  .stats-recent { margin-top: 0.75rem; }
+  .stats-recent li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 1.25rem; font-family: var(--mono); font-size: 0.8rem; padding: 0.4rem 0; }
+</style>

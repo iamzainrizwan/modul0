@@ -261,7 +261,10 @@ const sections = [
     <script>
       import { initMotion } from '../scripts/motion';
       import { getTheme, setTheme } from '../scripts/theme';
+      import { logHit } from '../scripts/hit';
       initMotion();
+      logHit();
+      document.addEventListener('astro:page-load', logHit);
 
       // the theme toggle lives in the persisted rail, so this wires it once;
       // the terminal's `theme` command fires modul0:theme too

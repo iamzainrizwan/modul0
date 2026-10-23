@@ -59,3 +59,17 @@ CREATE TABLE IF NOT EXISTS wall_state (
 );
 -- the wall's site-wide daily cap counts by day
 CREATE INDEX IF NOT EXISTS pixels_created ON pixels (created);
+
+-- page loads for the admin stats: when, which page, where from (the
+-- referrer's host only), country (cloudflare's guess) and the 8-char visitor
+-- tag (the start of the salted ip hash, same as a poster tag). kept 90 days,
+-- pruned by the worker as it goes.
+CREATE TABLE IF NOT EXISTS hits (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+  path TEXT NOT NULL,
+  ref TEXT,
+  country TEXT,
+  visitor TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS hits_at ON hits (at);

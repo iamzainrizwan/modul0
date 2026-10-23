@@ -10,6 +10,13 @@
 //                                  ({reply}; empty removes it)
 //   GET    /views                  the count
 //   POST   /views                  count this visit (once per visitor per day)
+//   POST   /hit                    log a page load: {path, ref} (kept HITS_DAYS)
+//   GET    /admin/stats?days=n     visits by day, top pages, referrers,     } admin
+//                                  countries and the latest page loads     }
+//   GET    /admin/posts            every blog post's markdown, with its sha }
+//   PUT    /admin/posts/:slug      save one ({text, sha}; no sha = new):    }
+//                                  a commit to main, which redeploys        }
+//   DELETE /admin/posts/:slug?sha= delete one (also a commit)               }
 //   GET    /wall                   the pixel wall, plus how long until you can place
 //   GET    /wall.svg               the same as an image (the page without js)
 //   POST   /wall                   place one pixel: {x, y, color}, one a day each
@@ -45,6 +52,12 @@ const COLORS = 3;
 const WALL_SITE_DAY = 1000; // placements a day for everyone, so a botnet can't repaint it all
 const HISTORY_MAX = 20000; // placements the replay gets (the newest, if there are more)
 const PLACE_MAX = 256; // bytes: a placement is {x, y, color}
+const HITS_DAYS = 90; // page loads kept for the stats
+const HIT_MAX = 512; // bytes: a hit is {path, ref}
+const TOP_MAX = 15; // rows in each stats top list
+const POST_MAX = 200_000; // bytes in a post's markdown
+const POSTS_MAX = 40; // posts the admin loads (one github fetch each; workers allow 50)
+const POSTS_DIR = 'src/content/blog';
 
 export default {
   async fetch(request, env, ctx) {
@@ -92,6 +105,11 @@ async function route(request, env, url, ctx) {
     if (method === 'POST') return json({ views: await countVisit(env, ip) });
   }
 
+  if (pathname === '/hit' && method === 'POST') {
+    if (!(await allow(env.VIEW_LIMIT, ip))) return json({ error: 'slow-down' }, 429);
+    return hit(request, env, ip);
+  }
+
   if ((pathname === '/wall' || pathname === '/wall.svg') && method === 'GET') {
     if (!(await allow(env.READ_LIMIT, ip))) return json({ error: 'slow-down' }, 429);
     const { cells } = await wallState(env);
@@ -115,8 +133,11 @@ async function route(request, env, url, ctx) {
   // everything below is admin
   const one = pathname.match(/^\/messages\/(\d+)$/);
   const replyTo = pathname.match(/^\/messages\/(\d+)\/reply$/);
+  const postSlug = pathname.match(/^\/admin\/posts\/([a-z0-9][a-z0-9-]{0,80})$/);
   const admin =
-    ((pathname === '/admin/messages' || pathname === '/admin/wall') && method === 'GET') ||
+    (pathname === '/admin/posts' && method === 'GET') ||
+    (postSlug && (method === 'PUT' || method === 'DELETE')) ||
+    ((pathname === '/admin/messages' || pathname === '/admin/wall' || pathname === '/admin/stats') && method === 'GET') ||
     (method === 'DELETE' && (one || pathname === '/messages' || pathname === '/wall')) ||
     (method === 'PUT' && replyTo);
   if (admin) {
@@ -124,6 +145,10 @@ async function route(request, env, url, ctx) {
     if (!(await isAdmin(request, env))) return json({ error: 'unauthorised' }, 401);
 
     if (replyTo) return setReply(request, env, Number(replyTo[1]));
+    if (pathname === '/admin/stats') return stats(env, url);
+    if (pathname === '/admin/posts') return listPosts(env);
+    if (postSlug && method === 'PUT') return savePost(request, env, postSlug[1]);
+    if (postSlug) return deletePost(env, postSlug[1], url.searchParams.get('sha') ?? '');
     if (pathname === '/admin/wall') {
       const { results } = await env.DB.prepare(
         'SELECT id, x, y, color, created, substr(ip_hash, 1, 8) AS poster FROM pixels ORDER BY id DESC LIMIT ?',
@@ -247,7 +272,7 @@ async function setReply(request, env, id) {
 async function notify(env, row, hash) {
   if (!env.DISCORD_WEBHOOK) return;
   const plain = (s, max) => [...String(s).replace(/`/g, "'")].slice(0, max).join('');
-  const admin = new URL('admin/', env.RETURN_URL).toString();
+  const admin = new URL('/admin/', env.RETURN_URL).toString();
   try {
     const res = await fetch(env.DISCORD_WEBHOOK, {
       method: 'POST',
@@ -401,6 +426,141 @@ async function countVisit(env, ip) {
   }
   return views(env);
 }
+
+// a page load for the stats. the path is the site's own (checked against a
+// plain pattern, query and hash dropped by the page); the referrer keeps only
+// its host, and only when it's another site. old rows are pruned as we go.
+async function hit(request, env, ip) {
+  if (Number(request.headers.get('content-length') ?? 0) > HIT_MAX) return json({ error: 'too-long' }, 413);
+  let body;
+  try {
+    const raw = await request.text();
+    if (raw.length > HIT_MAX) return json({ error: 'too-long' }, 413);
+    body = JSON.parse(raw);
+  } catch {
+    return json({ error: 'bad-request' }, 400);
+  }
+  const path = String(body?.path ?? '');
+  if (!/^\/[a-z0-9/._-]{0,120}$/i.test(path)) return json({ error: 'bad-request' }, 400);
+  let ref = null;
+  try {
+    const host = new URL(String(body?.ref ?? '')).hostname.toLowerCase();
+    const own = origins(env).map((o) => new URL(o).hostname);
+    if (host && !own.includes(host)) ref = host.slice(0, 80);
+  } catch {}
+  const country = typeof request.cf?.country === 'string' ? request.cf.country.slice(0, 2) : null;
+  const visitor = (await sha256((env.IP_SALT ?? '') + ip)).slice(0, 8);
+  await env.DB.batch([
+    env.DB.prepare("DELETE FROM hits WHERE at < strftime('%Y-%m-%dT%H:%M:%SZ', 'now', ?)").bind(`-${HITS_DAYS} days`),
+    env.DB.prepare('INSERT INTO hits (path, ref, country, visitor) VALUES (?, ?, ?, ?)').bind(path, ref, country, visitor),
+  ]);
+  return json({ ok: true }, 201);
+}
+
+// the admin stats over the last n days (1 to HITS_DAYS): one batch, one scan
+// of the window per list
+async function stats(env, url) {
+  const days = Math.min(HITS_DAYS, Math.max(1, Number(url.searchParams.get('days')) || 30));
+  const since = new Date(Date.now() - days * 86400 * 1000).toISOString().slice(0, 19) + 'Z';
+  const q = (sql, ...args) => env.DB.prepare(sql).bind(since, ...args);
+  const [total, daily, pages, refs, countries, recent] = await env.DB.batch([
+    q('SELECT COUNT(*) AS hits, COUNT(DISTINCT visitor) AS visitors FROM hits WHERE at >= ?'),
+    q('SELECT substr(at, 1, 10) AS day, COUNT(*) AS hits, COUNT(DISTINCT visitor) AS visitors FROM hits WHERE at >= ? GROUP BY day ORDER BY day'),
+    q('SELECT path, COUNT(*) AS hits, COUNT(DISTINCT visitor) AS visitors FROM hits WHERE at >= ? GROUP BY path ORDER BY hits DESC LIMIT ?', TOP_MAX),
+    q('SELECT ref, COUNT(*) AS hits FROM hits WHERE at >= ? AND ref IS NOT NULL GROUP BY ref ORDER BY hits DESC LIMIT ?', TOP_MAX),
+    q('SELECT country, COUNT(DISTINCT visitor) AS visitors FROM hits WHERE at >= ? AND country IS NOT NULL GROUP BY country ORDER BY visitors DESC LIMIT ?', TOP_MAX),
+    q('SELECT at, path, ref, country, visitor FROM hits WHERE at >= ? ORDER BY at DESC LIMIT ?', LIST_MAX),
+  ]);
+  return json({
+    days,
+    views: await views(env),
+    ...total.results[0],
+    daily: daily.results,
+    pages: pages.results,
+    refs: refs.results,
+    countries: countries.results,
+    recent: recent.results,
+  });
+}
+
+// blog posts live in the repo as markdown; the admin edits them through
+// github's contents api with the GITHUB_TOKEN secret (a fine-grained token,
+// contents read and write on this repo only). each save is a commit to
+// GITHUB_BRANCH, and the push redeploys the site. GITHUB_API is only there
+// so local dev can point at a mock.
+async function gh(env, path, init = {}) {
+  const base = env.GITHUB_API ?? 'https://api.github.com';
+  return fetch(`${base}/repos/${env.GITHUB_REPO}/contents/${path}`, {
+    ...init,
+    headers: {
+      authorization: `Bearer ${env.GITHUB_TOKEN}`,
+      accept: 'application/vnd.github+json',
+      'user-agent': 'modul0-api',
+      ...(init.body ? { 'content-type': 'application/json' } : {}),
+    },
+  });
+}
+const branch = (env) => env.GITHUB_BRANCH ?? 'main';
+
+async function listPosts(env) {
+  if (!env.GITHUB_TOKEN || !env.GITHUB_REPO) return json({ error: 'no-github' }, 503);
+  const res = await gh(env, `${POSTS_DIR}?ref=${branch(env)}`);
+  if (res.status === 404) return json({ posts: [] });
+  if (!res.ok) return json({ error: 'github', status: res.status }, 502);
+  const files = (await res.json()).filter((f) => f.type === 'file' && f.name.endsWith('.md')).slice(0, POSTS_MAX);
+  const posts = await Promise.all(
+    files.map(async (f) => {
+      const r = await gh(env, `${POSTS_DIR}/${f.name}?ref=${branch(env)}`);
+      if (!r.ok) return null;
+      const d = await r.json();
+      return { slug: f.name.slice(0, -3), sha: d.sha, text: fromBase64(d.content) };
+    }),
+  );
+  return json({ posts: posts.filter(Boolean) });
+}
+
+async function savePost(request, env, slug) {
+  if (!env.GITHUB_TOKEN || !env.GITHUB_REPO) return json({ error: 'no-github' }, 503);
+  let body;
+  try {
+    const raw = await request.text();
+    if (raw.length > POST_MAX * 2) return json({ error: 'too-long' }, 413);
+    body = JSON.parse(raw);
+  } catch {
+    return json({ error: 'bad-request' }, 400);
+  }
+  const text = String(body?.text ?? '');
+  if (!text.trim() || new TextEncoder().encode(text).length > POST_MAX) return json({ error: 'bad-request' }, 400);
+  const sha = typeof body?.sha === 'string' && body.sha ? body.sha : undefined;
+  const res = await gh(env, `${POSTS_DIR}/${slug}.md`, {
+    method: 'PUT',
+    body: JSON.stringify({ message: `${sha ? 'update' : 'add'} post ${slug}`, content: toBase64(text), branch: branch(env), sha }),
+  });
+  // 409/422: the file changed since it was loaded, or a new post's slug is taken
+  if (res.status === 409 || res.status === 422) return json({ error: 'conflict' }, 409);
+  if (!res.ok) return json({ error: 'github', status: res.status }, 502);
+  const d = await res.json();
+  return json({ ok: true, sha: d.content.sha });
+}
+
+async function deletePost(env, slug, sha) {
+  if (!env.GITHUB_TOKEN || !env.GITHUB_REPO) return json({ error: 'no-github' }, 503);
+  if (!/^[0-9a-f]{40}$/.test(sha)) return json({ error: 'bad-request' }, 400);
+  const res = await gh(env, `${POSTS_DIR}/${slug}.md`, {
+    method: 'DELETE',
+    body: JSON.stringify({ message: `delete post ${slug}`, sha, branch: branch(env) }),
+  });
+  if (res.status === 409 || res.status === 422) return json({ error: 'conflict' }, 409);
+  if (!res.ok) return json({ error: 'github', status: res.status }, 502);
+  return json({ ok: true });
+}
+
+function toBase64(s) {
+  let bin = '';
+  for (const b of new TextEncoder().encode(s)) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+const fromBase64 = (b) => new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g, '')), (c) => c.charCodeAt(0)));
 
 // a missing binding (older config) fails open rather than taking the site down
 async function allow(limiter, key) {

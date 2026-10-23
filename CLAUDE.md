@@ -46,7 +46,7 @@ export `cv-master.tex` (it's a bullet store); the master is a source for facts o
 - `src/layouts/Site.astro` - the one site layout: sticky rail (file-tree nav,
   now/uptime/visits, links, terminal button) + content. `boot` prop plays the
   boot animation (home only); `section` highlights a nav item on non-home
-  pages; `noindex` for the guestbook admin. Nav: files (about, contact)
+  pages; `noindex` for the admin page. Nav: files (about, contact)
   scroll home, directories (`href`) open their page; scroll-spy highlights
   home's teaser with the same id. `cv/` is a folder (`children`): open on
   desktop while its teaser or one of its /cv/ sections is current; flattened
@@ -150,7 +150,12 @@ export `cv-master.tex` (it's a bullet store); the master is a source for facts o
   mod the day of the month (`≡ r (mod d)`), a button that types the `expr`
   into the terminal. `src/pages/guestbook/`
   (posts work without js via a form post + 303 back to `#posted`),
-  `guestbook/admin/` (delete with the worker's `ADMIN_TOKEN`). The page also
+  `src/pages/admin/` (`/admin/`, the worker's `ADMIN_TOKEN`; `/guestbook/admin/`
+  redirects there): visit stats from the `hits` table (`src/scripts/hit.ts`
+  logs each page load, path + referrer host, not noindex pages or DNT/GPC),
+  posts (the worker commits `src/content/blog/*.md` through GitHub's contents
+  api with its `GITHUB_TOKEN` secret, so a save redeploys; frontmatter in
+  `src/scripts/frontmatter.ts`), then messages and the wall. The guestbook page also
   has the pixel wall (`src/scripts/wall.ts`, worker `/wall`): 32x32, one pixel
   a day per visitor, drawn on a canvas from the theme tokens at whole device
   pixels per cell; without js it's the worker's `/wall.svg` (in `<noscript>`,
@@ -263,7 +268,7 @@ and uses `trailingSlash: 'always'`, so internal links end in `/`.
   invite pentesting (no public CTF), and nothing on alexandria is publicly reachable.
 - Terminal and site design: animations never dissolve text and nothing loops forever.
   Square corners, serif and mono only, hard edges, no blur or glow.
-- Secrets: `ADMIN_TOKEN`, `IP_SALT` and `DISCORD_WEBHOOK` are set with
+- Secrets: `ADMIN_TOKEN`, `IP_SALT`, `DISCORD_WEBHOOK` and `GITHUB_TOKEN` are set with
   `wrangler secret put`; `CLOUDFLARE_API_TOKEN` and `ACCOUNT_ID` are GitHub repo secrets.
   Local creds go in gitignored `priv/`. Site deploys don't touch D1 data. Pushing main
   also triggers a daily 04:17 UTC rebuild.

@@ -15,6 +15,7 @@ npx wrangler d1 execute modul0 --remote --file=schema.sql   # safe to re-run
 npx wrangler secret put ADMIN_TOKEN      # a long random string: `openssl rand -hex 32`
 npx wrangler secret put IP_SALT          # another one
 npx wrangler secret put DISCORD_WEBHOOK  # optional: a discord webhook url, pinged on each new message
+npx wrangler secret put GITHUB_TOKEN     # for the post editor: fine-grained, modul0 only, contents read/write
 npx wrangler deploy                      # prints https://modul0-api.<you>.workers.dev
 ```
 
@@ -58,13 +59,33 @@ its id and poster tag, and a link to the admin page. Honeypot hits and
 rejected posts don't ping. A failed ping is logged (`npx wrangler tail`) and
 never fails the post.
 
+## Stats
+
+Each page load posts `{path, ref}` to `/hit` (skipped for noindex pages and
+for browsers sending Do Not Track or Global Privacy Control). A row keeps the
+time, the path, the referrer's host (other sites only), Cloudflare's country
+guess and the 8-character visitor tag; no IPs. Rows older than 90 days are
+pruned on each insert. The admin page reads them from `/admin/stats` (visits
+by day, top pages, referrers, countries, the latest 100 loads). Needs the
+`hits` table: re-run `schema.sql` remotely before deploying.
+
+## Posts
+
+The admin page's Posts section edits `src/content/blog/*.md` through
+GitHub's contents API with the `GITHUB_TOKEN` secret (repo and branch are
+`GITHUB_REPO`/`GITHUB_BRANCH` in `wrangler.toml`). Each save or delete is a
+commit to main ("add/update/delete post slug"), so the site redeploys. A save
+sends the sha the post was loaded with, so an edit made elsewhere in between
+is refused rather than overwritten. Locally, `--var GITHUB_API:<url>` points
+it at a mock instead of GitHub.
+
 ## Moderating
 
 The wall's recent placements are on the same admin page, with a poster tag
 each: undo everything from one poster (the cells go back to whatever was
 under them), or clear the whole wall.
 
-Delete messages at https://modul0.dev/guestbook/admin/ with the
+Delete messages at https://modul0.dev/admin/ with the
 `ADMIN_TOKEN`. With the token saved, each message shows a short poster tag
 (from the salted IP hash) and a button to delete everything from that poster,
 for spam waves. Or from here:
