@@ -1,7 +1,7 @@
 {
   "whoami": "zain - cs @ kcl (y2) · treasurer @ kcl cybersoc<br>i like breaking things (ctfs) and building things that don't break.",
   "status": "ledgr: stats view shipped -> categoriser (stretch)",
-  "birth": "2006-11-15",
+  "birth": "2006-11-14",
   "files": {
     "about.txt": "alexandria: homelab, named after the library - if you're going to hoard knowledge, commit to the bit. runs 1337, s3ntry, re::curse, an *arr stack and jellyfin.<br>valhalla: blade 14 '23, dual-boot. speakers took a year to fix, then the aux broke. worth it.",
     "stack.txt": "<pre>\nlanguages  > python, go, java, c#, c, typescript, bash\nbackend    > fastapi, flask, postgres, sqlite\ninfra      > linux, docker, nginx, systemd, github actions (self-hosted runners), azure.\n             ssh tunnels into alexandria at 2am.\nsecurity   > ctf tooling, wireshark, educated guessing.</pre>",
