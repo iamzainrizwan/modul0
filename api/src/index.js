@@ -14,9 +14,11 @@
 //   GET    /admin/stats?days=n     visits by day, top pages, referrers,     } admin
 //                                  countries and the latest page loads     }
 //   GET    /admin/posts            every blog post's markdown, with its sha }
-//   PUT    /admin/posts/:slug      save one ({text, sha}; no sha = new):    }
-//                                  a commit to main, which redeploys        }
-//   DELETE /admin/posts/:slug?sha= delete one (also a commit)               }
+//   GET    /admin/content          every src/data/content/*.json, ditto     }
+//   PUT    /admin/files            save one file: {path, text or base64,    }
+//                                  sha (none = new)}; a commit to main,     }
+//                                  which redeploys                          }
+//   DELETE /admin/files?path=&sha= delete one (also a commit)               }
 //   GET    /wall                   the pixel wall, plus how long until you can place
 //   GET    /wall.svg               the same as an image (the page without js)
 //   POST   /wall                   place one pixel: {x, y, color}, one a day each
@@ -55,9 +57,16 @@ const PLACE_MAX = 256; // bytes: a placement is {x, y, color}
 const HITS_DAYS = 90; // page loads kept for the stats
 const HIT_MAX = 512; // bytes: a hit is {path, ref}
 const TOP_MAX = 15; // rows in each stats top list
-const POST_MAX = 200_000; // bytes in a post's markdown
-const POSTS_MAX = 40; // posts the admin loads (one github fetch each; workers allow 50)
+const FILE_MAX = 6_000_000; // bytes in one saved file (an image, after the page shrinks it)
+const POSTS_MAX = 40; // files a listing loads (one github fetch each; workers allow 50)
 const POSTS_DIR = 'src/content/blog';
+const CONTENT_DIR = 'src/data/content';
+// the only files the admin can write: posts, the site's content, post images
+const EDITABLE = [
+  /^src\/content\/blog\/[a-z0-9][a-z0-9-]{0,80}\.md$/,
+  /^src\/data\/content\/[a-z0-9-]{1,40}\.json$/,
+  /^public\/blog\/[a-z0-9][a-z0-9-]{0,80}\/[a-z0-9][a-z0-9._-]{0,80}\.(png|jpe?g|webp|gif)$/,
+];
 
 export default {
   async fetch(request, env, ctx) {
@@ -133,10 +142,9 @@ async function route(request, env, url, ctx) {
   // everything below is admin
   const one = pathname.match(/^\/messages\/(\d+)$/);
   const replyTo = pathname.match(/^\/messages\/(\d+)\/reply$/);
-  const postSlug = pathname.match(/^\/admin\/posts\/([a-z0-9][a-z0-9-]{0,80})$/);
   const admin =
-    (pathname === '/admin/posts' && method === 'GET') ||
-    (postSlug && (method === 'PUT' || method === 'DELETE')) ||
+    ((pathname === '/admin/posts' || pathname === '/admin/content') && method === 'GET') ||
+    (pathname === '/admin/files' && (method === 'PUT' || method === 'DELETE')) ||
     ((pathname === '/admin/messages' || pathname === '/admin/wall' || pathname === '/admin/stats') && method === 'GET') ||
     (method === 'DELETE' && (one || pathname === '/messages' || pathname === '/wall')) ||
     (method === 'PUT' && replyTo);
@@ -146,9 +154,10 @@ async function route(request, env, url, ctx) {
 
     if (replyTo) return setReply(request, env, Number(replyTo[1]));
     if (pathname === '/admin/stats') return stats(env, url);
-    if (pathname === '/admin/posts') return listPosts(env);
-    if (postSlug && method === 'PUT') return savePost(request, env, postSlug[1]);
-    if (postSlug) return deletePost(env, postSlug[1], url.searchParams.get('sha') ?? '');
+    if (pathname === '/admin/posts') return listFiles(env, POSTS_DIR, '.md');
+    if (pathname === '/admin/content') return listFiles(env, CONTENT_DIR, '.json');
+    if (pathname === '/admin/files' && method === 'PUT') return saveFile(request, env);
+    if (pathname === '/admin/files') return deleteFile(env, url.searchParams.get('path') ?? '', url.searchParams.get('sha') ?? '');
     if (pathname === '/admin/wall') {
       const { results } = await env.DB.prepare(
         'SELECT id, x, y, color, created, substr(ip_hash, 1, 8) AS poster FROM pixels ORDER BY id DESC LIMIT ?',
@@ -483,11 +492,11 @@ async function stats(env, url) {
   });
 }
 
-// blog posts live in the repo as markdown; the admin edits them through
-// github's contents api with the GITHUB_TOKEN secret (a fine-grained token,
-// contents read and write on this repo only). each save is a commit to
-// GITHUB_BRANCH, and the push redeploys the site. GITHUB_API is only there
-// so local dev can point at a mock.
+// the admin edits the repo's own files (EDITABLE: posts, the site's content
+// json, post images) through github's contents api with the GITHUB_TOKEN
+// secret (a fine-grained token, contents read and write on this repo only).
+// each save is a commit to GITHUB_BRANCH, and the push redeploys the site.
+// GITHUB_API is only there so local dev can point at a mock.
 async function gh(env, path, init = {}) {
   const base = env.GITHUB_API ?? 'https://api.github.com';
   return fetch(`${base}/repos/${env.GITHUB_REPO}/contents/${path}`, {
@@ -501,54 +510,72 @@ async function gh(env, path, init = {}) {
   });
 }
 const branch = (env) => env.GITHUB_BRANCH ?? 'main';
+const github = (env) => !!(env.GITHUB_TOKEN && env.GITHUB_REPO);
+const editable = (path) => EDITABLE.some((re) => re.test(path));
 
-async function listPosts(env) {
-  if (!env.GITHUB_TOKEN || !env.GITHUB_REPO) return json({ error: 'no-github' }, 503);
-  const res = await gh(env, `${POSTS_DIR}?ref=${branch(env)}`);
-  if (res.status === 404) return json({ posts: [] });
+// every file in dir ending in ext, as {name, path, sha, text}
+async function listFiles(env, dir, ext) {
+  if (!github(env)) return json({ error: 'no-github' }, 503);
+  const res = await gh(env, `${dir}?ref=${branch(env)}`);
+  if (res.status === 404) return json({ files: [] });
   if (!res.ok) return json({ error: 'github', status: res.status }, 502);
-  const files = (await res.json()).filter((f) => f.type === 'file' && f.name.endsWith('.md')).slice(0, POSTS_MAX);
-  const posts = await Promise.all(
-    files.map(async (f) => {
-      const r = await gh(env, `${POSTS_DIR}/${f.name}?ref=${branch(env)}`);
+  const list = (await res.json()).filter((f) => f.type === 'file' && f.name.endsWith(ext)).slice(0, POSTS_MAX);
+  const files = await Promise.all(
+    list.map(async (f) => {
+      const r = await gh(env, `${dir}/${f.name}?ref=${branch(env)}`);
       if (!r.ok) return null;
       const d = await r.json();
-      return { slug: f.name.slice(0, -3), sha: d.sha, text: fromBase64(d.content) };
+      return { name: f.name.slice(0, -ext.length), path: `${dir}/${f.name}`, sha: d.sha, text: fromBase64(d.content) };
     }),
   );
-  return json({ posts: posts.filter(Boolean) });
+  return json({ files: files.filter(Boolean) });
 }
 
-async function savePost(request, env, slug) {
-  if (!env.GITHUB_TOKEN || !env.GITHUB_REPO) return json({ error: 'no-github' }, 503);
+// {path, text} or {path, base64} (images), with the sha it was loaded at;
+// no sha makes a new file
+async function saveFile(request, env) {
+  if (!github(env)) return json({ error: 'no-github' }, 503);
+  if (Number(request.headers.get('content-length') ?? 0) > FILE_MAX * 1.4) return json({ error: 'too-long' }, 413);
   let body;
   try {
     const raw = await request.text();
-    if (raw.length > POST_MAX * 2) return json({ error: 'too-long' }, 413);
+    if (raw.length > FILE_MAX * 1.4) return json({ error: 'too-long' }, 413);
     body = JSON.parse(raw);
   } catch {
     return json({ error: 'bad-request' }, 400);
   }
-  const text = String(body?.text ?? '');
-  if (!text.trim() || new TextEncoder().encode(text).length > POST_MAX) return json({ error: 'bad-request' }, 400);
-  const sha = typeof body?.sha === 'string' && body.sha ? body.sha : undefined;
-  const res = await gh(env, `${POSTS_DIR}/${slug}.md`, {
+  const path = String(body?.path ?? '');
+  if (!editable(path)) return json({ error: 'not-editable' }, 400);
+  let content;
+  if (typeof body.base64 === 'string') {
+    content = body.base64.replace(/\s/g, '');
+    if (!/^[A-Za-z0-9+/]+=*$/.test(content) || content.length > FILE_MAX * 1.37) return json({ error: 'bad-request' }, 400);
+  } else {
+    const text = String(body.text ?? '');
+    if (!text.trim() || new TextEncoder().encode(text).length > FILE_MAX) return json({ error: 'bad-request' }, 400);
+    // content json must stay json, or the next build fails
+    if (path.endsWith('.json')) try { JSON.parse(text); } catch { return json({ error: 'bad-json' }, 400); }
+    content = toBase64(text);
+  }
+  const sha = typeof body.sha === 'string' && body.sha ? body.sha : undefined;
+  const name = path.split('/').pop();
+  const res = await gh(env, path, {
     method: 'PUT',
-    body: JSON.stringify({ message: `${sha ? 'update' : 'add'} post ${slug}`, content: toBase64(text), branch: branch(env), sha }),
+    body: JSON.stringify({ message: `${sha ? 'update' : 'add'} ${name} from admin`, content, branch: branch(env), sha }),
   });
-  // 409/422: the file changed since it was loaded, or a new post's slug is taken
+  // 409/422: the file changed since it was loaded, or a new file's name is taken
   if (res.status === 409 || res.status === 422) return json({ error: 'conflict' }, 409);
   if (!res.ok) return json({ error: 'github', status: res.status }, 502);
   const d = await res.json();
   return json({ ok: true, sha: d.content.sha });
 }
 
-async function deletePost(env, slug, sha) {
-  if (!env.GITHUB_TOKEN || !env.GITHUB_REPO) return json({ error: 'no-github' }, 503);
-  if (!/^[0-9a-f]{40}$/.test(sha)) return json({ error: 'bad-request' }, 400);
-  const res = await gh(env, `${POSTS_DIR}/${slug}.md`, {
+async function deleteFile(env, path, sha) {
+  if (!github(env)) return json({ error: 'no-github' }, 503);
+  if (!editable(path) || !/^[0-9a-f]{40}$/.test(sha)) return json({ error: 'bad-request' }, 400);
+  const res = await gh(env, path, {
     method: 'DELETE',
-    body: JSON.stringify({ message: `delete post ${slug}`, sha, branch: branch(env) }),
+    body: JSON.stringify({ message: `delete ${path.split('/').pop()} from admin`, sha, branch: branch(env) }),
   });
   if (res.status === 409 || res.status === 422) return json({ error: 'conflict' }, 409);
   if (!res.ok) return json({ error: 'github', status: res.status }, 502);

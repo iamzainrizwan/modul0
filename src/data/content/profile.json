@@ -1,0 +1,33 @@
+{
+  "person": {
+    "name": "Zain Rizwan",
+    "handle": "iamzainrizwan",
+    "study": "Year 2 Computer Science, King's College London",
+    "location": "London, UK",
+    "birth": "2006-11-15",
+    "headline": "I like breaking things (CTFs) and building things that don't break.",
+    "intro": [
+      "I'm a second-year Computer Science student at King's College London and treasurer of KCL's Cyber Security Society, interested in site reliability, software engineering and security.",
+      "Most of what I build is useful little tools running on my own server, [alexandria](#homelab). I built the [pipeline that deploys to it](#project-s3ntry) and the monitor that tells me when something on it breaks."
+    ],
+    "lookingFor": "Looking for summer 2027 internships, 2027/28 placements, and anything else that needs fixing (or is bound to). Based in London, happy to relocate; on-site, hybrid or remote.",
+    "now": "ledgr: stats view shipped; categoriser next (stretch)"
+  },
+  "links": [
+    {
+      "label": "Email",
+      "text": "iamzainrizwan@gmail.com",
+      "href": "mailto:iamzainrizwan@gmail.com"
+    },
+    {
+      "label": "LinkedIn",
+      "text": "linkedin.com/in/iamzainrizwan",
+      "href": "https://www.linkedin.com/in/iamzainrizwan/"
+    },
+    {
+      "label": "GitHub",
+      "text": "github.com/iamzainrizwan",
+      "href": "https://github.com/iamzainrizwan"
+    }
+  ]
+}

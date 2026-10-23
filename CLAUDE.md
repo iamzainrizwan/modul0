@@ -151,11 +151,18 @@ export `cv-master.tex` (it's a bullet store); the master is a source for facts o
   into the terminal. `src/pages/guestbook/`
   (posts work without js via a form post + 303 back to `#posted`),
   `src/pages/admin/` (`/admin/`, the worker's `ADMIN_TOKEN`; `/guestbook/admin/`
-  redirects there): visit stats from the `hits` table (`src/scripts/hit.ts`
-  logs each page load, path + referrer host, not noindex pages or DNT/GPC),
-  posts (the worker commits `src/content/blog/*.md` through GitHub's contents
-  api with its `GITHUB_TOKEN` secret, so a save redeploys; frontmatter in
-  `src/scripts/frontmatter.ts`), then messages and the wall. The guestbook page also
+  redirects there) is a dashboard in its own layout (`Admin.astro`,
+  `src/styles/admin.css`, one module per panel in `src/scripts/admin/`, panels
+  by url hash): overview, posts (split markdown | preview in the blog's
+  `.article` styles via `marked`; images are shrunk to 1600px webp in the
+  browser and committed to `public/blog/<slug>/`), content (a form generated
+  from each `src/data/content/*.json`, or raw json), guestbook, wall, and
+  visits (the `hits` table; `src/scripts/hit.ts` logs each page load, path +
+  referrer host, not noindex pages or DNT/GPC). Every save is a commit to main
+  by the worker (GitHub contents api, `GITHUB_TOKEN` secret, an allow-list of
+  paths), so it redeploys. The data in `profile.ts` and `fs.ts` lives in those
+  json files; the .ts files keep the types and the sourcing notes, so the
+  accuracy rule covers the json too. The guestbook page also
   has the pixel wall (`src/scripts/wall.ts`, worker `/wall`): 32x32, one pixel
   a day per visitor, drawn on a canvas from the theme tokens at whole device
   pixels per cell; without js it's the worker's `/wall.svg` (in `<noscript>`,

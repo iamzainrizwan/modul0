@@ -1,0 +1,43 @@
+---
+// the admin dashboard's own shell: no rail, terminal or router, just the
+// site's tokens and type so the post preview looks like the real thing
+import '../styles/tokens.css';
+import '../styles/site.css';
+import '../styles/admin.css';
+import ModMark from '../components/ModMark.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="robots" content="noindex" />
+    <title>Admin - modul0</title>
+    <link rel="icon" href={`${base}favicon.svg`} type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300..800;1,6..72,300..800&display=swap" rel="stylesheet" />
+  </head>
+  <body class="adm">
+    <script is:inline>
+      // same theme as the site (src/scripts/theme.ts): dark unless chosen light
+      try {
+        if (localStorage.getItem('modul0-theme') === 'light') {
+          document.documentElement.dataset.theme = 'light';
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff');
+        }
+      } catch (e) {}
+    </script>
+    <header class="adm-top">
+      <a class="adm-brand" href={base}><ModMark /> modul0 <span>admin</span></a>
+      <slot name="top" />
+    </header>
+    <div class="adm-shell">
+      <slot />
+    </div>
+  </body>
+</html>

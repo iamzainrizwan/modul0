@@ -69,12 +69,15 @@ pruned on each insert. The admin page reads them from `/admin/stats` (visits
 by day, top pages, referrers, countries, the latest 100 loads). Needs the
 `hits` table: re-run `schema.sql` remotely before deploying.
 
-## Posts
+## Posts and content
 
-The admin page's Posts section edits `src/content/blog/*.md` through
+The admin dashboard edits the repo's own files through
 GitHub's contents API with the `GITHUB_TOKEN` secret (repo and branch are
-`GITHUB_REPO`/`GITHUB_BRANCH` in `wrangler.toml`). Each save or delete is a
-commit to main ("add/update/delete post slug"), so the site redeploys. A save
+`GITHUB_REPO`/`GITHUB_BRANCH` in `wrangler.toml`), limited to `EDITABLE` in
+`src/index.js`: posts (`src/content/blog/*.md`), the site's content
+(`src/data/content/*.json`, refused unless it parses) and post images
+(`public/blog/<slug>/*.png|jpg|webp|gif`, up to 6 MB). Each save or delete is a
+commit to main ("update hello-world.md from admin"), so the site redeploys. A save
 sends the sha the post was loaded with, so an edit made elsewhere in between
 is refused rather than overwritten. Locally, `--var GITHUB_API:<url>` points
 it at a mock instead of GitHub.

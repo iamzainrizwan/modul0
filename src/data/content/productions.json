@@ -1,0 +1,70 @@
+{
+  "productions": [
+    {
+      "title": "Carrie",
+      "when": "Nov 2025",
+      "org": "King’s Tech Crew",
+      "kind": "3 shows, about 120 cues",
+      "role": "Lighting operator",
+      "venue": "Greenwood Theatre"
+    },
+    {
+      "title": "Greased Lightning",
+      "when": "2025",
+      "org": "Langley Grammar School",
+      "kind": "Whole-school production",
+      "role": "Lighting and sound"
+    },
+    {
+      "title": "High School Musical",
+      "when": "2024",
+      "org": "Langley Grammar School",
+      "kind": "Whole-school production",
+      "role": "Lighting and sound"
+    },
+    {
+      "title": "Senior House Variety",
+      "when": "2024",
+      "org": "Langley Grammar School",
+      "role": "Lighting and sound"
+    },
+    {
+      "title": "Culture Day Parade",
+      "when": "2023",
+      "org": "Langley Grammar School",
+      "role": "Lighting and sound"
+    },
+    {
+      "title": "Bugsy Malone",
+      "when": "2023",
+      "org": "Langley Grammar School",
+      "role": "Lighting and sound"
+    },
+    {
+      "title": "The 25th Annual Putnam County Spelling Bee",
+      "when": "2022",
+      "org": "Langley Grammar School",
+      "kind": "Senior production",
+      "role": "Lighting and sound"
+    },
+    {
+      "title": "Greased Lightning",
+      "when": "2022",
+      "org": "Langley Grammar School",
+      "kind": "Junior production",
+      "role": "Lighting and sound"
+    },
+    {
+      "title": "End of Year Assembly",
+      "when": "2022",
+      "org": "Langley Grammar School",
+      "role": "Lighting and sound"
+    },
+    {
+      "title": "Christmas Concert",
+      "when": "2021",
+      "org": "Langley Grammar School",
+      "role": "Lighting and sound"
+    }
+  ]
+}

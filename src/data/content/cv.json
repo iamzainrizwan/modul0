@@ -1,0 +1,213 @@
+{
+  "experience": [
+    {
+      "org": "Elecosoft",
+      "url": "https://www.elecosoft.com/",
+      "role": "Infrastructure / Cloud Intern",
+      "place": "Aylesbury, UK (hybrid)",
+      "when": "Jul 2025",
+      "details": [
+        "Designed private IP addressing and subnetting for Azure VNets, with subnet delegation across environments.",
+        "Deployed VNets and configured subnet delegation with the Azure CLI, replacing manual Portal workflows.",
+        "Configured public and private DNS zones with VNet integration, so VMs resolve each other by name across environments.",
+        "Built a Microsoft 365 Enterprise mock tenancy from scratch (accounts, security groups, shared mailing lists, SharePoint sites), cutting onboarding setup time by about 20%."
+      ]
+    },
+    {
+      "org": "Shell & Microsoft",
+      "role": "Work experience",
+      "place": "London & Reading",
+      "when": "2023 – 2024",
+      "details": [
+        "Shell (Jul 2024): three days of talks across AI, geosciences, exploration, strategy, fuels and lubricants, carbon capture, and legal and derivatives.",
+        "Shadowed AI, geosciences and cybersecurity teams.",
+        "Presented “Green Sustainability in the Age of AI” at Microsoft."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "org": "King's College London",
+      "url": "https://www.kcl.ac.uk/",
+      "role": "Computer Science, Year 2",
+      "place": "London, UK",
+      "when": "Sep 2025 – present",
+      "details": [
+        "79.6% average, predicted First.",
+        "Year 1 highlights: Data Structures 97, Introduction to Software Engineering 88, Elementary Logic With Applications 84, Computer Systems 81, Database Systems 81.",
+        "Societies: Cyber Security Society ([treasurer](#leadership)), King’s Tech Crew, KCLTech."
+      ]
+    },
+    {
+      "org": "Langley Grammar School",
+      "url": "https://www.lgs.slough.sch.uk/",
+      "role": "A-Levels and GCSEs",
+      "place": "Slough, UK",
+      "when": "2018 – 2025",
+      "details": [
+        "A-Level: Maths A*, Further Maths A, Physics A, Computer Science A.",
+        "GCSE: 11 subjects including Further Maths, graded 9999998888."
+      ]
+    }
+  ],
+  "leadership": [
+    {
+      "org": "KCL Cyber Security Society",
+      "role": "Treasurer",
+      "place": "London (hybrid)",
+      "when": "May 2026 – present",
+      "details": [
+        "Manage the society’s termly budget, in the hundreds of pounds.",
+        "Compete in inter-university CTFs, including SIGINT. Motto: pwn others and don’t pwn yourself."
+      ]
+    },
+    {
+      "org": "King’s Tech Crew",
+      "role": "Lighting operator",
+      "place": "London",
+      "when": "Nov 2025",
+      "details": [
+        "Ran about 120 lighting cues across 3 shows of [Carrie](#productions) at the Greenwood Theatre.",
+        "Rigged and troubleshot the lighting rig and hazer."
+      ]
+    },
+    {
+      "org": "Langley Grammar School",
+      "role": "Lead technician",
+      "place": "Slough",
+      "when": "Dec 2021 – Jun 2025",
+      "details": [
+        "Ran lighting and sound for [about 14 productions](#productions), for a total audience of 1,000+.",
+        "Led teams producing other school events independently.",
+        "Trained younger students to use professional audio and lighting equipment safely."
+      ]
+    },
+    {
+      "org": "Langley Grammar School",
+      "role": "Digital leader & esports mentor",
+      "place": "Slough",
+      "when": "Sep 2020 – Jun 2025",
+      "details": [
+        "Staffed the Apple educator showcase at [BETT](https://www.bettshow.com/), advising 200+ international educators on student iPad and AI adoption.",
+        "Gave ad-hoc technical support to students and IT staff across hardware, software and network issues.",
+        "Mentored the school esports team, growing participation by about 40%."
+      ]
+    }
+  ],
+  "awards": [
+    {
+      "when": "2026",
+      "what": "Selected for the Google Student AI Hackathon",
+      "detail": "50 chosen from nearly 1,000 applicants. Built [Sherpa](#project-sherpa)."
+    },
+    {
+      "when": "2025",
+      "what": "1st place, KCL Informatics Puzzled",
+      "detail": "District Line team, of 200–300 undergraduates. Submitted 20 seconds before the deadline."
+    },
+    {
+      "when": "2025–26",
+      "what": "Top 5, UCL vs KCL CTF",
+      "detail": "Capture the flag"
+    },
+    {
+      "when": "2025–26",
+      "what": "Top 5, KCL Welcome CTF",
+      "detail": "Capture the flag"
+    },
+    {
+      "when": "2023",
+      "what": "Regional Finalist, Uber Global Hackathon",
+      "detail": "Middle East & North Africa"
+    }
+  ],
+  "hackathons": [
+    {
+      "name": "Google Student AI Hackathon",
+      "where": "London",
+      "built": "[Sherpa](#project-sherpa)"
+    },
+    {
+      "name": "[EasyA](https://www.easya.io/) x [Algorand](https://algorand.co/) London Hackathon",
+      "where": "London, 36 hours",
+      "built": "[EduChain](#project-educhain)"
+    },
+    {
+      "name": "[Encode London](https://www.encode.club/)",
+      "where": "Encode Hub, Shoreditch",
+      "built": ""
+    },
+    {
+      "name": "Uber Global Hackathon",
+      "where": "MENA region, regional finalist",
+      "built": "an accessibility business case study with a Figma prototype"
+    }
+  ],
+  "skills": [
+    {
+      "group": "Languages",
+      "items": [
+        "Python",
+        "Go",
+        "Java",
+        "C#",
+        "C / Embedded C",
+        "TypeScript",
+        "Bash"
+      ]
+    },
+    {
+      "group": "Backend",
+      "items": [
+        "FastAPI",
+        "Flask",
+        "SQLAlchemy",
+        "SQLite"
+      ]
+    },
+    {
+      "group": "Infrastructure",
+      "items": [
+        "Linux",
+        "Docker",
+        "nginx",
+        "systemd",
+        "GitHub Actions",
+        "Self-hosted runners",
+        "Azure",
+        "Azure CLI",
+        "Git"
+      ]
+    },
+    {
+      "group": "Security",
+      "items": [
+        "CTF tooling",
+        "Wireshark"
+      ]
+    },
+    {
+      "group": "Also",
+      "items": [
+        "Unity",
+        "Figma",
+        "Arduino",
+        "Microsoft 365"
+      ]
+    }
+  ],
+  "certifications": [
+    "[CS50P (Harvard)](https://cs50.harvard.edu/python/)",
+    "[CyberFirst Advanced (NCSC)](https://www.ncsc.gov.uk/cyberfirst)",
+    "[iDEA Gold](https://idea.org.uk/)",
+    "[DofE Bronze](https://www.dofe.org/)"
+  ],
+  "interests": [
+    "Hiking",
+    "Formula 1",
+    "Modded Minecraft (curating technical packs like [Nomifactory](https://github.com/Nomifactory/Nomifactory))",
+    "Live music and concerts",
+    "Astronomy",
+    "Mechanical keyboards"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "machines": [
+    {
+      "name": "alexandria",
+      "role": "Homelab server",
+      "text": "Ubuntu Server, named after the library: if you’re going to hoard knowledge, commit to the bit. Runs [1337](#project-1337), [s3ntry](#project-s3ntry) and [re::curse](#project-recurse), plus a Dockerised *arr stack ([Sonarr](https://sonarr.tv/), [Radarr](https://radarr.video/), [Prowlarr](https://prowlarr.com/)) and [Jellyfin](https://jellyfin.org/), behind nginx."
+    },
+    {
+      "name": "valhalla",
+      "role": "Laptop",
+      "text": "Razer Blade 14 ’23, dual-boot. The speakers took a year to fix, then the aux port broke. Worth it."
+    }
+  ],
+  "services": [
+    "1337",
+    "re::curse",
+    "Jellyfin",
+    "*arr stack"
+  ],
+  "failureTest": {
+    "trials": 5,
+    "transitions": "8/10",
+    "meanAlert": "5.7s",
+    "pollInterval": "10s",
+    "finding": "The 2 misses: one recovery and the next failure landed 5.1 seconds apart, inside a single 10-second poll, so neither was ever seen. Periodic polling can’t catch a flap faster than its interval; only event-driven monitoring would.",
+    "writeup": "https://github.com/iamzainrizwan/s3ntry/blob/main/incidents/failure-test-2026-09-20.md",
+    "script": "https://github.com/iamzainrizwan/s3ntry/blob/main/automation/failure-test.sh"
+  }
+}
