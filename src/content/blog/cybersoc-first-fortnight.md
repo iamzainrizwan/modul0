@@ -5,7 +5,7 @@ description: An intro to CTF tooling for about twenty people, then KCL CyberSoc'
 draft: true
 ---
 
-I run events for KCL's Cyber Security Society (and its
+I run (some) events for KCL's Cyber Security Society (and built aesthetics for its
 [Instagram](/projects/#project-cybersoc-ig)). The first two of the year went
 together: a session on the tools, then a CTF to use them in.
 
