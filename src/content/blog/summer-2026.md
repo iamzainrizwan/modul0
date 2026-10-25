@@ -2,7 +2,6 @@
 title: Summer 2026, in review
 date: 2026-09-26
 description: A hackathon, four things I built and still use, a server that watches itself, and Toronto. The long version of my LinkedIn post.
-draft: true
 ---
 
 I posted a shortened version of this on LinkedIn, because I didn't like the idea of cluttering everyone's feeds with a huge wall of text just seemed kinda selfish. Here's the long version. 
