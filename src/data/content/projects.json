@@ -147,6 +147,31 @@
       ]
     },
     {
+      "slug": "cr1ms0nfin",
+      "name": "cr1ms0nfin",
+      "year": "2026",
+      "tagline": "An OLED black and red theme for Jellyfin 12",
+      "summary": "A [theme for Jellyfin](https://github.com/iamzainrizwan/cr1ms0nfin) built around true black backgrounds, one red accent, square corners and monospace details. jellyfin-web 12 is MUI with CSS variables, so [one block of overrides](https://github.com/iamzainrizwan/cr1ms0nfin/blob/main/theme.css) beats every built-in theme’s palette whichever one a user picked, and the rest replaces the stock blue that’s hard-coded into sliders, switches, spinners and placeholder cards. An [optional script](https://github.com/iamzainrizwan/cr1ms0nfin/blob/main/cr1ms0nfin.js) adds a hero banner to Home and carries the theme onto the dashboard.",
+      "status": "done",
+      "statusText": "Open source, MIT",
+      "stack": [
+        "CSS",
+        "JavaScript",
+        "Jellyfin"
+      ],
+      "areas": [
+        "Apps"
+      ],
+      "repo": "https://github.com/iamzainrizwan/cr1ms0nfin",
+      "details": [
+        "Section titles read like code comments (“// Recently Added in Movies”), sign-in is a boxed “$ Please sign in_” prompt, and Play on a details page becomes a labelled red button that switches to Resume.",
+        "Short animations: home rows rise in one after another, hovering a card lifts it and closes red corner brackets around it, and the favourite heart beats once. All of it turns off under reduced motion.",
+        "The [hero banner](https://github.com/iamzainrizwan/cr1ms0nfin/blob/main/cr1ms0nfin.js) shows whatever you were watching, with a progress bar and the time left, or an unwatched pick that stays the same for the browser session. Logos are cropped to their visible pixels, and dark ones are turned white so they show on black.",
+        "Jellyfin deliberately leaves Custom CSS off its admin pages so a broken theme can’t lock you out; the script keeps a copy and applies it there too.",
+        "It only uses Jellyfin’s own API client and your logged-in session, with no dependencies or tracking."
+      ]
+    },
+    {
       "slug": "cybersoc-ig",
       "name": "cybersoc-ig",
       "year": "2026",

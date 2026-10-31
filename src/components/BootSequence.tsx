@@ -21,7 +21,7 @@ const LINES: Line[] = [
   { text: 'connecting to alexandria', short: 'connect alexandria', status: 'ok' },
   { text: 'starting s3ntry health daemon', short: 'start s3ntry health', status: 'ok' },
   { text: 'ledgr: categoriser', short: 'ledgr: categoriser', status: 'wait' },
-  { text: 'indexing 3 featured projects, 13 archived', short: 'index 16 projects', status: 'ok' },
+  { text: 'indexing 3 featured projects, 14 archived', short: 'index 17 projects', status: 'ok' },
 ];
 
 const LINE_STEP = 115;
