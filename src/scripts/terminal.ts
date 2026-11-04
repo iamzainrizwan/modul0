@@ -527,7 +527,7 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
           row('uptime', uptimeText(fs.birth)),
           row('shell', 'this one. type help'),
           row('study', 'cs @ kcl, year 2'),
-          row('stack', 'python, go, typescript, java, c#'),
+          row('stack', 'python, go, c++, typescript, java, c#'),
           row('homelab', 'alexandria (ubuntu server), valhalla (blade 14)'),
           row('theme', getTheme()),
           '',
