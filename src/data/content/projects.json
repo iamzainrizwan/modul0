@@ -391,6 +391,58 @@
       ]
     },
     {
+      "slug": "mosaic",
+      "name": "mosaic",
+      "year": "2026",
+      "tagline": "Tile live app windows onto one stage and screenshare just that",
+      "summary": "A small take on OBS scenes for GNOME on Wayland, made for online tutoring. Pick windows through GNOME’s [screencast portal](https://github.com/iamzainrizwan/mosaic/blob/main/mosaic/portal.py), drag them onto a 1920×1080 stage, save layouts and flip between them, then share one clean output window in Meet instead of juggling shares.",
+      "status": "building",
+      "statusText": "Open source, MIT",
+      "stack": [
+        "Python",
+        "GTK4",
+        "libadwaita",
+        "GStreamer",
+        "PipeWire",
+        "GNOME Shell"
+      ],
+      "areas": [
+        "Apps"
+      ],
+      "repo": "https://github.com/iamzainrizwan/mosaic",
+      "details": [
+        "Wayland only lets an app capture other windows through the desktop portal’s picker. mosaic keeps the portal’s restore token, so your windows come back on the next launch without the picker, and [opens a separate PipeWire connection per window](https://github.com/iamzainrizwan/mosaic/blob/main/mosaic/app.py): sharing one connection between streams corrupts the protocol and hangs.",
+        "Frames stay on the GPU: PipeWire hands over DMA-BUFs and [GTK draws them directly](https://github.com/iamzainrizwan/mosaic/blob/main/mosaic/live.py), with a plain-memory fallback. Windows that aren’t on the current layout pause, and the rest are capped at 30fps.",
+        "The portal never says which window you picked (on GNOME 46 even the size it reports is the monitor’s), so a [small GNOME Shell extension](https://github.com/iamzainrizwan/mosaic/tree/main/extension) lists open windows with tiny thumbnails over D-Bus, and mosaic names each new capture by matching its first frame against them."
+      ]
+    },
+    {
+      "slug": "inkpad",
+      "name": "inkpad",
+      "year": "2026",
+      "tagline": "Write on the iPad, see it live on the laptop",
+      "summary": "A mini OneNote for tutoring. Apple Pencil strokes stream live to every device with the page open, so I write on the iPad and the laptop I’m screensharing shows it as I write. Import a deck and annotate each slide with space around it.",
+      "status": "live",
+      "statusText": "Running on alexandria",
+      "stack": [
+        "Python",
+        "JavaScript",
+        "Canvas",
+        "Server-sent events",
+        "Docker",
+        "LibreOffice"
+      ],
+      "areas": [
+        "Apps"
+      ],
+      "repo": "https://github.com/iamzainrizwan/inkpad",
+      "details": [
+        "One standard-library [Python server](https://github.com/iamzainrizwan/inkpad/blob/main/server.py) and [one HTML page](https://github.com/iamzainrizwan/inkpad/blob/main/index.html). Strokes go up as small JSON ops and come back to every device over server-sent events, in-progress strokes included, so writing shows up mid-stroke.",
+        "Pencil pressure sets the line width. Fingers scroll and only the pencil draws, so a resting palm leaves no marks.",
+        "Decks go pptx → PDF (LibreOffice) → one PNG per slide (poppler), inside the Docker image. Calibri is swapped for Carlito, which has the same metrics, so slides keep their line breaks. Each deck is one entry with a slide bar to flip through it, and every slide keeps its own writing."
+      ]
+    },
+    {
       "slug": "glider",
       "name": "RF-controlled glider",
       "year": "2024",
