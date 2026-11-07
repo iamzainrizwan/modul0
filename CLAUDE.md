@@ -184,7 +184,13 @@ export `cv-master.tex` (it's a bullet store); the master is a source for facts o
   `\u` escapes through tool calls: they arrive as raw characters, and a raw
   U+2028 breaks a JS regex.
 - `src/content/blog/*.md` - posts; frontmatter `title`, `date`,
-  `description`, optional `draft: true` (hides it in production). Schema in
+  `description`, optional `draft: true` (hides it in production). Drafts
+  never go to GitHub (the repo's history is public and shows every edit):
+  they live in the worker's D1 (`drafts`, `draft_images`), edited from the
+  admin, and unticking draft publishes (images committed first, then the
+  post, then the draft deleted). The worker refuses to commit a post marked
+  `draft: true`. The gitignored `src/content/blog/drafts/` is for local
+  drafts (dev only, same slug); D1 is the source once a draft is there. Schema in
   `src/content.config.ts`. Also `src/pages/rss.xml.js` and `404.astro`.
 
 ## Motion

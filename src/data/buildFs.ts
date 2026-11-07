@@ -5,7 +5,10 @@ import { build } from './build';
 export type Post = { title: string; date: string; description: string; html: string };
 
 export async function getPosts(): Promise<CollectionEntry<'blog'>[]> {
-  const posts = await getCollection('blog', (p) => import.meta.env.DEV || !p.data.draft);
+  const posts = await getCollection(
+    'blog',
+    (p) => import.meta.env.DEV || (!p.data.draft && !p.filePath?.includes('/blog/drafts/')),
+  );
   return posts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 }
 

@@ -4,3 +4,6 @@ dist/
 
 # local-only notes and tokens, never committed (same as ledgr, s3ntry)
 priv/
+
+# blog drafts stay on this machine; move a post up to src/content/blog/ to publish it
+src/content/blog/drafts/

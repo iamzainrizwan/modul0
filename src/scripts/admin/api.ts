@@ -40,6 +40,8 @@ export function explain(e: unknown): string {
   if (e.code === 'no-github') return 'Editing needs the worker’s GITHUB_TOKEN secret.';
   if (e.code === 'bad-json') return 'That isn’t valid JSON.';
   if (e.code === 'too-long') return 'That’s too big to save.';
+  if (e.code === 'draft') return 'Drafts never go to GitHub: that save should have gone to the drafts store.';
+  if (e.code === 'too-many') return 'That’s 50 drafts already: publish or delete one.';
   return 'That failed. Try again.';
 }
 
@@ -48,6 +50,24 @@ export type RepoFile = { name: string; path: string; sha: string; text: string }
 
 export const saveFile = (path: string, data: { text: string } | { base64: string }, sha?: string) =>
   call<{ sha: string }>('/admin/files', { method: 'PUT', body: JSON.stringify({ path, sha, ...data }) }).then((d) => d.sha);
+
+// drafts: in the worker's d1, never in the repo (its history is public)
+export type Draft = { name: string; text: string; updated: string; images: string[] };
+export const loadDrafts = () =>
+  call<{ drafts: { slug: string; text: string; updated: string; images: string[] }[] }>('/admin/drafts').then((d) =>
+    d.drafts.map(({ slug, ...rest }) => ({ name: slug, ...rest })),
+  );
+export const saveDraft = (slug: string, text: string) => call('/admin/drafts', { method: 'PUT', body: JSON.stringify({ slug, text }) });
+export const deleteDraft = (slug: string) => call(`/admin/drafts?slug=${encodeURIComponent(slug)}`, { method: 'DELETE' });
+export const saveDraftImage = (slug: string, name: string, base64: string) =>
+  call('/admin/drafts/images', { method: 'PUT', body: JSON.stringify({ slug, name, base64 }) });
+export async function draftImage(slug: string, name: string): Promise<Blob> {
+  const res = await fetch(`${api}/admin/drafts/images?slug=${encodeURIComponent(slug)}&name=${encodeURIComponent(name)}`, {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new ApiError(res.status);
+  return res.blob();
+}
 
 export const deleteFile = (path: string, sha: string) =>
   call(`/admin/files?path=${encodeURIComponent(path)}&sha=${sha}`, { method: 'DELETE' });

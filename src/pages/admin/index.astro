@@ -54,7 +54,7 @@ const content = [
           <h1 id="posts-h" class="adm-h">Posts</h1>
           <a class="btn btn-primary" href="#posts/new">New post</a>
         </header>
-        <p class="adm-note">Saving commits the post to <code>main</code>, and the site redeploys in about two minutes. Drafts stay off the live site.</p>
+        <p class="adm-note">Drafts are private: they're kept by the worker, never on GitHub, since the repo and its history are public. Unticking draft publishes: the post and its images are committed to <code>main</code>, and the site redeploys in about two minutes.</p>
         <ol class="adm-list" data-post-list></ol>
       </div>
       <form class="md-editor" data-post-form hidden>

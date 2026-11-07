@@ -73,3 +73,19 @@ CREATE TABLE IF NOT EXISTS hits (
   visitor TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS hits_at ON hits (at);
+
+-- blog drafts, kept here because the repo (and its history) is public. the
+-- admin edits them; publishing commits the post and its images to github and
+-- deletes them from here. images sit in d1 (2 MB a value; the admin shrinks
+-- them to 1600px webp first) until then.
+CREATE TABLE IF NOT EXISTS drafts (
+  slug TEXT PRIMARY KEY,
+  text TEXT NOT NULL,
+  updated TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+);
+CREATE TABLE IF NOT EXISTS draft_images (
+  slug TEXT NOT NULL,
+  name TEXT NOT NULL,
+  data BLOB NOT NULL,
+  PRIMARY KEY (slug, name)
+);

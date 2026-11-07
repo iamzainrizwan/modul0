@@ -19,6 +19,12 @@
 //                                  sha (none = new)}; a commit to main,     }
 //                                  which redeploys                          }
 //   DELETE /admin/files?path=&sha= delete one (also a commit)               }
+//   GET    /admin/drafts           every draft (in d1, never on github:     }
+//                                  the repo is public), with image names   }
+//   PUT    /admin/drafts           save one: {slug, text}                   }
+//   DELETE /admin/drafts?slug=     delete one and its images                }
+//   PUT    /admin/drafts/images    {slug, name, base64}                     }
+//   GET    /admin/drafts/images?slug=&name=  one, as the image itself       }
 //   GET    /wall                   the pixel wall, plus how long until you can place
 //   GET    /wall.svg               the same as an image (the page without js)
 //   POST   /wall                   place one pixel: {x, y, color}, one a day each
@@ -58,6 +64,11 @@ const HITS_DAYS = 90; // page loads kept for the stats
 const HIT_MAX = 512; // bytes: a hit is {path, ref}
 const TOP_MAX = 15; // rows in each stats top list
 const FILE_MAX = 6_000_000; // bytes in one saved file (an image, after the page shrinks it)
+const DRAFT_MAX = 500_000; // bytes of markdown in one draft
+const DRAFT_IMAGE_MAX = 1_900_000; // bytes, under d1's 2 MB a value
+const DRAFTS_MAX = 50;
+const SLUG = /^[a-z0-9][a-z0-9-]{0,80}$/;
+const IMAGE_NAME = /^[a-z0-9][a-z0-9._-]{0,80}\.(png|jpe?g|webp|gif)$/;
 const POSTS_MAX = 40; // files a listing loads (one github fetch each; workers allow 50)
 const POSTS_DIR = 'src/content/blog';
 const CONTENT_DIR = 'src/data/content';
@@ -145,6 +156,7 @@ async function route(request, env, url, ctx) {
   const admin =
     ((pathname === '/admin/posts' || pathname === '/admin/content') && method === 'GET') ||
     (pathname === '/admin/files' && (method === 'PUT' || method === 'DELETE')) ||
+    ((pathname === '/admin/drafts' || pathname === '/admin/drafts/images') && ['GET', 'PUT', 'DELETE'].includes(method)) ||
     ((pathname === '/admin/messages' || pathname === '/admin/wall' || pathname === '/admin/stats') && method === 'GET') ||
     (method === 'DELETE' && (one || pathname === '/messages' || pathname === '/wall')) ||
     (method === 'PUT' && replyTo);
@@ -158,6 +170,8 @@ async function route(request, env, url, ctx) {
     if (pathname === '/admin/content') return listFiles(env, CONTENT_DIR, '.json');
     if (pathname === '/admin/files' && method === 'PUT') return saveFile(request, env);
     if (pathname === '/admin/files') return deleteFile(env, url.searchParams.get('path') ?? '', url.searchParams.get('sha') ?? '');
+    if (pathname === '/admin/drafts') return drafts(request, env, url);
+    if (pathname === '/admin/drafts/images') return draftImages(request, env, url);
     if (pathname === '/admin/wall') {
       const { results } = await env.DB.prepare(
         'SELECT id, x, y, color, created, substr(ip_hash, 1, 8) AS poster FROM pixels ORDER BY id DESC LIMIT ?',
@@ -555,6 +569,8 @@ async function saveFile(request, env) {
     if (!text.trim() || new TextEncoder().encode(text).length > FILE_MAX) return json({ error: 'bad-request' }, 400);
     // content json must stay json, or the next build fails
     if (path.endsWith('.json')) try { JSON.parse(text); } catch { return json({ error: 'bad-json' }, 400); }
+    // the repo's public, so drafts never reach it: they're kept in d1 (drafts())
+    if (path.endsWith('.md') && /^---\n[\s\S]*?^draft:\s*true\s*$[\s\S]*?^---$/m.test(text)) return json({ error: 'draft' }, 400);
     content = toBase64(text);
   }
   const sha = typeof body.sha === 'string' && body.sha ? body.sha : undefined;
@@ -568,6 +584,77 @@ async function saveFile(request, env) {
   if (!res.ok) return json({ error: 'github', status: res.status }, 502);
   const d = await res.json();
   return json({ ok: true, sha: d.content.sha });
+}
+
+// drafts live here, not in the repo: its history is public, and would show
+// every edit. publishing is the admin committing the post and its images
+// (fetched from here) to github, then deleting the draft.
+async function drafts(request, env, url) {
+  const method = request.method;
+  if (method === 'GET') {
+    const [posts, images] = await env.DB.batch([
+      env.DB.prepare('SELECT slug, text, updated FROM drafts ORDER BY updated DESC LIMIT ?').bind(DRAFTS_MAX),
+      env.DB.prepare('SELECT slug, name FROM draft_images ORDER BY name'),
+    ]);
+    return json({
+      drafts: posts.results.map((d) => ({ ...d, images: images.results.filter((i) => i.slug === d.slug).map((i) => i.name) })),
+    });
+  }
+  if (method === 'DELETE') {
+    const slug = url.searchParams.get('slug') ?? '';
+    if (!SLUG.test(slug)) return json({ error: 'bad-request' }, 400);
+    await env.DB.batch([
+      env.DB.prepare('DELETE FROM draft_images WHERE slug = ?').bind(slug),
+      env.DB.prepare('DELETE FROM drafts WHERE slug = ?').bind(slug),
+    ]);
+    return json({ ok: true });
+  }
+  const body = await readJson(request, DRAFT_MAX * 1.2);
+  if (!body) return json({ error: 'too-long' }, 413);
+  const slug = String(body.slug ?? '');
+  const text = String(body.text ?? '');
+  if (!SLUG.test(slug) || !text.trim()) return json({ error: 'bad-request' }, 400);
+  if (new TextEncoder().encode(text).length > DRAFT_MAX) return json({ error: 'too-long' }, 413);
+  const { n } = await env.DB.prepare('SELECT COUNT(*) AS n FROM drafts WHERE slug != ?').bind(slug).first();
+  if (n >= DRAFTS_MAX) return json({ error: 'too-many' }, 400);
+  await env.DB.prepare(
+    `INSERT INTO drafts (slug, text) VALUES (?, ?)
+     ON CONFLICT (slug) DO UPDATE SET text = excluded.text, updated = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')`,
+  ).bind(slug, text).run();
+  return json({ ok: true });
+}
+
+const IMAGE_TYPES = { webp: 'image/webp', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif' };
+
+async function draftImages(request, env, url) {
+  if (request.method === 'GET') {
+    const slug = url.searchParams.get('slug') ?? '';
+    const name = url.searchParams.get('name') ?? '';
+    const row = await env.DB.prepare('SELECT data FROM draft_images WHERE slug = ? AND name = ?').bind(slug, name).first();
+    if (!row) return json({ error: 'not-found' }, 404);
+    return new Response(new Uint8Array(row.data), {
+      headers: { 'content-type': IMAGE_TYPES[name.split('.').pop()], 'cache-control': 'no-store' },
+    });
+  }
+  if (request.method === 'DELETE') return json({ error: 'bad-request' }, 400);
+  const body = await readJson(request, DRAFT_IMAGE_MAX * 1.4);
+  if (!body) return json({ error: 'too-long' }, 413);
+  const slug = String(body.slug ?? '');
+  const name = String(body.name ?? '');
+  const b64 = String(body.base64 ?? '').replace(/\s/g, '');
+  if (!SLUG.test(slug) || !IMAGE_NAME.test(name) || !/^[A-Za-z0-9+/]+=*$/.test(b64)) return json({ error: 'bad-request' }, 400);
+  const data = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  if (data.length > DRAFT_IMAGE_MAX) return json({ error: 'too-long' }, 413);
+  await env.DB.prepare('INSERT OR REPLACE INTO draft_images (slug, name, data) VALUES (?, ?, ?)').bind(slug, name, data).run();
+  return json({ ok: true });
+}
+
+// the body as json, or null if it's over max bytes or not json
+async function readJson(request, max) {
+  if (Number(request.headers.get('content-length') ?? 0) > max) return null;
+  const raw = await request.text();
+  if (raw.length > max) return null;
+  try { return JSON.parse(raw); } catch { return {}; }
 }
 
 async function deleteFile(env, path, sha) {

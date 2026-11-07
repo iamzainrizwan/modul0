@@ -1,15 +1,23 @@
 // posts: src/content/blog/*.md, edited side by side with a preview drawn in
 // the blog's own styles. images (button, paste or drop) are shrunk here, then
 // committed to public/blog/<slug>/ straight away; the markdown points at them.
+// drafts are different: the repo is public and its history shows every edit,
+// so a draft and its images live in the worker's d1 instead, and publishing
+// commits them (images first, then the post) and deletes the draft.
 import { marked } from 'marked';
-import { call, saveFile, deleteFile, explain, type RepoFile } from './api';
+import {
+  call, saveFile, deleteFile, explain, loadDrafts, saveDraft, deleteDraft, saveDraftImage, draftImage,
+  type RepoFile, type Draft,
+} from './api';
 import { say, el, watchDirty } from './ui';
 import { parse, serialise } from '../frontmatter';
 
-export let posts: RepoFile[] = [];
+export let posts: RepoFile[] = []; // live, on github
+export let drafts: Draft[] = []; // private, in d1
 const dir = 'src/content/blog';
 const IMAGE_WIDTH = 1600; // px, the widest an image is stored
 const IMAGE_MAX = 5_000_000; // bytes, after shrinking
+const DRAFT_IMAGE_MAX = 1_900_000; // a draft's images sit in d1, 2 MB a value
 
 const form = document.querySelector<HTMLFormElement>('[data-post-form]')!;
 const index = document.querySelector<HTMLElement>('[data-post-index]')!;
@@ -18,14 +26,15 @@ const preview = form.querySelector<HTMLElement>('[data-preview]')!;
 const base = document.querySelector<HTMLElement>('[data-login]')!.dataset.base ?? '/';
 const field = (name: string) => form.elements.namedItem(name) as HTMLInputElement;
 
-let current: RepoFile | null = null; // the post open in the editor (null: a new one)
+let current: RepoFile | null = null; // the live post open in the editor
+let draft: Draft | null = null; // or the draft (both null: a new post)
 let open = ''; // the hash the editor was opened at
 let saved = ''; // the post as last loaded or saved, to spot unsaved changes
 const pending = new Map<string, string>(); // image url -> local preview, until the site redeploys
 
 const text = () =>
   serialise({
-    ...parse(current?.text ?? ''),
+    ...parse((current ?? draft)?.text ?? ''),
     title: field('title').value.trim(),
     date: field('date').value,
     description: field('description').value.trim(),
@@ -36,23 +45,24 @@ const dirty = () => !form.hidden && text() !== saved;
 watchDirty(dirty);
 
 export async function loadPosts() {
-  posts = (await call<{ files: RepoFile[] }>('/admin/posts')).files;
+  [posts, drafts] = await Promise.all([call<{ files: RepoFile[] }>('/admin/posts').then((d) => d.files), loadDrafts()]);
   showIndex();
 }
 
 function showIndex() {
   const list = document.querySelector<HTMLOListElement>('[data-post-list]')!;
-  const sorted = posts.map((p) => ({ p, f: parse(p.text) })).sort((a, b) => b.f.date.localeCompare(a.f.date));
+  const all = [...drafts.map((p) => ({ p, live: false })), ...posts.map((p) => ({ p, live: true }))];
+  const sorted = all.map((x) => ({ ...x, f: parse(x.p.text) })).sort((a, b) => b.f.date.localeCompare(a.f.date));
   list.replaceChildren(
-    ...sorted.map(({ p, f }) =>
+    ...sorted.map(({ p, f, live }) =>
       el('li', {},
         el('a', { class: 'adm-list-title', href: `#posts/${p.name}`, text: f.title || p.name }),
         el('span', { class: 'gb-poster', text: [f.date, p.name].join(' · ') }),
-        f.draft ? el('span', { class: 'adm-badge', text: 'draft' }) : el('a', { class: 'text-btn', href: `${base}blog/${p.name}/`, target: '_blank', text: 'live ↗' }),
+        live ? el('a', { class: 'text-btn', href: `${base}blog/${p.name}/`, target: '_blank', text: 'live ↗' }) : el('span', { class: 'adm-badge', text: 'draft' }),
       ),
     ),
   );
-  if (!posts.length) list.append(el('li', { class: 'gb-empty', text: 'No posts yet.' }));
+  if (!all.length) list.append(el('li', { class: 'gb-empty', text: 'No posts yet.' }));
 }
 
 export function routePosts(sub: string) {
@@ -67,21 +77,24 @@ export function routePosts(sub: string) {
     return;
   }
   if (target === open && !form.hidden) return;
-  const post = sub === 'new' ? null : posts.find((p) => p.name === sub);
-  if (sub !== 'new' && !post) return say(`There's no post called ${sub}.`, true);
-  edit(post ?? null, target);
+  const post = sub === 'new' ? null : posts.find((p) => p.name === sub) ?? null;
+  const d = sub === 'new' || post ? null : drafts.find((p) => p.name === sub) ?? null;
+  if (sub !== 'new' && !post && !d) return say(`There's no post called ${sub}.`, true);
+  edit(post, d, target);
 }
 
-function edit(post: RepoFile | null, hash: string) {
-  current = post;
+function edit(live: RepoFile | null, d: Draft | null, hash: string) {
+  current = live;
+  draft = d;
   open = hash;
+  const post = live ?? d;
   const f = parse(post?.text ?? '');
   field('slug').value = post?.name ?? '';
   field('slug').readOnly = !!post;
   field('title').value = f.title;
   field('date').value = f.date || new Date().toISOString().slice(0, 10);
   field('description').value = f.description;
-  field('draft').checked = post ? f.draft : true;
+  field('draft').checked = !live;
   area.value = f.body;
   form.querySelector<HTMLElement>('[data-post-delete]')!.hidden = !post;
   index.hidden = true;
@@ -90,11 +103,18 @@ function edit(post: RepoFile | null, hash: string) {
   state();
   render();
   (post ? area : field('title')).focus({ preventScroll: true });
+  // a draft's images are in d1, so the preview fetches them with the token
+  for (const name of d?.images ?? []) {
+    const url = `${base}blog/${d!.name}/${name}`;
+    if (pending.has(url)) continue;
+    draftImage(d!.name, name).then((b) => { pending.set(url, URL.createObjectURL(b)); render(); }, () => {});
+  }
 }
 
 function state() {
-  const parts = [current ? current.name : 'new post', field('draft').checked ? 'draft' : 'live', dirty() ? 'unsaved changes' : 'saved'];
-  if (!current && !dirty()) parts.pop();
+  const name = (current ?? draft)?.name;
+  const parts = [name ?? 'new post', field('draft').checked ? 'draft (private)' : 'live', dirty() ? 'unsaved changes' : 'saved'];
+  if (!name && !dirty()) parts.pop();
   form.querySelector('[data-post-state]')!.textContent = parts.join(' · ');
 }
 
@@ -245,9 +265,17 @@ async function addImages(list: File[]) {
     const s = area.selectionStart;
     const before = s > 0 && area.value[s - 1] !== '\n' ? '\n\n' : '';
     put(`${before}![${alt}](${url})\n`, s, area.selectionEnd, [before.length + 2, before.length + 2 + alt.length]);
+    const privately = field('draft').checked;
+    if (privately && blob.size > DRAFT_IMAGE_MAX) {
+      say(`${name} is over 1.9 MB, the most a draft can hold. Try a smaller one.`, true);
+      continue;
+    }
     say(`Uploading ${name}…`);
     try {
-      await saveFile(`public/blog/${slug}/${name}`, { base64: await toBase64(blob) });
+      if (privately) {
+        await saveDraftImage(slug, name, await toBase64(blob));
+        draftNames(slug).add(name);
+      } else await saveFile(`public/blog/${slug}/${name}`, { base64: await toBase64(blob) });
       say(`Added ${name} (${Math.round(blob.size / 1024)} KB). Type over the selected alt text to describe it.`);
     } catch (e) {
       say(`${name}: ${explain(e)} The markdown for it is still in the post.`, true);
@@ -280,44 +308,93 @@ area.addEventListener('drop', (e) => {
   addImages(files);
 });
 
-// ---- save and delete ----
+// ---- save, publish and delete ----
+// a draft's images still in d1, by slug (added this session, or listed with the draft)
+const draftImageNames = new Map<string, Set<string>>();
+function draftNames(slug: string) {
+  if (!draftImageNames.has(slug)) draftImageNames.set(slug, new Set(drafts.find((d) => d.name === slug)?.images ?? []));
+  return draftImageNames.get(slug)!;
+}
+
+function afterSave(slug: string, body: string, live: RepoFile | null, d: Draft | null) {
+  const wasNew = !current && !draft;
+  current = live;
+  draft = d;
+  saved = body;
+  field('slug').readOnly = true;
+  form.querySelector<HTMLElement>('[data-post-delete]')!.hidden = false;
+  showIndex();
+  state();
+  if (wasNew) {
+    open = `posts/${slug}`;
+    history.replaceState(null, '', `#${open}`);
+  }
+}
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!form.reportValidity()) return;
   const slug = field('slug').value;
-  if (!current && posts.some((p) => p.name === slug)) return say(`There's already a post called ${slug}.`, true);
+  const isNew = !current && !draft;
+  if (isNew && [...posts, ...drafts].some((p) => p.name === slug)) return say(`There's already a post called ${slug}.`, true);
   const body = text();
   const path = `${dir}/${slug}.md`;
   try {
+    if (field('draft').checked) {
+      // a live post ticked back to draft comes off the site
+      if (current && !confirm(`Unpublish ${slug}? It comes off the live site and back to your private drafts. Its images stay public.`)) return;
+      await saveDraft(slug, body);
+      const d: Draft = { name: slug, text: body, updated: new Date().toISOString(), images: [...draftNames(slug)] };
+      drafts = [...drafts.filter((p) => p.name !== slug), d];
+      if (current) {
+        await deleteFile(current.path, current.sha);
+        posts = posts.filter((p) => p.name !== slug);
+      }
+      afterSave(slug, body, null, d);
+      return say(`Saved ${slug} privately. Drafts never touch GitHub.`);
+    }
+    if (draft && !confirm(`Publish ${slug}? It's committed to the public repo and goes live in about two minutes.`)) return;
+    // images first, so the post never goes live pointing at missing ones
+    const names = [...draftNames(slug)];
+    for (const [i, name] of names.entries()) {
+      say(`Publishing image ${i + 1} of ${names.length}…`);
+      await saveFile(`public/blog/${slug}/${name}`, { base64: await toBase64(await draftImage(slug, name)) });
+    }
     const sha = await saveFile(path, { text: body }, current?.sha);
     const post = { name: slug, path, sha, text: body };
     posts = [...posts.filter((p) => p.name !== slug), post];
-    const wasNew = !current;
-    current = post;
-    saved = body;
-    field('slug').readOnly = true;
-    form.querySelector<HTMLElement>('[data-post-delete]')!.hidden = false;
-    showIndex();
-    state();
-    if (wasNew) {
-      open = `posts/${slug}`;
-      history.replaceState(null, '', `#${open}`);
+    if (draft || names.length) {
+      await deleteDraft(slug);
+      drafts = drafts.filter((p) => p.name !== slug);
+      draftImageNames.delete(slug);
     }
-    say(`Saved ${slug}. ${parse(body).draft ? 'It’s a draft, so it stays off the live site.' : 'Live in about two minutes.'}`);
+    afterSave(slug, body, post, null);
+    say(`Saved ${slug}. Live in about two minutes.`);
   } catch (err) {
     say(explain(err), true);
   }
 });
 
 form.querySelector('[data-post-delete]')!.addEventListener('click', async () => {
-  if (!current || !confirm(`Delete the post ${current.name}? It comes back only from git history. Its images stay.`)) return;
+  const target = current ?? draft;
+  if (!target) return;
+  const msg = current
+    ? `Delete the post ${current.name}? It comes back only from git history. Its images stay.`
+    : `Delete the draft ${target.name} and its images? It was never on GitHub, so it can't come back.`;
+  if (!confirm(msg)) return;
   try {
-    await deleteFile(current.path, current.sha);
-    posts = posts.filter((p) => p !== current);
-    say(`Deleted ${current.name}.`);
+    if (current) {
+      await deleteFile(current.path, current.sha);
+      posts = posts.filter((p) => p !== current);
+    } else {
+      await deleteDraft(target.name);
+      drafts = drafts.filter((p) => p !== target);
+      draftImageNames.delete(target.name);
+    }
+    say(`Deleted ${target.name}.`);
     saved = text(); // nothing left to lose
     form.hidden = true;
-    current = null;
+    current = draft = null;
     showIndex();
     location.hash = 'posts';
   } catch (e) {
