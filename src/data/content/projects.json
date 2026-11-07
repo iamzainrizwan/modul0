@@ -396,7 +396,7 @@
       "year": "2026",
       "tagline": "Tile live app windows onto one stage and screenshare just that",
       "summary": "A small take on OBS scenes for GNOME on Wayland, made for online tutoring. Pick windows through GNOME’s [screencast portal](https://github.com/iamzainrizwan/mosaic/blob/main/mosaic/portal.py), drag them onto a 1920×1080 stage, save layouts and flip between them, then share one clean output window in Meet instead of juggling shares.",
-      "status": "building",
+      "status": "done",
       "statusText": "Open source, MIT",
       "stack": [
         "Python",
