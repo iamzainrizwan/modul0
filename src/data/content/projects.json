@@ -391,6 +391,33 @@
       ]
     },
     {
+      "slug": "redline",
+      "name": "redline",
+      "year": "2026",
+      "tagline": "A tmux-style top bar for GNOME",
+      "summary": "A GNOME Shell extension that turns the top bar into something like tmux’s status line: a [tag block](https://github.com/iamzainrizwan/redline/blob/main/redline@zain/tag.js) on the left with what’s next today, workspaces as tmux windows, the focused window’s title, now playing, and a right side that stays empty until something needs attention: cpu/mem only when they’re high, device batteries, and red live / rec / mic off tags while the screen is shared or the mic is muted.",
+      "status": "done",
+      "statusText": "Open source, MIT",
+      "stack": [
+        "JavaScript",
+        "GNOME Shell",
+        "D-Bus",
+        "Python",
+        "Bash"
+      ],
+      "areas": [
+        "Apps"
+      ],
+      "repo": "https://github.com/iamzainrizwan/redline",
+      "details": [
+        "The tag’s data comes from a source module: [my day planner’s CLI](https://github.com/iamzainrizwan/redline/blob/main/redline@zain/helm.js) when it’s installed, otherwise [GNOME’s calendar](https://github.com/iamzainrizwan/redline/blob/main/redline@zain/calendar.js). The calendar source reads the clock menu’s own event source, because the calendar server keeps a single time range and a second client would empty the first one’s events.",
+        "GNOME’s quick settings and clock stay, moved right and restyled, with [their status icons gated](https://github.com/iamzainrizwan/redline/blob/main/redline@zain/util.js): Wi-Fi only when the signal is weak, volume only when muted, no night-light or notification icons.",
+        "Wayland can’t restart the shell, so a [test script](https://github.com/iamzainrizwan/redline/blob/main/bin/redline-test) runs the bar in a throwaway headless GNOME Shell on its own D-Bus session, with fake UPower, MPRIS and calendar servers. It screenshots the panel and cycles disable/enable the way the lock screen does. Its XDG dirs have to be set before dbus-run-session or dconf writes land in the live settings, so two guards abort the run if isolation fails.",
+        "Hovering a pair of Nothing earbuds’ battery drops a card to switch noise mode, codec and multipoint, [over the buds’ own Bluetooth protocol](https://github.com/iamzainrizwan/redline/blob/main/bin/buds), no app needed.",
+        "Scripts can’t show GNOME’s OSD box themselves, so [redline-osd](https://github.com/iamzainrizwan/redline/blob/main/bin/redline-osd) writes a file the bar watches. Unlike notify-send, it shows under Do Not Disturb."
+      ]
+    },
+    {
       "slug": "mosaic",
       "name": "mosaic",
       "year": "2026",
