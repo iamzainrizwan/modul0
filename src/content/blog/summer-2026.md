@@ -8,7 +8,7 @@ I posted a shortened version of this on LinkedIn, because I didn't like the idea
 
 ## Google Student AI Hackathon
 
-Fifty students were picked from nearly a thousand applicants, and I was one of them. A team of six of us built [Sherpa](/projects/#project-sherpa), an AI-powered career dashboard for students: a guidance chat built on Gemini, CV scoring CV rewrite and LaTeX auto-formatting with rewrite suggestions, and social application tracking.
+Fifty students were picked from nearly a thousand applicants, and I was one of them. A team of six of us built [Sherpa](/projects/sherpa/), an AI-powered career dashboard for students: a guidance chat built on Gemini, CV scoring CV rewrite and LaTeX auto-formatting with rewrite suggestions, and social application tracking.
 
 My parts was the "Generate updated CV" feature, which takes the original CV, renderers it in a LaTeX template, and I also had a  hand in markdown rendering for Gemini's replies, fixing auth and upload failures, and demoing the whole thing live on stage.
 
@@ -18,7 +18,7 @@ Ever heard of Anki? The main idea is that it takes your flashcards, and uses a s
 
 It has two parts - its tracker and dashboard, where it shows the problems I've got scheduled next, the ones I'm due to do coming up, and my overall progress; and the second part, that automatically emails me a digest of overdue problems every morning. 
 
-It's mostly built with Claude Code, and is now the tool I use almost rail, rather than a simple portfolio piece. Two rules do most of the work: "struggled " sends a problem back to a review tomorrow instead of moving its review further away, and gaps count from the day I actually reviewed a problem, so a late review shifts the next ones further out instead of having a risk of them landing close to each other and ruining my workload. [More on the projects page](/projects/#project-1337).
+It's mostly built with Claude Code, and is now the tool I use almost rail, rather than a simple portfolio piece. Two rules do most of the work: "struggled " sends a problem back to a review tomorrow instead of moving its review further away, and gaps count from the day I actually reviewed a problem, so a late review shifts the next ones further out instead of having a risk of them landing close to each other and ruining my workload. [More on the projects page](/projects/1337/).
 
 ## re::curse
 
@@ -26,13 +26,13 @@ Interview prep by email. Every day it has Gemini write a set of questions, keep 
 
 ## ledgr
 
-My attempt at a [finance ledger](/projects/#project-ledgr), built the way accounting software is. It reals my real bank statements (HSBC PDFs, Revolut exports), checks each one before its own printed totals before posting anything, and turns every transaction into balanced double-entry lines. 
+My attempt at a [finance ledger](/projects/ledgr/), built the way accounting software is. It reals my real bank statements (HSBC PDFs, Revolut exports), checks each one before its own printed totals before posting anything, and turns every transaction into balanced double-entry lines. 
 
 I mentioned posts were "idempotent" in the LinkedIn post. That means that every posting carries its own external ID, so importing the same statement twice never counts those transactions twice. Entries are never editer or delete either; a mistake gets a reversal instead. There's a [live demo](https://ledgr-demo.fly.dev/) if you wanna go throw a mock statement at it. 
 
 ## s3ntry
 
-I used to manually SSH in and `git pull` my work from its repo. [s3ntry](/projects/#project-s3ntry) was made to fix that, and add more. 
+I used to manually SSH in and `git pull` my work from its repo. [s3ntry](/projects/s3ntry/) was made to fix that, and add more. 
 
 I started with a deploy pipeline, documenting each step to set up on a new project. A push to main runs through a CI gate on a self-hosted runner with no manual steps, as a non-root user with no sudo anywhere in the pipeline. A Go health demon polls every service and pings Slack and Discord when something goes down or comes back. 
 

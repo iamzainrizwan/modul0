@@ -11,6 +11,7 @@ const html = (s: string) => ({ __html: inline(s) });
 // so the filter bar stays under the pointer.
 
 const PREVIEW = 3;
+const page = (p: Project) => `${import.meta.env.BASE_URL}projects/${p.slug}/`;
 
 function Status({ p }: { p: Project }) {
   return (
@@ -39,7 +40,9 @@ function Featured({ p }: { p: Project }) {
     <article className="feature" id={`project-${p.slug}`}>
       <header className="feature-head">
         <div>
-          <h2 className="feature-name">{p.name}</h2>
+          <h2 className="feature-name">
+            <a href={page(p)}>{p.name}</a>
+          </h2>
           <p className="feature-tagline">{p.tagline}</p>
         </div>
         <div className="feature-meta">
@@ -67,6 +70,9 @@ function Featured({ p }: { p: Project }) {
               {all ? 'Show less' : `Show ${extra} more`}
             </button>
           )}
+          <a className="text-btn" href={page(p)} aria-label={`${p.name}: its own page`}>
+            Full page
+          </a>
           {p.repo && (
             <a className="text-btn" href={p.repo}>
               Source on GitHub
@@ -85,7 +91,9 @@ function ArchiveCard({ p, i, wipe }: { p: Project; i: number; wipe: boolean }) {
   return (
     <li className={wipe ? 'card card-in' : 'card'} id={`project-${p.slug}`} style={{ '--i': i } as CSSProperties}>
       <div className="card-head">
-        <h3 className="card-name">{p.name}</h3>
+        <h3 className="card-name">
+          <a href={page(p)}>{p.name}</a>
+        </h3>
         <span className="year">{p.year}</span>
       </div>
       <p className="card-tagline">{p.tagline}</p>
@@ -99,21 +107,22 @@ function ArchiveCard({ p, i, wipe }: { p: Project; i: number; wipe: boolean }) {
       )}
       <div className="card-foot">
         <span className="card-stack">{p.stack.join(', ')}</span>
-        {(expandable || p.repo || p.context) && (
-          <span className="card-actions">
-            {expandable && (
-              <button type="button" className="text-btn js-only" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
-                {open ? 'Less' : 'Details'}
-              </button>
-            )}
-            {p.repo && (
-              <a className="text-btn" href={p.repo} aria-label={`${p.name} source on GitHub`}>
-                Source
-              </a>
-            )}
-            {p.context && <span className="card-context">{p.context}</span>}
-          </span>
-        )}
+        <span className="card-actions">
+          {expandable && (
+            <button type="button" className="text-btn js-only" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
+              {open ? 'Less' : 'Details'}
+            </button>
+          )}
+          <a className="text-btn" href={page(p)} aria-label={`${p.name}: its own page`}>
+            Page
+          </a>
+          {p.repo && (
+            <a className="text-btn" href={p.repo} aria-label={`${p.name} source on GitHub`}>
+              Source
+            </a>
+          )}
+          {p.context && <span className="card-context">{p.context}</span>}
+        </span>
       </div>
     </li>
   );

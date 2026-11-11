@@ -1,0 +1,90 @@
+---
+// a project's own page: everything from projects.json in full, with its
+// screenshots. /projects/ stays the list; old links to a card on it
+// (/projects/#project-x) come here (the script in projects/index.astro).
+import Site from '../../layouts/Site.astro';
+import { person, featured, archive, type Project } from '../../data/profile';
+import { inline, plain } from '../../data/inline';
+
+export function getStaticPaths() {
+  const all = [...featured, ...archive];
+  return all.map((p, i) => ({
+    params: { slug: p.slug },
+    props: { p, prev: all[i - 1] ?? null, next: all[i + 1] ?? null },
+  }));
+}
+
+interface Props {
+  p: Project;
+  prev: Project | null;
+  next: Project | null;
+}
+const { p, prev, next } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const page = (x: Project) => `${base}projects/${x.slug}/`;
+const [hero, ...shots] = p.images ?? [];
+const summary = plain(p.summary);
+const description = `${p.tagline}. ${summary}`.length > 180 ? `${p.tagline}. ${summary}`.slice(0, 177).replace(/\s+\S*$/, '') + '…' : `${p.tagline}. ${summary}`;
+---
+
+<Site section="projects" title={`${p.name} - ${person.name}`} description={description}>
+  <article class="proj">
+    <p class="proj-back"><a href={`${base}projects/`}><span aria-hidden="true">&lt;-</span> All projects</a></p>
+    <header class="proj-head">
+      <div>
+        <h1 class="page-title proj-title">{p.name}</h1>
+        <p class="proj-tagline">{p.tagline}</p>
+      </div>
+      <dl class="proj-meta">
+        <div><dt>status</dt><dd><span class={`status status-${p.status}`}><span class="status-dot" aria-hidden="true" />{p.statusText}</span></dd></div>
+        <div><dt>year</dt><dd>{p.year}</dd></div>
+        <div><dt>{p.areas.length === 1 ? 'area' : 'areas'}</dt><dd>{p.areas.join(', ')}</dd></div>
+      </dl>
+    </header>
+
+    <p class="proj-summary" set:html={inline(p.summary)} />
+
+    {hero && (
+      <figure class="proj-shot proj-hero">
+        <a href={`${base}${hero.src}`}><img src={`${base}${hero.src}`} width={hero.width} height={hero.height} alt={hero.alt} /></a>
+        {hero.caption && <figcaption>{hero.caption}</figcaption>}
+      </figure>
+    )}
+
+    {p.details.length > 0 && (
+      <section class="proj-section" aria-labelledby="proj-details-h">
+        <h2 class="proj-h" id="proj-details-h">Details</h2>
+        <ul class="details proj-details">
+          {p.details.map((d) => <li set:html={inline(d)} />)}
+        </ul>
+      </section>
+    )}
+
+    {shots.length > 0 && (
+      <section class="proj-section" aria-labelledby="proj-shots-h">
+        <h2 class="proj-h" id="proj-shots-h">Screenshots</h2>
+        <div class="proj-shots">
+          {shots.map((s) => (
+            <figure class="proj-shot">
+              <a href={`${base}${s.src}`}><img src={`${base}${s.src}`} width={s.width} height={s.height} alt={s.alt} loading="lazy" /></a>
+              {s.caption && <figcaption>{s.caption}</figcaption>}
+            </figure>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <footer class="proj-foot">
+      <ul class="stack" aria-label="Built with">{p.stack.map((s) => <li>{s}</li>)}</ul>
+      <p class="proj-links">
+        {p.repo && <a class="btn btn-primary" href={p.repo}>Source on GitHub</a>}
+        {p.context && <span class="card-context">{p.context}</span>}
+      </p>
+    </footer>
+
+    <nav class="proj-nav" aria-label="More projects">
+      {prev ? <a class="proj-prev" href={page(prev)}><span class="proj-nav-dir"><span aria-hidden="true">&lt;-</span> previous</span><span class="proj-nav-name">{prev.name}</span></a> : <span />}
+      {next && <a class="proj-next" href={page(next)}><span class="proj-nav-dir">next <span aria-hidden="true">-&gt;</span></span><span class="proj-nav-name">{next.name}</span></a>}
+    </nav>
+  </article>
+</Site>

@@ -1,8 +1,9 @@
 // the sitemap search engines read (linked from robots.txt and every page's
-// head). every public page, plus each published post with its date; the
+// head). every public page, each project's page, plus each published post with its date; the
 // guestbook admin and 404 stay out (both noindex).
 import type { APIRoute } from 'astro';
 import { getPosts } from '../data/buildFs';
+import { featured, archive } from '../data/profile';
 
 const PAGES = ['', 'projects/', 'homelab/', 'cv/', 'productions/', 'blog/', 'guestbook/', 'terminal/'];
 
@@ -12,6 +13,7 @@ export const GET: APIRoute = async ({ site }) => {
   const posts = await getPosts();
   const entries = [
     ...PAGES.map((p) => ({ loc: url(p) })),
+    ...[...featured, ...archive].map((p) => ({ loc: url(`projects/${p.slug}/`) })),
     ...posts.map((p) => ({ loc: url(`blog/${p.id}/`), lastmod: p.data.date.toISOString().slice(0, 10) })),
   ];
   const body = `<?xml version="1.0" encoding="UTF-8"?>

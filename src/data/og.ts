@@ -24,7 +24,15 @@ export async function cards(): Promise<Card[]> {
     description: p.data.description,
     prompt: `cat blog/${p.id}.md`,
   }));
-  return [...PAGES, ...posts];
+  // each project's own page (src/pages/projects/[slug].astro)
+  const projects = [...featured, ...archive].map((p) => ({
+    slug: `project-${p.slug}`,
+    path: `projects/${p.slug}/`,
+    title: p.name,
+    description: p.tagline,
+    prompt: `cat projects/${p.slug}.md`,
+  }));
+  return [...PAGES, ...projects, ...posts];
 }
 
 // the card for a page (its pathname, base stripped), or none: home keeps og.png

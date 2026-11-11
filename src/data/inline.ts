@@ -4,12 +4,13 @@
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
 // content links to a section (#project-s3ntry, #leadership) go to the page
-// that section now lives on; home only has the teasers.
+// that section now lives on; home only has the teasers. a project has its own
+// page (src/pages/projects/[slug].astro).
 const cv = ['experience', 'education', 'leadership', 'awards', 'skills'];
 export function route(hash: string): string {
   const base = import.meta.env.BASE_URL;
   const id = hash.slice(1);
-  if (id.startsWith('project-')) return `${base}projects/#${id}`;
+  if (id.startsWith('project-')) return `${base}projects/${id.slice('project-'.length)}/`; // its own page
   if (cv.includes(id)) return `${base}cv/#${id}`;
   if (id === 'failure-drill') return `${base}homelab/#${id}`;
   if (['projects', 'homelab', 'cv', 'productions', 'guestbook'].includes(id)) return `${base}${id}/`;

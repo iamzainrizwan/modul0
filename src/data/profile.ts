@@ -62,9 +62,14 @@ export type Project = {
   repo?: string;
   context?: string;
   details: string[];
+  // screenshots on the project's own page (/projects/<slug>/), from public/.
+  // only real ones: the repo's own README images, or shots of the live thing
+  images?: { src: string; width: number; height: number; alt: string; caption?: string }[];
 };
 
 export const featured = projects.featured as Project[];
+// the archive is newest first, by when each was started (its repo's creation
+// date; the term, for uni work with no repo). a new project goes on top
 export const archive = projects.archive as Project[];
 
 export const homelab = lab;
