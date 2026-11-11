@@ -66,6 +66,14 @@ export `cv-master.tex` (it's a bullet store); the master is a source for facts o
   Site.astro's `sections`, about is 00; desktop only, cv's children unnumbered).
   Content links to a section (`#project-x`, `#leadership`, `#failure-drill`)
   are rewritten to the page it lives on by `route()` in `src/data/inline.ts`.
+  Each project has its own page, `src/pages/projects/[slug].astro`
+  (`/projects/<slug>/`: everything in projects.json, its `images` with alt
+  text and captions, previous/next), with a share card (og.ts) and a sitemap
+  entry. `#project-x` routes there; old links to a card on the list
+  (`/projects/#project-x`, in older posts) are forwarded by the inline script
+  in `projects/index.astro`. Project `images` live in `public/projects/<slug>/`
+  (webp, at most 1600px wide) and must be real: the repo's own README images
+  or shots of the live thing, checked for anything private before they go in.
 - `src/components/` - React islands: `BootSequence` (first visit per session;
   log -> typed name with a deliberate typo + backspace fix -> purple wipe. The
   "N archived" count in its log is hardcoded: keep it equal to `archive.length`;
@@ -155,7 +163,14 @@ export `cv-master.tex` (it's a bullet store); the master is a source for facts o
   `src/styles/admin.css`, one module per panel in `src/scripts/admin/`, panels
   by url hash): overview, posts (split markdown | preview in the blog's
   `.article` styles via `marked`; images are shrunk to 1600px webp in the
-  browser and committed to `public/blog/<slug>/`), content (a form generated
+  browser and committed to `public/blog/<slug>/`; the editor's parts are in
+  `src/scripts/admin/editor/`: an ide-style link picker for the site's own
+  pages (`](` or ctrl+k, fed by the `data-site-links` json the admin page
+  builds), list carry-on and tab indenting, paste-a-url-to-link, a status bar
+  with word count and a broken-link check, a per-browser backup, focus mode,
+  image options (alt, caption, narrow), block-by-block scroll sync, and a
+  preview that matches the built post: figures, smart punctuation, shiki
+  code colours), content (a form generated
   from each `src/data/content/*.json`, or raw json), guestbook, wall, and
   visits (the `hits` table; `src/scripts/hit.ts` logs each page load, path +
   referrer host, not noindex pages or DNT/GPC). Every save is a commit to main
@@ -192,6 +207,11 @@ export `cv-master.tex` (it's a bullet store); the master is a source for facts o
   `draft: true`. The gitignored `src/content/blog/drafts/` is for local
   drafts (dev only, same slug); D1 is the source once a draft is there. Schema in
   `src/content.config.ts`. Also `src/pages/rss.xml.js` and `404.astro`.
+  Markdown runs through Astro 7's Sätteri processor (`satteri()` in
+  astro.config.mjs; rehype plugins don't plug in) with one hast plugin,
+  `src/data/figures.mjs`: a line of only images becomes figures (the title is
+  the caption, `#narrow` on the src narrows it, two or more sit in a row).
+  The admin preview copies it in `editor/figures.ts`; change both together.
 
 ## Motion
 

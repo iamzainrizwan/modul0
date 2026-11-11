@@ -1,7 +1,28 @@
 ---
 import Admin from '../../layouts/Admin.astro';
 import { api } from '../../data/api';
+import { cards } from '../../data/og';
+import { featured, archive } from '../../data/profile';
 const base = import.meta.env.BASE_URL;
+// everything a post can link to on the site, for the editor's link picker
+// (src/scripts/admin/editor/picker.ts) and its broken-link check. sections are
+// the ids the pages really have: add one here when a page grows a new anchor
+const sections = [
+  ['', 'about', 'about'], ['', 'projects', 'projects teaser'], ['', 'homelab', 'homelab teaser'], ['', 'cv', 'cv at a glance'],
+  ['', 'productions', 'productions teaser'], ['', 'writing', 'writing teaser'], ['', 'guestbook', 'guestbook teaser'], ['', 'contact', 'contact'],
+  ['cv/', 'experience', 'experience'], ['cv/', 'education', 'education'], ['cv/', 'leadership', 'leadership'], ['cv/', 'awards', 'awards'], ['cv/', 'skills', 'skills'],
+  ['homelab/', 'failure-drill', 'the failure drill'],
+  ['guestbook/', 'sign', 'sign the guestbook'], ['guestbook/', 'messages', 'guestbook messages'], ['guestbook/', 'wall', 'the pixel wall'],
+];
+const siteLinks = [
+  { path: base, title: 'Home', kind: 'page' },
+  ...(await cards()).map((c) => ({ path: base + c.path, title: c.title, kind: c.slug.startsWith('blog-') ? 'post' : c.slug.startsWith('project-') ? 'project' : 'page', hint: c.description })),
+  { path: `${base}terminal/`, title: 'Terminal', kind: 'page' },
+  ...sections.map(([page, id, title]) => ({ path: `${base}${page}#${id}`, title, kind: 'section' })),
+  // the old way to link a project (a card on /projects/): still works, it
+  // forwards to the page, so the link check accepts it; the picker doesn't offer it
+  ...[...featured, ...archive].map((p) => ({ path: `${base}projects/#project-${p.slug}`, title: p.name, kind: 'project', old: true })),
+];
 // the content files, in the order the nav lists them (src/data/content/*.json)
 const content = [
   ['profile', 'profile & links'],
@@ -84,11 +105,19 @@ const content = [
           <button type="button" data-md="list" title="list">• list</button>
           <button type="button" data-md="image" title="add images (or paste / drop them in)">+ image</button>
           <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden data-md-file />
-          <span class="md-tabs" role="group" aria-label="Show">
-            <button type="button" data-md-view="write" aria-pressed="true">write</button>
-            <button type="button" data-md-view="preview" aria-pressed="false">preview</button>
+          <span class="md-tools-end">
+            <span class="md-tabs" role="group" aria-label="Show">
+              <button type="button" data-md-view="write" aria-pressed="true">write</button>
+              <button type="button" data-md-view="preview" aria-pressed="false">preview</button>
+            </span>
+            <button type="button" data-md-focus aria-pressed="false" title="focus mode (ctrl+shift+f, esc leaves)">focus</button>
           </span>
         </div>
+        <p class="md-restore" data-md-restore role="status" hidden>
+          <span data-md-restore-text></span>
+          <button type="button" class="text-btn" data-md-restore-yes>Restore it</button>
+          <button type="button" class="text-btn" data-md-restore-no>Throw it away</button>
+        </p>
         <div class="md-split" data-view="write">
           <label class="md-pane md-write">
             <span class="sr-only">markdown</span>
@@ -101,7 +130,48 @@ const content = [
             </article>
           </div>
         </div>
+        <footer class="md-status">
+          <span data-md-pos>ln 1, col 1</span>
+          <span data-md-words></span>
+          <span class="md-status-hint" data-md-hint></span>
+          <button type="button" class="md-problems-btn" data-md-problems-btn aria-expanded="false" aria-controls="md-problems" hidden></button>
+          <details class="md-keys">
+            <summary>keys</summary>
+            <dl>
+              <dt>ctrl+s</dt><dd>save</dd>
+              <dt>ctrl+b / ctrl+i</dt><dd>bold / italic</dd>
+              <dt>ctrl+k</dt><dd>link: search the site or paste a url</dd>
+              <dt>type ](/</dt><dd>pages, sections, projects and posts to link</dd>
+              <dt>ctrl+space</dt><dd>show them in a link</dd>
+              <dt>paste a url</dt><dd>over selected text, links it</dd>
+              <dt>enter</dt><dd>carries a list on; twice ends it</dd>
+              <dt>tab / shift+tab</dt><dd>indent list items or selected lines (esc, then tab, leaves the box)</dd>
+              <dt>alt+enter</dt><dd>on an image: alt text, caption, size</dd>
+              <dt>ctrl+shift+f</dt><dd>focus mode; esc leaves</dd>
+            </dl>
+          </details>
+        </footer>
+        <ul class="md-problems" id="md-problems" data-md-problems hidden></ul>
       </form>
+      <dialog class="md-dlg" data-img-dlg aria-labelledby="img-dlg-h">
+        <form method="dialog" data-img-form>
+          <h2 id="img-dlg-h">Image</h2>
+          <img data-img-thumb alt="" />
+          <label class="gb-field"><span>alt text <em>what's in it, for screen readers</em></span><textarea name="alt" rows="2" required></textarea></label>
+          <label class="gb-field"><span>caption <em>optional, shown under it</em></span><input name="caption" autocomplete="off" /></label>
+          <fieldset class="md-dlg-size">
+            <legend>size</legend>
+            <label><input type="radio" name="size" value="full" checked /> full width</label>
+            <label><input type="radio" name="size" value="narrow" /> narrow</label>
+          </fieldset>
+          <p class="md-dlg-note">Two or more images on one line sit side by side.</p>
+          <p class="md-dlg-actions">
+            <button class="btn" type="submit" value="cancel" formnovalidate>Cancel</button>
+            <button class="btn btn-primary" type="submit" value="ok">Apply</button>
+          </p>
+        </form>
+      </dialog>
+      <script is:inline type="application/json" data-site-links set:html={JSON.stringify(siteLinks).replaceAll('<', '\\' + 'u003c')} />
     </section>
 
     <section data-panel="content" aria-labelledby="content-h" hidden>
@@ -116,7 +186,7 @@ const content = [
           <button class="btn btn-primary" type="button" data-content-save disabled>Save</button>
         </span>
       </header>
-      <p class="adm-note">Text can hold <code>[text](url)</code> links (<code>#project-x</code> links to a section). The terminal files are html. Saving commits to <code>main</code>; live in about two minutes.</p>
+      <p class="adm-note">Text can hold <code>[text](url)</code> links (<code>#project-x</code> links to that project's page). The terminal files are html. Saving commits to <code>main</code>; live in about two minutes.</p>
       <div class="cf" data-content-form></div>
       <label class="gb-field cf-json" hidden><span class="sr-only">json</span><textarea data-content-json spellcheck="false"></textarea></label>
     </section>
