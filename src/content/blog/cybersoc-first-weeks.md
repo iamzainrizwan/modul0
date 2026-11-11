@@ -4,7 +4,7 @@ date: 2026-11-01
 description: KCL CyberSoc's welcome fair stall, an intro to CTF tooling, WelcomeCTF, then Patch Wednesday, where players fixed the bugs instead of exploiting them. What we ran, what broke, and what I'd change.
 ---
 
-I've run a few events for KCL's Cyber Security Society this first half of Semeset 1, alongside buliding aesthetics for its [Instagram](/projects/#project-cybersoc-git) and making our [website](/projects/#project-kclcybersoc)! These sessions each built on each other: a welcome session about cyber tools, a CTF to use them in, and then a workshop focused on fixing what the CTF taught people to break.
+I've run a few events for KCL's Cyber Security Society this first half of Semeset 1, alongside buliding aesthetics for its [Instagram](/projects/cybersoc-ig/) and making our [website](/projects/kclcybersoc/)! These sessions each built on each other: a welcome session about cyber tools, a CTF to use them in, and then a workshop focused on fixing what the CTF taught people to break.
 
 ## Welcome fair
 
