@@ -159,21 +159,10 @@ export `cv-master.tex` (it's a bullet store); the master is a source for facts o
   into the terminal. `src/pages/guestbook/`
   (posts work without js via a form post + 303 back to `#posted`),
   `src/pages/admin/` (`/admin/`, the worker's `ADMIN_TOKEN`; `/guestbook/admin/`
-  redirects there) is a dashboard in its own layout (`Admin.astro`,
-  `src/styles/admin.css`, one module per panel in `src/scripts/admin/`, panels
-  by url hash): overview, posts (split markdown | preview in the blog's
-  `.article` styles via `marked`; images are shrunk to 1600px webp in the
-  browser and committed to `public/blog/<slug>/`; the editor's parts are in
-  `src/scripts/admin/editor/`: an ide-style link picker for the site's own
-  pages (`](` or ctrl+k, fed by the `data-site-links` json the admin page
-  builds), list carry-on and tab indenting, paste-a-url-to-link, a status bar
-  with word count and a broken-link check, a per-browser backup, focus mode,
-  image options (alt, caption, narrow), block-by-block scroll sync, and a
-  preview that matches the built post: figures, smart punctuation, shiki
-  code colours), content (a form generated
-  from each `src/data/content/*.json`, or raw json), guestbook, wall, and
-  visits (the `hits` table; `src/scripts/hit.ts` logs each page load, path +
-  referrer host, not noindex pages or DNT/GPC). Every save is a commit to main
+  redirects there) is a dashboard in its own layout (`Admin.astro`, panels
+  in `src/scripts/admin/`, details in `src/scripts/admin/CLAUDE.md`).
+  `src/scripts/hit.ts` logs each page load (path + referrer host, not
+  noindex pages or DNT/GPC). Every save is a commit to main
   by the worker (GitHub contents api, `GITHUB_TOKEN` secret, an allow-list of
   paths), so it redeploys. The data in `profile.ts` and `fs.ts` lives in those
   json files; the .ts files keep the types and the sourcing notes, so the
@@ -181,16 +170,9 @@ export `cv-master.tex` (it's a bullet store); the master is a source for facts o
   has the pixel wall (`src/scripts/wall.ts`, worker `/wall`): 32x32, one pixel
   a day per visitor, drawn on a canvas from the theme tokens at whole device
   pixels per cell; without js it's the worker's `/wall.svg` (in `<noscript>`,
-  so it isn't fetched twice). "replay" redraws it from `/wall/history` (3
-  base-32 chars a placement). The worker keeps the finished wall and the
-  replay in one `wall_state` row, updated in the same statement as each
-  placement and rebuilt after an admin undo/clear: reading the wall must
-  stay one row, never a scan (D1 free tier; workers.dev can't edge-cache). It
-  cleans up its observer and timers on `astro:before-swap`. Admin undoes a
-  poster or clears it. Zain can reply to a message from the admin page
-  (`replies` table, joined into `/messages`, shown under it as "↳ zain");
-  deleting a message deletes its reply.
-  `src/scripts/guestbook.ts` renders messages with textContent only. Messages
+  so it isn't fetched twice). It cleans up its observer and timers on
+  `astro:before-swap`. Worker internals (wall state, replay, replies) are in
+  `api/CLAUDE.md`. `src/scripts/guestbook.ts` renders messages with textContent only. Messages
   go live straight away (Zain's call), so the worker caps every abuse path
   (listed in `api/README.md`); admin can delete one message or everything
   from one poster; each new message pings Discord (`DISCORD_WEBHOOK` worker
@@ -263,7 +245,7 @@ accuracy rule: don't add facts there that profile.ts doesn't have.
 
 ## Commands
 
-`npm run dev` / `npm run build` / `npm run preview`. No tests or linter: the
+No tests or linter: the
 checks are `npm run build` passing plus the screenshot pass below.
 `astro.config.mjs` reads `SITE`/`BASE` env vars (defaults: modul0.dev, `/`)
 and uses `trailingSlash: 'always'`, so internal links end in `/`.
