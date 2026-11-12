@@ -120,6 +120,22 @@
         "Deadline-based pacing is recomputed on every load and flags the goal as unrealistic past 8 new problems a day.",
         "The daily digest runs in-process, so a single gunicorn worker is deliberate: a second would send duplicate emails.",
         "Deployed to alexandria by [s3ntry’s pipeline](#project-s3ntry), behind nginx."
+      ],
+      "images": [
+        {
+          "src": "projects/1337/problems.webp",
+          "width": 1440,
+          "height": 900,
+          "alt": "The 1337 problems page: the NeetCode 150 grouped by category, with a company tag filter and core, extra and custom lists.",
+          "caption": "The problem list, grouped by category and filterable by company."
+        },
+        {
+          "src": "projects/1337/stats.webp",
+          "width": 1440,
+          "height": 900,
+          "alt": "The 1337 stats page: an activity heatmap since July and a burndown chart against the ideal pace.",
+          "caption": "Activity and burndown against the goal pace."
+        }
       ]
     }
   ],
@@ -184,6 +200,15 @@
         "Wayland only lets an app capture other windows through the desktop portal’s picker. mosaic keeps the portal’s restore token, so your windows come back on the next launch without the picker, and [opens a separate PipeWire connection per window](https://github.com/iamzainrizwan/mosaic/blob/main/mosaic/app.py): sharing one connection between streams corrupts the protocol and hangs.",
         "Frames stay on the GPU: PipeWire hands over DMA-BUFs and [GTK draws them directly](https://github.com/iamzainrizwan/mosaic/blob/main/mosaic/live.py), with a plain-memory fallback. Windows that aren’t on the current layout pause, and the rest are capped at 30fps.",
         "The portal never says which window you picked (on GNOME 46 even the size it reports is the monitor’s), so a [small GNOME Shell extension](https://github.com/iamzainrizwan/mosaic/tree/main/extension) lists open windows with tiny thumbnails over D-Bus, and mosaic names each new capture by matching its first frame against them."
+      ],
+      "images": [
+        {
+          "src": "projects/mosaic/layout.webp",
+          "width": 1600,
+          "height": 978,
+          "alt": "The mosaic control window: a tutoring layout on the 1920 by 1080 stage with an inkpad page large on the left and two browser windows stacked on the right, saved layouts in the sidebar and the window pool along the bottom.",
+          "caption": "The control window: drag windows from the pool onto the stage, switch layouts on the left. Staged for this page with stand-in feeds."
+        }
       ]
     },
     {
@@ -210,6 +235,15 @@
         "One standard-library [Python server](https://github.com/iamzainrizwan/inkpad/blob/main/server.py) and [one HTML page](https://github.com/iamzainrizwan/inkpad/blob/main/index.html). Strokes go up as small JSON ops and come back to every device over server-sent events, in-progress strokes included, so writing shows up mid-stroke.",
         "Pencil pressure sets the line width. Fingers scroll and only the pencil draws, so a resting palm leaves no marks.",
         "Decks go pptx → PDF (LibreOffice) → one PNG per slide (poppler), inside the Docker image. Calibri is swapped for Carlito, which has the same metrics, so slides keep their line breaks. Each deck is one entry with a slide bar to flip through it, and every slide keeps its own writing."
+      ],
+      "images": [
+        {
+          "src": "projects/inkpad/page.webp",
+          "width": 1440,
+          "height": 900,
+          "alt": "inkpad on the laptop: a grid page of handwritten partial fractions working, with the pen, highlighter, colour and follow controls along the top and the pages list on the left.",
+          "caption": "A real tutoring page as the laptop sees it, written on the iPad."
+        }
       ]
     },
     {
@@ -452,6 +486,22 @@
         "Checked assumptions with residual and Q-Q plots and a Breusch-Pagan heteroskedasticity test.",
         "Compared the fund with a passive factor portfolio on Sharpe ratio, annualised volatility and maximum drawdown.",
         "Tested beta stationarity with rolling regressions and augmented Dickey-Fuller tests."
+      ],
+      "images": [
+        {
+          "src": "projects/hedge-fund/rolling-betas.webp",
+          "width": 1000,
+          "height": 500,
+          "alt": "Rolling betas over time for the constant, the value vs growth factor and the credit factor; value vs growth swings from about +0.3 to below -0.8.",
+          "caption": "Rolling factor betas: the fund's value vs growth exposure flips sign part-way through."
+        },
+        {
+          "src": "projects/hedge-fund/qq.webp",
+          "width": 640,
+          "height": 480,
+          "alt": "A Q-Q plot of the regression residuals, close to the normal line apart from a few points in the tails.",
+          "caption": "Residuals against a normal distribution, checking the regression's assumptions."
+        }
       ]
     },
     {
@@ -475,6 +525,15 @@
       "repo": "https://github.com/iamzainrizwan/github-scraper-chatbot",
       "details": [
         "HTML scraping with no API key required, plus .xlsx export of the repository list."
+      ],
+      "images": [
+        {
+          "src": "projects/scraper/app.webp",
+          "width": 1082,
+          "height": 640,
+          "alt": "The scraper's window: a GitHub username and file path, a start search button, a chat log reading loaded 25 repos for iamzainrizwan, and a question ready to send to Gemini.",
+          "caption": "After a real scrape of my own profile: 25 repos loaded and exported, ready to ask about."
+        }
       ]
     },
     {
@@ -499,6 +558,15 @@
       "details": [
         "Can read my CV (PDF or .tex) and inject it into the prompt to tailor the conceptual question to my background.",
         "An always-on homelab service, and one more thing [s3ntry](#project-s3ntry) watches."
+      ],
+      "images": [
+        {
+          "src": "projects/recurse/questions.webp",
+          "width": 1000,
+          "height": 1334,
+          "alt": "The re::curse questions email: three cards, a quant brainteaser, an algorithm problem and a conceptual question, each with a hint, and a footer saying solutions arrive at 23:00.",
+          "caption": "The morning email's template, filled with placeholder text."
+        }
       ]
     },
     {
@@ -570,6 +638,29 @@
         "The team’s [PyTeal contract](https://github.com/SCGR-1/Hackathon_10.18/blob/master/hackathon1018/projects/cred_contracts/src/app.py) stores each credential in a 161-byte Algorand box; revoking one flips a single byte.",
         "I wrote little of the code: my part was learning the codebase and getting it deployed.",
         "Presented it to the judges, which was also my first technical presentation."
+      ],
+      "images": [
+        {
+          "src": "projects/educhain/landing.webp",
+          "width": 1600,
+          "height": 792,
+          "alt": "The EduChain landing page: blockchain-powered credential verification with commemorative NFTs, four feature cards and a log in panel.",
+          "caption": "The landing page. Log in as a student, certifier, institution or authority."
+        },
+        {
+          "src": "projects/educhain/verify.webp",
+          "width": 1600,
+          "height": 799,
+          "alt": "The verify page: an Algorand address searched, showing an active certification credential with its ID, body, score and validity dates.",
+          "caption": "Verifying a credential by wallet address, read from the chain."
+        },
+        {
+          "src": "projects/educhain/wallet.webp",
+          "width": 1600,
+          "height": 798,
+          "alt": "A student's wallet listing seven credential NFTs, filterable by education, visa and employment.",
+          "caption": "A student's wallet: each credential is an NFT."
+        }
       ]
     },
     {
@@ -593,6 +684,22 @@
         "Configurable environment: adjust hyperparameters before a run and watch learning progress in 3D.",
         "Per-round metrics (wins, reward, distance) exported to CSV and graphed live.",
         "18 tests, including hand-checked PPO and DQN maths and backprop within 5% of a Wine-dataset benchmark."
+      ],
+      "images": [
+        {
+          "src": "projects/rl-unity/agent-config.webp",
+          "width": 1356,
+          "height": 969,
+          "alt": "The agent configuration design: algorithm set to DQN, learning rate, exploration probability and decay, batch size and layer sizes.",
+          "caption": "Design mockup from the report: configuring an agent."
+        },
+        {
+          "src": "projects/rl-unity/results.webp",
+          "width": 1600,
+          "height": 1138,
+          "alt": "The results screen design: a wins per 10 rounds chart for the runner, with tabs for loss functions and failures.",
+          "caption": "Design mockup from the report: the post-simulation stats."
+        }
       ]
     },
     {
@@ -632,6 +739,22 @@
       "details": [
         "Space-themed Figma prototype with one-handed bottom navigation and colour-coded subjects.",
         "The C# prototype adds and completes quests, displays them as a table, and flags overdue ones."
+      ],
+      "images": [
+        {
+          "src": "projects/studyquest/screens.webp",
+          "width": 1408,
+          "height": 959,
+          "alt": "Three StudyQuest phone screens: adding a quest with subject, difficulty and due date, a study timer for a further mechanics past paper, and a calendar.",
+          "caption": "Figma designs from the writeup: add a quest, the study timer, the calendar."
+        },
+        {
+          "src": "projects/studyquest/console.webp",
+          "width": 1008,
+          "height": 955,
+          "alt": "The console prototype: a menu to add, view and complete quests, and a table of two quests with subject, due time and status.",
+          "caption": "The C# console prototype from the writeup."
+        }
       ]
     },
     {
