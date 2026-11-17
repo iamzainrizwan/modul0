@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { birthday } from '../scripts/birthday';
+import { outros, type Outro } from '../data/motion';
 
 // first-visit boot animation. the page is fully rendered underneath. an inline
 // script in Site.astro sets html[data-boot=pending] before first paint, which
@@ -9,6 +11,11 @@ import { useEffect, useRef, useState } from 'react';
 // bar fills, the name types itself (typo included, then fixed), and a solid
 // purple panel dithers in over it, then dithers away to reveal the site
 // (css px-in / px-out). any key/tap skips straight to the wipe.
+//
+// that last hand-over (wipe in, then reveal out) is the outro, picked by
+// html[data-outro] (motion.ts; the test site's panel switches it). each outro
+// is css in site.css ("boot outros"); the element marked data-end finishing
+// its animation moves wipe -> reveal -> done.
 
 // `short` is shown on narrow screens so each line stays on one row. statuses
 // read as remainders: r0 = done, nothing left over; r1 = something still left
@@ -45,16 +52,19 @@ type Phase = 'log' | 'name' | 'wipe' | 'reveal' | 'done';
 
 // the project count comes from profile.ts (Site.astro passes it), so adding
 // a project from the admin keeps it right
-export default function BootSequence({ featured, archived }: { featured: number; archived: number }) {
-  const lines: Line[] = [
-    ...LINES,
-    { text: `indexing ${featured} featured projects, ${archived} archived`, short: `index ${featured + archived} projects`, status: 'ok' },
-  ];
+export default function BootSequence({ birth, featured, archived }: { birth: string; featured: number; archived: number }) {
   const [active, setActive] = useState(false);
+  // on the birthday (and the days after) the log gets one more line, after the user
+  const [lines, setLines] = useState(LINES);
   const [shown, setShown] = useState(0);
   const [resolved, setResolved] = useState(0);
   const [typed, setTyped] = useState('');
   const [phase, setPhase] = useState<Phase>('log');
+  const [outro, setOutro] = useState<Outro>('wipe');
+  // outro geometry, measured when the wipe starts (mod's grid, rail's target)
+  const [geo, setGeo] = useState<Record<string, string>>({});
+  const [cells, setCells] = useState(0);
+  const outroRef = useRef<Outro>('wipe');
   const timers = useRef<number[]>([]);
   const skipped = useRef(false);
 
@@ -64,6 +74,24 @@ export default function BootSequence({ featured, archived }: { featured: number;
     if (skipped.current) return;
     skipped.current = true;
     timers.current.forEach(clearTimeout);
+    if (outroRef.current === 'mod') {
+      const cols = Math.ceil(innerWidth / 48);
+      setCells(cols * Math.ceil(innerHeight / 48));
+      setGeo({ '--cols': String(cols) });
+    }
+    if (outroRef.current === 'rail') {
+      // squash the boot screen into the rail's name
+      const r = document.querySelector('.rail-name')?.getBoundingClientRect();
+      const ok = r && r.width > 0;
+      setGeo({
+        '--rx': `${ok ? r.left : innerWidth / 2}px`,
+        '--ry': `${ok ? r.top : innerHeight / 2}px`,
+        '--rw': `${ok ? r.width : 0}px`,
+        '--rh': `${ok ? r.height : 0}px`,
+        '--sx': String(ok ? r.width / innerWidth : 0),
+        '--sy': String(ok ? r.height / innerHeight : 0),
+      });
+    }
     setPhase('wipe');
     try {
       sessionStorage.setItem('modul0-booted', '1');
@@ -75,14 +103,28 @@ export default function BootSequence({ featured, archived }: { featured: number;
     if (root.dataset.boot !== 'pending') return;
     // hand over from the static cover to the animated overlay
     root.dataset.boot = 'running';
+    const o = root.dataset.outro as Outro;
+    if (outros.some((x) => x.id === o)) {
+      outroRef.current = o;
+      setOutro(o);
+    }
+    const bday = birthday(birth);
+    const all = [
+      ...LINES,
+      { text: `indexing ${featured} featured projects, ${archived} archived`, short: `index ${featured + archived} projects`, status: 'ok' as const },
+    ];
+    const LOG = bday
+      ? [all[0], { text: `uptime rolled over: ${bday.age}y. happy birthday`, short: `uptime: ${bday.age}y rollover`, status: 'ok' as const }, ...all.slice(1)]
+      : all;
+    setLines(LOG);
     setActive(true);
 
-    lines.forEach((_, i) => {
+    LOG.forEach((_, i) => {
       later(() => setShown(i + 1), LINE_STEP * (i + 1));
       later(() => setResolved(i + 1), LINE_STEP * (i + 1) + RESOLVE);
     });
 
-    let t = LINE_STEP * lines.length + RESOLVE + 260;
+    let t = LINE_STEP * LOG.length + RESOLVE + 260;
     later(() => setPhase('name'), t);
     t += 180;
     for (const k of KEYS) {
@@ -113,7 +155,7 @@ export default function BootSequence({ featured, archived }: { featured: number;
     const t = window.setTimeout(() => {
       document.documentElement.removeAttribute('data-boot');
       setPhase(phase === 'wipe' ? 'reveal' : 'done');
-    }, 1200);
+    }, 2000);
     return () => clearTimeout(t);
   }, [phase]);
 
@@ -122,9 +164,24 @@ export default function BootSequence({ featured, archived }: { featured: number;
   const filled = Math.round((resolved / lines.length) * BAR);
 
   return (
-    <div className="bootseq" role="presentation" aria-hidden="true" data-phase={phase}>
+    <div
+      className="bootseq"
+      role="presentation"
+      aria-hidden="true"
+      data-phase={phase}
+      data-outro={outro}
+      style={geo as CSSProperties}
+      onAnimationEnd={(e) => {
+        if (!(e.target as HTMLElement).hasAttribute('data-end')) return;
+        if (phase === 'wipe') {
+          // page shows through as soon as the black screen is gone
+          document.documentElement.removeAttribute('data-boot');
+          setPhase('reveal');
+        } else if (phase === 'reveal') setPhase('done');
+      }}
+    >
       {phase !== 'reveal' && (
-        <div className="boot-screen">
+        <div className="boot-screen" {...(phase === 'wipe' && (outro === 'rail' || outro === 'crt') ? { 'data-end': '' } : {})}>
           <div className="boot-log">
             <div className="boot-head">
               <span>modul0 bootloader</span>
@@ -160,18 +217,67 @@ export default function BootSequence({ featured, archived }: { featured: number;
           </span>
         </div>
       )}
-      {(phase === 'wipe' || phase === 'reveal') && (
-        <div
-          className={phase === 'wipe' ? 'boot-wipe boot-wipe-in' : 'boot-wipe boot-wipe-out'}
-          onAnimationEnd={() => {
-            if (phase === 'wipe') {
-              // page shows through as soon as the black screen is gone
-              document.documentElement.removeAttribute('data-boot');
-              setPhase('reveal');
-            } else setPhase('done');
-          }}
-        />
-      )}
+      {(phase === 'wipe' || phase === 'reveal') && <Hand outro={outro} phase={phase} cells={cells} />}
     </div>
   );
+}
+
+// the outro's own elements. rail and crt animate the boot screen itself on
+// the way in (it carries data-end then), so they only add something here for
+// the reveal. keys differ between phases so every element restarts
+const end = (last: boolean) => (last ? { 'data-end': '' } : {});
+const BANDS = 8;
+const TEAR = [3, 0, 5, 1, 6, 2, 7, 4, 9, 8]; // order the tear's bands go in
+const range = (n: number) => Array.from({ length: n }, (_, i) => i);
+
+function Hand({ outro, phase, cells }: { outro: Outro; phase: 'wipe' | 'reveal'; cells: number }) {
+  const inn = phase === 'wipe';
+  switch (outro) {
+    case 'shutter':
+      return (
+        <div className="ot-bands" key={phase}>
+          {range(BANDS).map((i) => (
+            <span key={i} style={{ '--i': inn ? i : BANDS - 1 - i } as CSSProperties} {...end(inn ? i === BANDS - 1 : i === 0)} />
+          ))}
+        </div>
+      );
+    case 'bar':
+      return (
+        <div className="ot-bar" key={phase}>
+          {range(16).map((i) => (
+            <span key={i} style={{ '--i': i } as CSSProperties} {...end(i === 15)} />
+          ))}
+        </div>
+      );
+    case 'mod':
+      // in: the cells where 4 divides i - g, g = 0..3; out: the same mod 5
+      return (
+        <div className="ot-mod" key={phase}>
+          {range(cells).map((i) => (
+            <span key={i} style={{ '--i': inn ? i % 4 : i % 5 } as CSSProperties} {...end(i === (inn ? 3 : 4))} />
+          ))}
+        </div>
+      );
+    case 'tear':
+      if (inn) return <div className="ot-panel" key="in" data-end />;
+      return (
+        <div className="ot-tear" key="out">
+          {TEAR.map((d, i) => (
+            <span key={i} style={{ '--i': d } as CSSProperties} {...end(d === TEAR.length - 1)} />
+          ))}
+        </div>
+      );
+    case 'rail':
+      return inn ? null : <div className="ot-rail" key="out" data-end />;
+    case 'crt':
+      return inn ? null : (
+        <div className="ot-crt" key="out">
+          <span data-end />
+          <span />
+        </div>
+      );
+    default:
+      // wipe, slash, cut: one panel
+      return <div className={`ot-panel ot-${inn ? 'in' : 'out'}`} key={phase} data-end />;
+  }
 }

@@ -100,7 +100,10 @@ export `cv-master.tex` (it's a bullet store); the master is a source for facts o
   Ns", the real downtime), `sl`, `vim` (stuck until `:q`), `ls -a` / `.secrets`,
   `echo $SHELL`, `man man`, `git push`/`blame`, `reboot` (replays the boot on
   a real load of home) and `shutdown`, each counted with `found(id)`. A new
-  egg goes in `EGGS` too. Keep their jokes free of facts about Zain's setup
+  egg goes in `EGGS` too. Birthday (`src/scripts/birthday.ts`, from `birth`,
+  the day and 3 after, visitor's local date): a boot log line, the `cake`
+  egg (always counted; an empty plate outside the window), its tip first,
+  and a line under `uptime`. Keep their jokes free of facts about Zain's setup
   that nothing sources. `TIPS` there are the nudges: one you haven't found,
   new every time the drop-down opens (in its title bar, click runs it; the
   title hides under 420px to make room) and at the end of `/terminal/`'s boot.

@@ -2,7 +2,7 @@
 // test site only (PUBLIC_TEST=1): switch how the site moves, per browser.
 // one reveal style (radios) plus independent extras (checkboxes); saved in
 // localStorage, read before paint by the head script in Site.astro.
-import { styles, extras, defaults } from '../data/motion';
+import { styles, outros, extras, defaults } from '../data/motion';
 const base = import.meta.env.BASE_URL;
 ---
 
@@ -13,6 +13,12 @@ const base = import.meta.env.BASE_URL;
       <legend>style</legend>
       {styles.map((s) => (
         <label><input type="radio" name="style" value={s.id} /> {s.label}</label>
+      ))}
+    </fieldset>
+    <fieldset>
+      <legend>boot outro</legend>
+      {outros.map((o) => (
+        <label><input type="radio" name="outro" value={o.id} /> {o.label}</label>
       ))}
     </fieldset>
     <fieldset>
@@ -44,10 +50,11 @@ const base = import.meta.env.BASE_URL;
   // are set up at load, so they show from the next page on
   const apply = (m: Record<string, unknown>) => {
     html.dataset.motion = String(m.style);
-    for (const k of Object.keys(defaults)) if (k !== 'style') html.toggleAttribute(`data-mx-${k}`, !!m[k]);
+    html.dataset.outro = String(m.outro);
+    for (const k of Object.keys(defaults)) if (k !== 'style' && k !== 'outro') html.toggleAttribute(`data-mx-${k}`, !!m[k]);
   };
   const fill = (m: Record<string, unknown>) => {
-    for (const el of form.querySelectorAll<HTMLInputElement>('input')) el.checked = el.type === 'radio' ? el.value === m.style : !!m[el.name];
+    for (const el of form.querySelectorAll<HTMLInputElement>('input')) el.checked = el.type === 'radio' ? el.value === m[el.name] : !!m[el.name];
   };
 
   fill(load());
@@ -55,7 +62,8 @@ const base = import.meta.env.BASE_URL;
   panel.addEventListener('toggle', () => { try { localStorage.setItem(`${KEY}-open`, panel.open ? '1' : '0'); } catch {} });
 
   form.addEventListener('change', () => {
-    const m: Record<string, unknown> = { style: (form.elements.namedItem('style') as RadioNodeList).value };
+    const radio = (n: string) => (form.elements.namedItem(n) as RadioNodeList).value;
+    const m: Record<string, unknown> = { style: radio('style'), outro: radio('outro') };
     for (const el of form.querySelectorAll<HTMLInputElement>('input[type=checkbox]')) m[el.name] = el.checked;
     save(m);
     apply(m);

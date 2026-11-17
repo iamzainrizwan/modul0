@@ -7,6 +7,8 @@
 // cmatrix, yes, the fork bomb) animate in the output on the step clock and
 // take the keyboard while they run: ctrl+c or q stops them.
 
+import { birthday } from './birthday';
+
 export type Esc = (s: string) => string;
 
 // every egg, in the order `eggs` lists them. the engine's own eggs (rm -rf /,
@@ -42,6 +44,7 @@ export const EGGS: [id: string, name: string][] = [
   ['snake', 'snake'],
   ['reboot', 'reboot'],
   ['shutdown', 'shutdown'],
+  ['cake', 'cake'],
 ];
 
 // what the terminal suggests each time it opens: [egg, the nudge, what it
@@ -68,8 +71,10 @@ const TIPS: [string, string, string][] = [
 // a nudge toward an egg you haven't found yet: [text, command]. never the
 // same one twice running, while there's a choice
 let lastTip = '';
-export function tip(): [string, string] {
+export function tip(birth?: string): [string, string] {
   const got = foundEggs();
+  // the birthday's tip wins while it's on, until the cake's been found
+  if (birth && birthday(birth) && !got.has('cake')) return ["it's my birthday. try cake", 'cake'];
   let left = TIPS.filter(([id]) => !got.has(id));
   // counted against EGGS, so a stale id from an old version doesn't count
   const all = EGGS.every(([id]) => got.has(id));
@@ -157,6 +162,36 @@ const cow = (text: string, esc: Esc) => {
                 ||----w |
                 ||     ||</pre>`;
 };
+
+// one candle per bit of the age (20 candles won't fit at 320px): the 1s lit.
+// after the birthday window the plate's empty
+export function cake(birth: string) {
+  const b = birthday(birth);
+  if (!b) {
+    const [, m, d] = birth.split('-').map(Number);
+    const now = new Date();
+    let next = new Date(now.getFullYear(), m - 1, d);
+    if (next.valueOf() < now.valueOf()) next = new Date(now.getFullYear() + 1, m - 1, d);
+    const days = Math.ceil((next.valueOf() - now.valueOf()) / 864e5);
+    return `<span class="dim">the cake's gone. the next one's in ${days} day${days === 1 ? '' : 's'}.</span>`;
+  }
+  const bits = b.age.toString(2);
+  const flames = [...bits].map((c) => (c === '1' ? '<span class="accent">*</span>' : '<span class="dim">.</span>')).join('   ');
+  const w = bits.length * 4 + 1;
+  const label = 'happy birthday!';
+  const pad = w - label.length;
+  const bar = '-'.repeat(w);
+  // plain ascii: box-drawing glyphs fall back to another font and misalign
+  const art = `   ${flames}
+   ${[...bits].map(() => '|').join('   ')}
+ +${bar}+
+ |${' '.repeat(Math.floor(pad / 2))}${label}${' '.repeat(Math.ceil(pad / 2))}|
+ +${bar}+
+ |<span class="accent">${'%'.repeat(w)}</span>|
+ +${bar}+`;
+  const when = b.ago === 0 ? "it's my birthday today" : `my birthday was ${b.ago === 1 ? 'yesterday' : `${b.ago} days ago`}`;
+  return `<pre role="img" aria-label="a birthday cake with ${bits.length} candles">${art}</pre>${when}: ${b.age} = ${bits} in binary, one candle per bit, the 1s lit. <a class="run" href="#" data-cmd="uptime">uptime</a> just rolled over.`;
+}
 
 const MAN_MAN = `<div class="man">
 <p>MAN(1)</p>

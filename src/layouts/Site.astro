@@ -138,6 +138,7 @@ const sections = [
         if (testSite) Object.assign(m, JSON.parse(localStorage.getItem('modul0-motion') || '{}'));
       } catch (e) {}
       root.dataset.motion = m.style;
+      root.dataset.outro = m.outro;
       ['reveal', 'cursor', 'decode', 'pointer'].forEach(function (x) {
         if (m[x]) root.setAttribute('data-mx-' + x, '');
       });
@@ -154,7 +155,7 @@ const sections = [
     </script>
     <a class="skip" href="#main">Skip to content</a>
     {boot && <div class="boot-cover" aria-hidden="true" />}
-    {boot && <BootSequence client:load featured={featured.length} archived={archive.length} />}
+    {boot && <BootSequence client:load birth={person.birth} featured={featured.length} archived={archive.length} />}
 
     <div class="shell">
       <aside class="rail" transition:persist="rail">

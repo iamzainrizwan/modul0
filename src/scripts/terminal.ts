@@ -1,7 +1,8 @@
 import { listing, postView } from './render';
 import { uptimeRows, uptimeText } from './uptime';
+import { birthday } from './birthday';
 import { getTheme, setTheme } from './theme';
-import { EGGS, markEgg, foundEggs, resetEggs, eggsReport, quick, MAN_MAN, yes, forkbomb, hack, cmatrix, snake, mod, tip, type Ctx, type Stop } from './eggs';
+import { EGGS, markEgg, foundEggs, resetEggs, eggsReport, quick, MAN_MAN, yes, forkbomb, hack, cmatrix, snake, mod, tip, cake, type Ctx, type Stop } from './eggs';
 
 type Post = { title: string; date: string; description: string; html: string };
 export type Fs = {
@@ -278,7 +279,9 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
       if (el) el.textContent = fmt();
     }, 1000);
     // it ticks every second: not announced each time (it's in the live region)
-    return `<span class="uptime" aria-live="off">${fmt()}</span>`;
+    const bday = birthday(fs.birth);
+    const note = bday ? `<br><span class="dim">rolled over to ${bday.age}y ${bday.ago ? `${bday.ago}d ago` : 'today'}. it's my birthday:</span> <a class="run" href="#" data-cmd="cake">cake</a>` : '';
+    return `<span class="uptime" aria-live="off">${fmt()}</span>${note}`;
   }
 
   // every unit is a remainder of the one above it
@@ -486,6 +489,10 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
         out = target ? error(`rm: cannot remove '${escape(target)}': read-only file system`) : error('rm: missing operand');
         break;
       }
+      case 'cake':
+        hit = 'cake';
+        out = cake(fs.birth);
+        break;
       case 'sl':
         hit = 'sl';
         out = reduced()
@@ -742,7 +749,7 @@ export function boot(terminal: HTMLElement, fs: Fs, opts: Options = {}) {
   const delay = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : (opts.bootDelay ?? 150);
   const lines = [...BOOT];
   if (opts.tip) {
-    const [text, cmd] = tip();
+    const [text, cmd] = tip(fs.birth);
     lines.push(`<span class="dim">tip:</span> <a class="run" href="#" data-cmd="${escape(cmd)}">${escape(text)}</a>`);
   }
   lines.forEach((line, i) => setTimeout(() => print(line, undefined, '', i === lines.length - 1 ? 'entry' : 'entry boot'), i * delay));

@@ -64,7 +64,7 @@ export default function QuakeTerminal({ src }: { src: string }) {
       // promise is already settled
       load()
         .then(({ terminal, eggs, fs }) => {
-          setTip(eggs.tip());
+          setTip(eggs.tip(fs.birth));
           if (!engine.current && root.current) {
             engine.current = terminal.boot(root.current, fs, { onExit: () => setOpen(false), scroller: scroller.current!, bootDelay: 30 });
           }

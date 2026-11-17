@@ -991,9 +991,97 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
   white-space: pre;
 }
 .boot-skip { position: absolute; right: 1.25rem; bottom: 1rem; font-size: 0.74rem; color: var(--muted); }
-.boot-wipe { position: absolute; inset: 0; background: var(--purple); }
-.boot-wipe-in { animation: var(--boot-in, var(--sf-in)) var(--sf-dur) var(--boot-ease-in, var(--sf-ease)) both; }
-.boot-wipe-out { animation: var(--boot-out, var(--sf-out)) calc(var(--sf-dur) * 1.3) var(--boot-ease-out, var(--sf-ease)) both; }
+
+/* ---------- boot outros: how the boot hands over to the page ----------
+   picked by .bootseq[data-outro] (motion.ts). each has a wipe phase (covers
+   or takes down the boot screen) and a reveal phase (shows the page); the
+   element with data-end finishing moves it on. hard steps only. */
+.ot-panel, .ot-bands, .ot-bar, .ot-mod, .ot-tear, .ot-crt { position: absolute; inset: 0; }
+.ot-panel { background: var(--purple); }
+
+/* wipe (the original): the motion style's surface animation, in and out */
+.bootseq[data-outro='wipe'] .ot-in { animation: var(--boot-in, var(--sf-in)) var(--sf-dur) var(--boot-ease-in, var(--sf-ease)) both; }
+.bootseq[data-outro='wipe'] .ot-out { animation: var(--boot-out, var(--sf-out)) calc(var(--sf-dur) * 1.3) var(--boot-ease-out, var(--sf-ease)) both; }
+
+/* cut: one frame of purple, then the page */
+.bootseq[data-outro='cut'] .ot-in { animation: cut-in 70ms linear both; }
+.bootseq[data-outro='cut'] .ot-out { animation: cut-out 20ms linear both; }
+
+/* % slash: a slanted purple bar sweeps in from the left, covering the
+   screen, then carries on off the right edge, the page behind it */
+.bootseq[data-outro='slash'] .ot-in { animation: ot-slash-in 0.26s steps(7, end) both; }
+.bootseq[data-outro='slash'] .ot-out { animation: ot-slash-out 0.3s steps(8, end) both; }
+@keyframes ot-slash-in {
+  from { clip-path: polygon(0 0, 0 0, -40% 100%, -40% 100%); }
+  to { clip-path: polygon(0 0, 140% 0, 100% 100%, -40% 100%); }
+}
+@keyframes ot-slash-out {
+  from { clip-path: polygon(0 0, 140% 0, 100% 100%, -40% 100%); }
+  to { clip-path: polygon(140% 0, 140% 0, 100% 100%, 100% 100%); }
+}
+
+/* shutter: eight bands drop shut top to bottom, then lift bottom to top */
+.ot-bands { display: flex; flex-direction: column; }
+.ot-bands span { flex: 1; background: var(--purple); margin-bottom: -1px; }
+.bootseq[data-phase='wipe'] .ot-bands span { transform-origin: top; animation: ot-sy-in 90ms steps(3, end) both; animation-delay: calc(var(--i) * 24ms); }
+.bootseq[data-phase='reveal'] .ot-bands span { transform-origin: bottom; animation: ot-sy-out 90ms steps(3, end) both; animation-delay: calc(var(--i) * 28ms); }
+@keyframes ot-sy-in { from { transform: scaleY(0); } to { transform: none; } }
+@keyframes ot-sy-out { from { transform: none; } to { transform: scaleY(0); } }
+
+/* progress bar: the bar's 16 squares, screen high: fill left to right like
+   the bar did, then empty left to right */
+.ot-bar { display: grid; grid-template-columns: repeat(16, 1fr); }
+.ot-bar span { background: var(--purple); margin-right: -1px; }
+.bootseq[data-phase='wipe'] .ot-bar span { animation: ot-on 1ms step-end both; animation-delay: calc(var(--i) * 18ms); }
+.bootseq[data-phase='reveal'] .ot-bar span { animation: ot-off 1ms step-end both; animation-delay: calc(var(--i) * 22ms + 60ms); }
+@keyframes ot-on { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ot-off { from { opacity: 1; } to { opacity: 0; } }
+
+/* mod grid: 48px cells, filled in four passes (i mod 4), cleared in five
+   (i mod 5), the same arithmetic as the terminal's mod n */
+.ot-mod { display: grid; grid-template-columns: repeat(var(--cols), 48px); grid-auto-rows: 48px; overflow: hidden; }
+.ot-mod span { background: var(--purple); }
+.bootseq[data-phase='wipe'] .ot-mod span { animation: ot-on 1ms step-end both; animation-delay: calc(var(--i) * 55ms); }
+.bootseq[data-phase='reveal'] .ot-mod span { animation: ot-off 1ms step-end both; animation-delay: calc(var(--i) * 55ms + 40ms); }
+
+/* tear: a purple panel cuts in, then rips into ten bands that jerk off
+   sideways, alternate ones each way (the rm -rf look) */
+.ot-tear { display: flex; flex-direction: column; overflow: hidden; }
+.ot-tear span { flex: 1; background: var(--purple); margin-bottom: -1px; animation: ot-tear-r 0.14s steps(3, end) both; animation-delay: calc(var(--i) * 30ms); }
+.ot-tear span:nth-child(2n) { animation-name: ot-tear-l; }
+@keyframes ot-tear-r { from { transform: none; } 34% { transform: translateX(6%); } to { transform: translateX(101%); } }
+@keyframes ot-tear-l { from { transform: none; } 34% { transform: translateX(-6%); } to { transform: translateX(-101%); } }
+.bootseq[data-outro='tear'][data-phase='wipe'] .ot-panel { animation: cut-in 90ms linear both; }
+
+/* collapse to rail: the boot screen squashes, in hard steps, into the
+   rail's name (the page around it showing as it goes), goes purple there,
+   then that block cuts out: the boot becomes the site's name */
+.bootseq[data-outro='rail'][data-phase='wipe'] .boot-screen {
+  transform-origin: 0 0;
+  border: 2px solid var(--purple);
+  animation: ot-rail 0.32s steps(6, end) both;
+}
+.bootseq[data-outro='rail'][data-phase='wipe'] .boot-screen > * { animation: ot-off 1ms step-end both; animation-delay: 0.1s; }
+@keyframes ot-rail {
+  from { transform: none; }
+  to { transform: translate(var(--rx), var(--ry)) scale(var(--sx), var(--sy)); background: var(--purple); }
+}
+.ot-rail { position: absolute; left: var(--rx); top: var(--ry); width: var(--rw); height: var(--rh); background: var(--purple); animation: cut-out 0.16s linear both; }
+
+/* crt: the picture collapses to a 2px purple line across the middle, then
+   the line opens up into the page */
+.bootseq[data-outro='crt'][data-phase='wipe'] { background: var(--void); }
+.bootseq[data-outro='crt'][data-phase='wipe'] .boot-screen { animation: ot-crt-off 0.22s steps(5, end) both; }
+.bootseq[data-outro='crt'][data-phase='wipe'] .boot-screen > * { animation: ot-off 1ms step-end both; animation-delay: 0.13s; }
+@keyframes ot-crt-off {
+  from { clip-path: inset(0 0 0 0); }
+  to { clip-path: inset(calc(50% - 1px) 0 calc(50% - 1px) 0); background: var(--purple); }
+}
+.ot-crt span { position: absolute; left: 0; right: 0; height: 50%; background: var(--void); animation: ot-crt-up 0.26s steps(6, end) both; }
+.ot-crt span:first-child { top: 0; border-bottom: 1px solid var(--purple); }
+.ot-crt span:last-child { bottom: 0; border-top: 1px solid var(--purple); animation-name: ot-crt-down; }
+@keyframes ot-crt-up { from { transform: none; } to { transform: translateY(-101%); } }
+@keyframes ot-crt-down { from { transform: none; } to { transform: translateY(101%); } }
 
 /* ---------- quake terminal ---------- */
 
@@ -1370,7 +1458,7 @@ main { counter-reset: sec; }
 .mpanel summary::-webkit-details-marker { display: none; }
 .mpanel[open] summary::after { content: ' [-]'; }
 .mpanel:not([open]) summary::after { content: ' [+]'; }
-.mpanel form { display: grid; gap: 0.7rem; padding: 0.7rem 0.75rem 0.75rem; width: 15rem; }
+.mpanel form { display: grid; gap: 0.7rem; padding: 0.7rem 0.75rem 0.75rem; width: 15rem; max-height: calc(100dvh - 4rem); overflow-y: auto; }
 .mpanel fieldset { margin: 0; padding: 0; border: none; display: grid; gap: 0.2rem; }
 .mpanel legend { padding: 0; margin-bottom: 0.3rem; color: var(--muted); }
 .mpanel label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
