@@ -162,6 +162,13 @@ export default function BootSequence({ birth, featured, archived }: { birth: str
   if (!active || phase === 'done') return null;
 
   const filled = Math.round((resolved / lines.length) * BAR);
+  const advance = () => {
+    if (phase === 'wipe') {
+      // page shows through as soon as the black screen is gone
+      document.documentElement.removeAttribute('data-boot');
+      setPhase('reveal');
+    } else if (phase === 'reveal') setPhase('done');
+  };
 
   return (
     <div
@@ -172,16 +179,11 @@ export default function BootSequence({ birth, featured, archived }: { birth: str
       data-outro={outro}
       style={geo as CSSProperties}
       onAnimationEnd={(e) => {
-        if (!(e.target as HTMLElement).hasAttribute('data-end')) return;
-        if (phase === 'wipe') {
-          // page shows through as soon as the black screen is gone
-          document.documentElement.removeAttribute('data-boot');
-          setPhase('reveal');
-        } else if (phase === 'reveal') setPhase('done');
+        if ((e.target as HTMLElement).hasAttribute('data-end')) advance();
       }}
     >
       {phase !== 'reveal' && (
-        <div className="boot-screen" {...(phase === 'wipe' && (outro === 'rail' || outro === 'crt') ? { 'data-end': '' } : {})}>
+        <div className="boot-screen" {...(phase === 'wipe' && SELF.includes(outro) ? { 'data-end': '' } : {})}>
           <div className="boot-log">
             <div className="boot-head">
               <span>modul0 bootloader</span>
@@ -217,7 +219,7 @@ export default function BootSequence({ birth, featured, archived }: { birth: str
           </span>
         </div>
       )}
-      {(phase === 'wipe' || phase === 'reveal') && <Hand outro={outro} phase={phase} cells={cells} />}
+      {(phase === 'wipe' || phase === 'reveal') && <Hand outro={outro} phase={phase} cells={cells} onEnd={advance} />}
     </div>
   );
 }
@@ -226,13 +228,25 @@ export default function BootSequence({ birth, featured, archived }: { birth: str
 // the way in (it carries data-end then), so they only add something here for
 // the reveal. keys differ between phases so every element restarts
 const end = (last: boolean) => (last ? { 'data-end': '' } : {});
+// outros whose wipe is the boot screen's own animation (it carries data-end)
+const SELF: Outro[] = ['rail', 'crt', 'bayer', 'adam7', 'scan', 'halftone', 'afterglow'];
 const BANDS = 8;
 const TEAR = [3, 0, 5, 1, 6, 2, 7, 4, 9, 8]; // order the tear's bands go in
 const range = (n: number) => Array.from({ length: n }, (_, i) => i);
 
-function Hand({ outro, phase, cells }: { outro: Outro; phase: 'wipe' | 'reveal'; cells: number }) {
+function Hand({ outro, phase, cells, onEnd }: { outro: Outro; phase: 'wipe' | 'reveal'; cells: number; onEnd: () => void }) {
   const inn = phase === 'wipe';
   switch (outro) {
+    case 'bayer':
+    case 'adam7':
+    case 'scan':
+    case 'halftone':
+    case 'afterglow':
+      return inn ? null : <span className="ot-done" key="out" data-end />;
+    case 'front':
+    case 'static':
+    case 'life':
+      return inn ? <Cells kind={outro} onEnd={onEnd} key="in" /> : <span className="ot-done" key="out" data-end />;
     case 'shutter':
       return (
         <div className="ot-bands" key={phase}>
@@ -280,4 +294,118 @@ function Hand({ outro, phase, cells }: { outro: Outro; phase: 'wipe' | 'reveal';
       // wipe, slash, cut: one panel
       return <div className={`ot-panel ot-${inn ? 'in' : 'out'}`} key={phase} data-end />;
   }
+}
+
+// front, static, life: the paper colour in cells over the page, drawn a
+// frame at a time on a canvas. each cell is one pixel of a small canvas,
+// scaled up without smoothing, so the edges stay hard at any size
+type CellKind = 'front' | 'static' | 'life';
+const CELL: Record<CellKind, number> = { front: 4, static: 2, life: 8 };
+
+// the 8x8 bayer matrix (ordered dither): the bits of x^y and y, interleaved and reversed
+const bayer8 = (x: number, y: number) => {
+  const a = (x ^ y) & 7, b = y & 7;
+  let v = 0;
+  for (let k = 0; k < 3; k++) v = (v << 2) | (((a >> k) & 1) << 1) | ((b >> k) & 1);
+  return v;
+};
+
+// each frame: which cells are still covered, and how long it holds
+type Frame = [on: (i: number) => boolean, ms: number];
+
+function frames(kind: CellKind, cols: number, rows: number, cell: number): Frame[] {
+  const n = cols * rows;
+  if (kind === 'front') {
+    // from the rail's name outward: distance does most of it, the dither
+    // grains the edge
+    const r = document.querySelector('.rail-name')?.getBoundingClientRect();
+    const ox = r && r.width ? (r.left + r.width / 2) / cell : 0;
+    const oy = r && r.width ? (r.top + r.height / 2) / cell : 0;
+    const far = Math.max(...[[0, 0], [cols, 0], [0, rows], [cols, rows]].map(([x, y]) => Math.hypot(x - ox, y - oy)));
+    const t = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const x = i % cols, y = Math.floor(i / cols);
+      t[i] = 0.72 * (Math.hypot(x - ox, y - oy) / far) + 0.28 * ((bayer8(x, y) + 0.5) / 64);
+    }
+    const steps = 14;
+    return Array.from({ length: steps + 1 }, (_, f): Frame => [(i) => t[i] >= f / steps, 32]);
+  }
+  if (kind === 'static') {
+    // new noise every frame, thinner each time
+    return [1, 0.85, 0.7, 0.55, 0.4, 0.25, 0.12, 0].map((d): Frame => {
+      const on = new Uint8Array(n);
+      for (let i = 0; i < n; i++) on[i] = Math.random() < d ? 1 : 0;
+      return [(i) => on[i] === 1, 45];
+    });
+  }
+  // life: a random soup, then conway's rules a few generations, then what's
+  // still alive is thinned out
+  let g = new Uint8Array(n);
+  for (let i = 0; i < n; i++) g[i] = Math.random() < 0.5 ? 1 : 0;
+  const snap = (a: Uint8Array): Frame => [(i) => a[i] === 1, 70];
+  const out: Frame[] = [[() => true, 60], snap(g)];
+  for (let gen = 0; gen < 9; gen++) {
+    const next = new Uint8Array(n);
+    for (let y = 0; y < rows; y++)
+      for (let x = 0; x < cols; x++) {
+        let k = 0;
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy) continue;
+            const xx = x + dx, yy = y + dy;
+            if (xx >= 0 && yy >= 0 && xx < cols && yy < rows) k += g[yy * cols + xx];
+          }
+        const i = y * cols + x;
+        next[i] = k === 3 || (k === 2 && g[i]) ? 1 : 0;
+      }
+    g = next;
+    out.push(snap(g));
+  }
+  for (const keep of [0.5, 0.2]) {
+    g = g.map((v) => (v && Math.random() < keep ? 1 : 0));
+    out.push([((a) => (i: number) => a[i] === 1)(g), 60]);
+  }
+  out.push([() => false, 0]);
+  return out;
+}
+
+function Cells({ kind, onEnd }: { kind: CellKind; onEnd: () => void }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = ref.current!;
+    const dpr = devicePixelRatio || 1;
+    const cell = CELL[kind];
+    const cols = Math.ceil(innerWidth / cell), rows = Math.ceil(innerHeight / cell);
+    canvas.width = Math.round(innerWidth * dpr);
+    canvas.height = Math.round(innerHeight * dpr);
+    const ctx = canvas.getContext('2d')!;
+    const small = document.createElement('canvas');
+    small.width = cols;
+    small.height = rows;
+    const sctx = small.getContext('2d')!;
+    // the paper colour as rgb: drawn once, read back
+    sctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--void').trim() || '#000';
+    sctx.fillRect(0, 0, 1, 1);
+    const [r, g, b] = sctx.getImageData(0, 0, 1, 1).data;
+    const img = sctx.createImageData(cols, rows);
+    for (let i = 0; i < cols * rows; i++) img.data.set([r, g, b], i * 4);
+    const draw = (on: (i: number) => boolean) => {
+      for (let i = 0; i < cols * rows; i++) img.data[i * 4 + 3] = on(i) ? 255 : 0;
+      sctx.putImageData(img, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(small, 0, 0, cols * cell * dpr, rows * cell * dpr);
+    };
+    const list = frames(kind, cols, rows, cell);
+    let k = 0;
+    let t = 0;
+    const step = () => {
+      const [on, ms] = list[k++];
+      draw(on);
+      t = window.setTimeout(k < list.length ? step : onEnd, ms);
+    };
+    step();
+    return () => clearTimeout(t);
+  }, []);
+  return <canvas className="ot-cells" ref={ref} />;
 }

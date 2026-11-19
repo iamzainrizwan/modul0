@@ -4,8 +4,11 @@
 export type MotionStyle = 'dither' | 'redraw' | 'print' | 'instant' | 'smooth';
 // how the boot hands over to the page (BootSequence.tsx, "boot outros" in
 // site.css). wipe is the original: a purple panel in the motion style's
-// surface animation, in and out
-export type Outro = 'wipe' | 'shutter' | 'slash' | 'rail' | 'crt' | 'cut' | 'mod' | 'tear' | 'bar';
+// surface animation, in and out. sweeps cover the screen and uncover it;
+// dithers break the boot screen up over the page
+export type Outro =
+  | 'wipe' | 'shutter' | 'slash' | 'rail' | 'crt' | 'cut' | 'mod' | 'tear' | 'bar'
+  | 'bayer' | 'adam7' | 'front' | 'afterglow' | 'halftone' | 'static' | 'scan' | 'life';
 export type Motion = {
   style: MotionStyle;
   outro: Outro;
@@ -21,18 +24,26 @@ export const styles: { id: MotionStyle; label: string }[] = [
   { id: 'redraw', label: 'redraw' },
   { id: 'print', label: 'print' },
   { id: 'instant', label: 'instant' },
-  { id: 'smooth', label: 'smooth (the old style)' },
+  { id: 'smooth', label: 'smooth' },
 ];
-export const outros: { id: Outro; label: string }[] = [
-  { id: 'wipe', label: 'wipe (current)' },
-  { id: 'shutter', label: 'shutter' },
-  { id: 'slash', label: '% slash' },
-  { id: 'rail', label: 'collapse to rail' },
-  { id: 'crt', label: 'crt off/on' },
-  { id: 'cut', label: 'cut' },
-  { id: 'mod', label: 'mod grid' },
-  { id: 'tear', label: 'tear' },
-  { id: 'bar', label: 'progress bar' },
+export const outros: { id: Outro; label: string; group: 'sweep' | 'dither' }[] = [
+  { id: 'wipe', label: 'wipe', group: 'sweep' },
+  { id: 'shutter', label: 'shutter', group: 'sweep' },
+  { id: 'slash', label: '% slash', group: 'sweep' },
+  { id: 'rail', label: 'to rail', group: 'sweep' },
+  { id: 'crt', label: 'crt', group: 'sweep' },
+  { id: 'cut', label: 'cut', group: 'sweep' },
+  { id: 'mod', label: 'mod grid', group: 'sweep' },
+  { id: 'tear', label: 'tear', group: 'sweep' },
+  { id: 'bar', label: 'bar', group: 'sweep' },
+  { id: 'bayer', label: 'bayer', group: 'dither' },
+  { id: 'adam7', label: 'interlace', group: 'dither' },
+  { id: 'front', label: 'from name', group: 'dither' },
+  { id: 'afterglow', label: 'afterglow', group: 'dither' },
+  { id: 'halftone', label: 'halftone', group: 'dither' },
+  { id: 'static', label: 'static', group: 'dither' },
+  { id: 'scan', label: 'scanlines', group: 'dither' },
+  { id: 'life', label: 'life', group: 'dither' },
 ];
 export const extras: { id: Exclude<keyof Motion, 'style' | 'outro'>; label: string }[] = [
   { id: 'reveal', label: 'scroll reveal' },

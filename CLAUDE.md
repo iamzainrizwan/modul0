@@ -218,7 +218,10 @@ Site.astro sets the attributes before paint; `src/scripts/motion.ts` does
 the js half. Page changes are instant, prefetched loads with no animation:
 view transitions and a per-page arrival draw were both tried and dropped
 (a blank frame; body text dissolving reads as dashed lines). Don't
-dissolve body text. Animations that hand off on animationend need distinct
+dissolve the page's body text; the boot screen is the exception (Zain
+lifted it there, 2026-11-19): its outros (`outros` in motion.ts, sweeps and
+dithers, picked on the test site's motion panel) may break the boot log up
+with the screen. Animations that hand off on animationend need distinct
 keyframes for each step. Never touch DOM inside React islands, never hide
 anything without js, everything off for reduced motion.
 
@@ -286,7 +289,7 @@ and uses `trailingSlash: 'always'`, so internal links end in `/`.
 - Publishing and safety: never publish his K-number or student ID. Experiment on the
   test site first, then he picks. Keep the mobile nav grid unchanged. No features that
   invite pentesting (no public CTF), and nothing on alexandria is publicly reachable.
-- Terminal and site design: animations never dissolve text and nothing loops forever.
+- Terminal and site design: animations never dissolve page text (boot outros excepted) and nothing loops forever.
   Square corners, serif and mono only, hard edges, no blur or glow.
 - Secrets: `ADMIN_TOKEN`, `IP_SALT`, `DISCORD_WEBHOOK` and `GITHUB_TOKEN` are set with
   `wrangler secret put`; `CLOUDFLARE_API_TOKEN` and `ACCOUNT_ID` are GitHub repo secrets.

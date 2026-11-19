@@ -1,34 +1,47 @@
 ---
 // test site only (PUBLIC_TEST=1): switch how the site moves, per browser.
-// one reveal style (radios) plus independent extras (checkboxes); saved in
-// localStorage, read before paint by the head script in Site.astro.
+// one reveal style, one boot outro (picking one replays the boot), plus
+// independent extras; saved in localStorage, read before paint by the
+// script at the top of Site.astro's body. * marks what the live site uses.
 import { styles, outros, extras, defaults } from '../data/motion';
 const base = import.meta.env.BASE_URL;
+const groups = [['sweep', 'sweeps'], ['dither', 'dither']] as const;
 ---
 
 <details class="mpanel" data-base={base} data-defaults={JSON.stringify(defaults)} transition:persist="mpanel">
   <summary>motion</summary>
   <form>
     <fieldset>
-      <legend>style</legend>
-      {styles.map((s) => (
-        <label><input type="radio" name="style" value={s.id} /> {s.label}</label>
+      <legend>boot outro <button type="button" class="mpanel-link" data-boot>replay</button></legend>
+      {groups.map(([g, name]) => (
+        <div class="mpanel-group">
+          <span class="mpanel-sub">{name}</span>
+          <div class="mpanel-grid">
+            {outros.filter((o) => o.group === g).map((o) => (
+              <label class:list={{ 'is-default': o.id === defaults.outro }}><input type="radio" name="outro" value={o.id} /> <span>{o.label}</span></label>
+            ))}
+          </div>
+        </div>
       ))}
     </fieldset>
     <fieldset>
-      <legend>boot outro</legend>
-      {outros.map((o) => (
-        <label><input type="radio" name="outro" value={o.id} /> {o.label}</label>
-      ))}
+      <legend>style</legend>
+      <div class="mpanel-grid">
+        {styles.map((s) => (
+          <label class:list={{ 'is-default': s.id === defaults.style }}><input type="radio" name="style" value={s.id} /> <span>{s.label}</span></label>
+        ))}
+      </div>
     </fieldset>
     <fieldset>
       <legend>extras</legend>
-      {extras.map((x) => (
-        <label><input type="checkbox" name={x.id} /> {x.label}</label>
-      ))}
+      <div class="mpanel-grid mpanel-one">
+        {extras.map((x) => (
+          <label class:list={{ 'is-default': defaults[x.id] }}><input type="checkbox" name={x.id} /> <span>{x.label}</span></label>
+        ))}
+      </div>
     </fieldset>
     <div class="mpanel-actions">
-      <button type="button" data-boot>replay boot</button>
+      <span class="mpanel-note">* live default</span>
       <button type="button" data-reset>reset</button>
     </div>
   </form>
@@ -61,14 +74,17 @@ const base = import.meta.env.BASE_URL;
   try { panel.open = localStorage.getItem(`${KEY}-open`) !== '0'; } catch { panel.open = true; }
   panel.addEventListener('toggle', () => { try { localStorage.setItem(`${KEY}-open`, panel.open ? '1' : '0'); } catch {} });
 
-  form.addEventListener('change', () => {
+  const replay = () => location.assign(panel.dataset.base!);
+  form.addEventListener('change', (e) => {
     const radio = (n: string) => (form.elements.namedItem(n) as RadioNodeList).value;
     const m: Record<string, unknown> = { style: radio('style'), outro: radio('outro') };
     for (const el of form.querySelectorAll<HTMLInputElement>('input[type=checkbox]')) m[el.name] = el.checked;
     save(m);
     apply(m);
+    // an outro is only worth seeing played
+    if ((e.target as HTMLInputElement).name === 'outro') replay();
   });
-  panel.querySelector('[data-boot]')!.addEventListener('click', () => location.assign(panel.dataset.base!));
+  panel.querySelector('[data-boot]')!.addEventListener('click', replay);
   panel.querySelector('[data-reset]')!.addEventListener('click', () => {
     try { localStorage.removeItem(KEY); } catch {}
     fill(defaults);
