@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { birthday } from '../scripts/birthday';
 import { outros, type Outro } from '../data/motion';
 
@@ -67,6 +67,7 @@ export default function BootSequence({ birth, featured, archived }: { birth: str
   const outroRef = useRef<Outro>('wipe');
   const timers = useRef<number[]>([]);
   const skipped = useRef(false);
+  const screen = useRef<HTMLDivElement>(null);
 
   const later = (fn: () => void, ms: number) => timers.current.push(window.setTimeout(fn, ms));
 
@@ -79,7 +80,7 @@ export default function BootSequence({ birth, featured, archived }: { birth: str
       setCells(cols * Math.ceil(innerHeight / 48));
       setGeo({ '--cols': String(cols) });
     }
-    if (outroRef.current === 'rail') {
+    if (outroRef.current === 'rail' || outroRef.current === 'grow60') {
       // squash the boot screen into the rail's name
       const r = document.querySelector('.rail-name')?.getBoundingClientRect();
       const ok = r && r.width > 0;
@@ -183,7 +184,7 @@ export default function BootSequence({ birth, featured, archived }: { birth: str
       }}
     >
       {phase !== 'reveal' && (
-        <div className="boot-screen" {...(phase === 'wipe' && SELF.includes(outro) ? { 'data-end': '' } : {})}>
+        <div className="boot-screen" ref={screen} {...(phase === 'wipe' && SELF.includes(outro) ? { 'data-end': '' } : {})}>
           <div className="boot-log">
             <div className="boot-head">
               <span>modul0 bootloader</span>
@@ -219,7 +220,7 @@ export default function BootSequence({ birth, featured, archived }: { birth: str
           </span>
         </div>
       )}
-      {(phase === 'wipe' || phase === 'reveal') && <Hand outro={outro} phase={phase} cells={cells} onEnd={advance} />}
+      {(phase === 'wipe' || phase === 'reveal') && <Hand outro={outro} phase={phase} cells={cells} onEnd={advance} screen={screen} />}
     </div>
   );
 }
@@ -234,9 +235,23 @@ const BANDS = 8;
 const TEAR = [3, 0, 5, 1, 6, 2, 7, 4, 9, 8]; // order the tear's bands go in
 const range = (n: number) => Array.from({ length: n }, (_, i) => i);
 
-function Hand({ outro, phase, cells, onEnd }: { outro: Outro; phase: 'wipe' | 'reveal'; cells: number; onEnd: () => void }) {
+function Hand({ outro, phase, cells, onEnd, screen }: { outro: Outro; phase: 'wipe' | 'reveal'; cells: number; onEnd: () => void; screen: RefObject<HTMLDivElement | null> }) {
   const inn = phase === 'wipe';
   switch (outro) {
+    // 60fps: the boot screen itself, text and all, through every bayer level
+    case 'bayer60':
+      return inn ? <Levels key="in" target={screen} from={0} to={64} ms={520} onEnd={onEnd} /> : <span className="ot-done" key="out" data-end />;
+    // the original wipe at full frame rate: purple dithers in, then out
+    case 'wipe60':
+      return <Levels key={phase} from={inn ? 64 : 0} to={inn ? 0 : 64} ms={inn ? 280 : 460} onEnd={onEnd} />;
+    // purple rectangles moving at full frame rate (css, eased, no steps)
+    case 'slide60':
+    case 'grow60':
+      return <div className={`ot-${outro} ot-${inn ? 'in' : 'out'}`} key={phase} data-end />;
+    case 'sweep60':
+      return <Flow key={phase} kind={outro} phase={phase} onEnd={onEnd} />;
+    case 'front60':
+      return inn ? <Flow key="in" kind={outro} phase={phase} onEnd={onEnd} /> : <span className="ot-done" key="out" data-end />;
     case 'bayer':
     case 'adam7':
     case 'scan':
@@ -407,5 +422,115 @@ function Cells({ kind, onEnd }: { kind: CellKind; onEnd: () => void }) {
     step();
     return () => clearTimeout(t);
   }, []);
+  return <canvas className="ot-cells" ref={ref} />;
+}
+
+// ---- 60fps outros: driven by requestAnimationFrame, a new frame every paint ----
+
+const ease = (p: number) => p * p * (3 - 2 * p); // smoothstep: eases in and out
+
+// runs `frame(p)` every animation frame for `ms`, p from 0 to 1, then `onEnd`
+function useTween(ms: number, frame: (p: number) => void, onEnd: () => void) {
+  useEffect(() => {
+    let raf = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / ms);
+      frame(ease(p));
+      if (p < 1) raf = requestAnimationFrame(tick);
+      else onEnd();
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+}
+
+// a mask that keeps the cells of an 8x8 bayer tile (2px cells) whose level
+// is at least k: 0 keeps everything, 64 nothing. built once each
+const MASKS: string[] = [];
+function levelMask(k: number) {
+  if (k <= 0) return 'none';
+  if (k >= 64) return 'linear-gradient(#0000, #0000)';
+  if (!MASKS[k]) {
+    let d = '';
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) if (bayer8(x, y) >= k) d += `M${x * 2} ${y * 2}h2v2h-2z`;
+    MASKS[k] = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'%3E%3Cpath d='${d}'/%3E%3C/svg%3E") 0 0 / 16px 16px`;
+  }
+  return MASKS[k];
+}
+
+// steps an element (the boot screen, or its own purple panel) through the
+// bayer levels from `from` to `to`
+function Levels({ target, from, to, ms, onEnd }: { target?: RefObject<HTMLElement | null>; from: number; to: number; ms: number; onEnd: () => void }) {
+  const own = useRef<HTMLDivElement>(null);
+  let last = -1;
+  useTween(
+    ms,
+    (p) => {
+      const el = target?.current ?? own.current;
+      const k = Math.round(from + (to - from) * p);
+      if (!el || k === last) return;
+      last = k;
+      el.style.mask = levelMask(k);
+    },
+    onEnd,
+  );
+  return target ? null : <div className="ot-panel" ref={own} style={{ mask: levelMask(from) }} />;
+}
+
+// sweep60: a purple bar with a dithered leading edge crosses left to right,
+// covering the boot, then carries on off the right edge, uncovering the page.
+// front60: the page grows out from the rail's name, its edge grained by the
+// dither. both on a canvas of 2px cells
+const BAND = 0.3; // how much of the sweep the dithered edge spans
+function Flow({ kind, phase, onEnd }: { kind: 'sweep60' | 'front60'; phase: 'wipe' | 'reveal'; onEnd: () => void }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const draw = useRef<(p: number) => void>(() => {});
+  useEffect(() => {
+    const canvas = ref.current!;
+    const dpr = devicePixelRatio || 1;
+    const cell = 2;
+    const cols = Math.ceil(innerWidth / cell), rows = Math.ceil(innerHeight / cell), n = cols * rows;
+    canvas.width = Math.round(innerWidth * dpr);
+    canvas.height = Math.round(innerHeight * dpr);
+    const ctx = canvas.getContext('2d')!;
+    const small = document.createElement('canvas');
+    small.width = cols;
+    small.height = rows;
+    const sctx = small.getContext('2d')!;
+    sctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue(kind === 'sweep60' ? '--purple' : '--void').trim() || '#000';
+    sctx.fillRect(0, 0, 1, 1);
+    const [r, g, b] = sctx.getImageData(0, 0, 1, 1).data;
+    const img = sctx.createImageData(cols, rows);
+    for (let i = 0; i < n; i++) img.data.set([r, g, b], i * 4);
+    // each cell's threshold: when p passes it, the cell changes over
+    const t = new Float32Array(n);
+    if (kind === 'sweep60') {
+      for (let i = 0; i < n; i++) t[i] = ((i % cols) / cols) * (1 - BAND) + BAND * ((bayer8(i % cols, Math.floor(i / cols)) + 0.5) / 64);
+    } else {
+      const rr = document.querySelector('.rail-name')?.getBoundingClientRect();
+      const ox = rr && rr.width ? (rr.left + rr.width / 2) / cell : 0;
+      const oy = rr && rr.width ? (rr.top + rr.height / 2) / cell : 0;
+      const far = Math.max(...[[0, 0], [cols, 0], [0, rows], [cols, rows]].map(([x, y]) => Math.hypot(x - ox, y - oy)));
+      for (let i = 0; i < n; i++) {
+        const x = i % cols, y = Math.floor(i / cols);
+        t[i] = (Math.hypot(x - ox, y - oy) / far) * (1 - BAND) + BAND * ((bayer8(x, y) + 0.5) / 64);
+      }
+    }
+    // sweep: covered once p passes it on the way in, uncovered once p passes
+    // it on the way out. front: covered (the boot's black) until p passes it
+    const covered = kind === 'front60' || phase === 'reveal' ? (i: number, p: number) => t[i] >= p : (i: number, p: number) => t[i] < p;
+    draw.current = (p) => {
+      for (let i = 0; i < n; i++) img.data[i * 4 + 3] = covered(i, p) ? 255 : 0;
+      sctx.putImageData(img, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(small, 0, 0, cols * cell * dpr, rows * cell * dpr);
+    };
+    draw.current(0);
+  }, []);
+  // front60 is one pass, in the wipe
+  const ms = kind === 'front60' ? 650 : phase === 'wipe' ? 320 : 420;
+  useTween(ms, (p) => draw.current(p), onEnd);
   return <canvas className="ot-cells" ref={ref} />;
 }

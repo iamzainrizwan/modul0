@@ -5,10 +5,12 @@ export type MotionStyle = 'dither' | 'redraw' | 'print' | 'instant' | 'smooth';
 // how the boot hands over to the page (BootSequence.tsx, "boot outros" in
 // site.css). wipe is the original: a purple panel in the motion style's
 // surface animation, in and out. sweeps cover the screen and uncover it;
-// dithers break the boot screen up over the page
+// dithers break the boot screen up over the page, a hard frame at a time;
+// 60fps ones redraw every animation frame
 export type Outro =
   | 'wipe' | 'shutter' | 'slash' | 'rail' | 'crt' | 'cut' | 'mod' | 'tear' | 'bar'
-  | 'bayer' | 'adam7' | 'front' | 'afterglow' | 'halftone' | 'static' | 'scan' | 'life';
+  | 'bayer' | 'adam7' | 'front' | 'afterglow' | 'halftone' | 'static' | 'scan' | 'life'
+  | 'bayer60' | 'wipe60' | 'sweep60' | 'front60' | 'slide60' | 'grow60';
 export type Motion = {
   style: MotionStyle;
   outro: Outro;
@@ -26,7 +28,7 @@ export const styles: { id: MotionStyle; label: string }[] = [
   { id: 'instant', label: 'instant' },
   { id: 'smooth', label: 'smooth' },
 ];
-export const outros: { id: Outro; label: string; group: 'sweep' | 'dither' }[] = [
+export const outros: { id: Outro; label: string; group: 'sweep' | 'dither' | 'fps' }[] = [
   { id: 'wipe', label: 'wipe', group: 'sweep' },
   { id: 'shutter', label: 'shutter', group: 'sweep' },
   { id: 'slash', label: '% slash', group: 'sweep' },
@@ -44,6 +46,12 @@ export const outros: { id: Outro; label: string; group: 'sweep' | 'dither' }[] =
   { id: 'static', label: 'static', group: 'dither' },
   { id: 'scan', label: 'scanlines', group: 'dither' },
   { id: 'life', label: 'life', group: 'dither' },
+  { id: 'bayer60', label: 'bayer', group: 'fps' },
+  { id: 'wipe60', label: 'dither wipe', group: 'fps' },
+  { id: 'sweep60', label: 'dither sweep', group: 'fps' },
+  { id: 'front60', label: 'from name', group: 'fps' },
+  { id: 'slide60', label: 'slide', group: 'fps' },
+  { id: 'grow60', label: 'grow', group: 'fps' },
 ];
 export const extras: { id: Exclude<keyof Motion, 'style' | 'outro'>; label: string }[] = [
   { id: 'reveal', label: 'scroll reveal' },

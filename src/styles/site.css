@@ -1096,8 +1096,28 @@ html[data-boot='pending'] .boot-cover { display: block; position: fixed; inset: 
 .bootseq[data-outro='afterglow'][data-phase='wipe'] .boot-screen { background: transparent; animation: ot-glow 0.6s step-end both; }
 /* front, static, life: a canvas of cells over the page (Cells in
    BootSequence.tsx); the boot screen goes at once beneath it */
-.bootseq:is([data-outro='front'], [data-outro='static'], [data-outro='life'])[data-phase='wipe'] .boot-screen { visibility: hidden; }
+.bootseq:is([data-outro='front'], [data-outro='static'], [data-outro='life'], [data-outro='front60'])[data-phase='wipe'] .boot-screen { visibility: hidden; }
 .ot-cells { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* slide: a purple panel glides up over the boot and on off the top, eased,
+   with a dithered fringe on both edges (the fringe image is drawn in
+   --purple's dark-theme value; its light value is close enough to pass) */
+.ot-slide60 { position: absolute; left: 0; right: 0; top: 0; height: 100%; background: var(--purple); }
+.ot-slide60::before, .ot-slide60::after { content: ''; position: absolute; left: 0; right: 0; height: 24px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='24' shape-rendering='crispEdges'%3E%3Cpath fill='%23a769ff' d='M4 2h2v2h-2zM12 2h2v2h-2zM0 6h2v2h-2zM4 6h2v2h-2zM8 6h2v2h-2zM12 6h2v2h-2zM6 8h2v2h-2zM14 8h2v2h-2zM0 10h2v2h-2zM4 10h2v2h-2zM8 10h2v2h-2zM12 10h2v2h-2zM2 12h2v2h-2zM6 12h2v2h-2zM10 12h2v2h-2zM14 12h2v2h-2zM0 14h2v2h-2zM2 14h2v2h-2zM4 14h2v2h-2zM8 14h2v2h-2zM10 14h2v2h-2zM12 14h2v2h-2zM2 16h2v2h-2zM6 16h2v2h-2zM10 16h2v2h-2zM14 16h2v2h-2zM0 18h2v2h-2zM2 18h2v2h-2zM4 18h2v2h-2zM6 18h2v2h-2zM8 18h2v2h-2zM10 18h2v2h-2zM12 18h2v2h-2zM14 18h2v2h-2zM0 20h2v2h-2zM2 20h2v2h-2zM6 20h2v2h-2zM8 20h2v2h-2zM10 20h2v2h-2zM14 20h2v2h-2zM0 22h2v2h-2zM2 22h2v2h-2zM4 22h2v2h-2zM6 22h2v2h-2zM8 22h2v2h-2zM10 22h2v2h-2zM12 22h2v2h-2zM14 22h2v2h-2z'/%3E%3C/svg%3E") 0 0 / 16px 24px; }
+.ot-slide60::before { bottom: 100%; }
+.ot-slide60::after { top: 100%; transform: scaleY(-1); }
+.ot-slide60.ot-in { animation: ot-slide-in 0.34s cubic-bezier(0.6, 0, 0.3, 1) both; }
+.ot-slide60.ot-out { animation: ot-slide-out 0.42s cubic-bezier(0.6, 0, 0.3, 1) both; }
+@keyframes ot-slide-in { from { transform: translateY(calc(100% + 24px)); } to { transform: none; } }
+@keyframes ot-slide-out { from { transform: none; } to { transform: translateY(calc(-100% - 24px)); } }
+/* grow: the purple rectangle grows out of the rail's name to the whole
+   screen, then shrinks back into it (rail's measurements, --rx...) */
+.ot-grow60 { position: absolute; inset: 0; background: var(--purple); }
+.ot-grow60.ot-in { animation: ot-grow 0.36s cubic-bezier(0.7, 0, 0.3, 1) both; }
+.ot-grow60.ot-out { animation: ot-grow 0.44s cubic-bezier(0.7, 0, 0.3, 1) reverse both; }
+@keyframes ot-grow {
+  from { clip-path: inset(var(--ry) calc(100% - var(--rx) - var(--rw)) calc(100% - var(--ry) - var(--rh)) var(--rx)); }
+  to { clip-path: inset(0); }
+}
 /* the reveal for outros that finish in the wipe: nothing to show, just the end */
 .ot-done { animation: ot-off 1ms step-end both; }
 @keyframes ot-bayer {
