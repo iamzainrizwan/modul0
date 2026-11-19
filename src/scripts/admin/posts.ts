@@ -17,6 +17,7 @@ import { images as imagesIn, imageMd, toFigures, codeRanges, type Img } from './
 import { colour } from './editor/highlight';
 import { tops } from './editor/mirror';
 import { smarten } from './editor/smart';
+import { publish } from './publish';
 
 export let posts: RepoFile[] = []; // live, on github
 export let drafts: Draft[] = []; // private, in d1
@@ -167,6 +168,14 @@ function draw() {
     if (first) first.dataset.at = String(start);
     frag.append(t.content);
   }
+  // marked passes raw html through, and this page holds the token: nothing
+  // pasted in gets to run here (the built post is a different page)
+  frag.querySelectorAll('script, iframe, object, embed, form').forEach((n) => n.remove());
+  frag.querySelectorAll('*').forEach((n) => {
+    for (const a of [...n.attributes]) {
+      if (a.name.startsWith('on') || (/^(href|src|action|formaction|xlink:href)$/.test(a.name) && /^\s*javascript:/i.test(a.value))) n.removeAttribute(a.name);
+    }
+  });
   pvBody.replaceChildren(frag);
   toFigures(pvBody);
   smarten(pvBody);
@@ -621,6 +630,10 @@ const toBase64 = (blob: Blob) =>
   });
 
 let lastImage: { alt: [number, number]; end: number } | null = null;
+// uploads still going, and a save still going: a save waits for both (a
+// publish mid-upload would leave the image out; a double ctrl+s would race)
+let uploading = 0;
+let saving = false;
 async function addImages(list: File[]) {
   const images = list.filter((f) => EXT[f.type]);
   if (!images.length) return say('Only png, jpg, webp and gif images.', true);
@@ -661,6 +674,7 @@ async function addImages(list: File[]) {
       continue;
     }
     say(`Uploading ${name}…`);
+    uploading++;
     try {
       if (privately) {
         await saveDraftImage(slug, name, await toBase64(blob));
@@ -670,6 +684,8 @@ async function addImages(list: File[]) {
       say(images.length === 1 ? `Added ${name} (${kb} KB).` : `Added ${name} (${kb} KB). Type over the selected alt text to describe it, or alt+enter on it.`);
     } catch (e) {
       say(`${name}: ${explain(e)} The markdown for it is still in the post.`, true);
+    } finally {
+      uploading--;
     }
   }
 }
@@ -737,17 +753,20 @@ function afterSave(slug: string, body: string, live: RepoFile | null, d: Draft |
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!form.reportValidity()) return;
+  if (uploading) return say('Wait for the upload to finish.', true);
+  if (saving) return;
   const slug = field('slug').value;
   const isNew = !current && !draft;
   if (isNew && [...posts, ...drafts].some((p) => p.name === slug)) return say(`There's already a post called ${slug}.`, true);
   const body = text();
   const path = `${dir}/${slug}.md`;
+  saving = true;
   try {
     if (field('draft').checked) {
       // a live post ticked back to draft comes off the site
       if (current && !confirm(`Unpublish ${slug}? It comes off the live site and back to your private drafts. Its images stay public.`)) return;
-      await saveDraft(slug, body);
-      const d: Draft = { name: slug, text: body, updated: new Date().toISOString(), images: [...draftNames(slug)] };
+      const updated = await saveDraft(slug, body, draft?.updated);
+      const d: Draft = { name: slug, text: body, updated, images: [...draftNames(slug)] };
       drafts = [...drafts.filter((p) => p.name !== slug), d];
       if (current) {
         await deleteFile(current.path, current.sha);
@@ -757,29 +776,33 @@ form.addEventListener('submit', async (e) => {
       return say(`Saved ${slug} privately. Drafts never touch GitHub.`);
     }
     if (draft && !confirm(`Publish ${slug}? It's committed to the public repo and goes live in about two minutes.`)) return;
-    // images first, so the post never goes live pointing at missing ones
-    // only the ones the post still uses: the rest go with the draft
+    // only the images the post still uses: the rest go with the draft
     const names = [...draftNames(slug)].filter((n) => body.includes(`/blog/${slug}/${n}`));
-    for (const [i, name] of names.entries()) {
-      say(`Publishing image ${i + 1} of ${names.length}…`);
-      // a conflict means it's already there: a publish cut short (rate
-      // limit, network) is being retried, and the names never repeat
-      await saveFile(`public/blog/${slug}/${name}`, { base64: await toBase64(await draftImage(slug, name)) }).catch((err) => {
-        if (!(err instanceof ApiError && err.code === 'conflict')) throw err;
-      });
-    }
-    const sha = await saveFile(path, { text: body }, current?.sha);
+    const { sha, dropped } = await publish(
+      {
+        image: async (name) => saveFile(`public/blog/${slug}/${name}`, { base64: await toBase64(await draftImage(slug, name)) }),
+        post: () => saveFile(path, { text: body }, current?.sha),
+        dropDraft: () => deleteDraft(slug),
+      },
+      names,
+      // a draft left over from a publish whose last step failed counts too: saving again clears it
+      !!(draft || drafts.some((p) => p.name === slug) || draftNames(slug).size),
+      (i) => say(`Publishing image ${i + 1} of ${names.length}…`),
+    );
+    // live now, whatever happens to the draft: keep the sha so the next save works
     const post = { name: slug, path, sha, text: body };
     posts = [...posts.filter((p) => p.name !== slug), post];
-    if (draft || draftNames(slug).size) {
-      await deleteDraft(slug);
+    if (dropped) {
       drafts = drafts.filter((p) => p.name !== slug);
       draftImageNames.delete(slug);
     }
     afterSave(slug, body, post, null);
+    if (!dropped) return say(`Published ${slug}, but couldn't remove its private draft. Save again to retry.`, true);
     say(`Saved ${slug}. Live in about two minutes.`);
   } catch (err) {
     say(explain(err), true);
+  } finally {
+    saving = false;
   }
 });
 

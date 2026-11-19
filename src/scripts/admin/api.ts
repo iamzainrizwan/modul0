@@ -37,6 +37,7 @@ export function explain(e: unknown): string {
   if (e.status === 401) return 'Wrong token.';
   if (e.status === 429) return 'Too many requests: wait a minute.';
   if (e.code === 'conflict') return 'That changed on GitHub since it loaded (or the name is taken). Reload and try again.';
+  if (e.code === 'stale') return 'This draft was saved from another tab since it loaded. Copy your text somewhere, reload, and merge.';
   if (e.code === 'no-github') return 'Editing needs the worker’s GITHUB_TOKEN secret.';
   if (e.code === 'bad-json') return 'That isn’t valid JSON.';
   if (e.code === 'too-long') return 'That’s too big to save.';
@@ -57,7 +58,10 @@ export const loadDrafts = () =>
   call<{ drafts: { slug: string; text: string; updated: string; images: string[] }[] }>('/admin/drafts').then((d) =>
     d.drafts.map(({ slug, ...rest }) => ({ name: slug, ...rest })),
   );
-export const saveDraft = (slug: string, text: string) => call('/admin/drafts', { method: 'PUT', body: JSON.stringify({ slug, text }) });
+// `updated`: the version this tab loaded, so a save over another tab's newer
+// one is refused (stale) instead of wiping it. returns the new version
+export const saveDraft = (slug: string, text: string, updated?: string) =>
+  call<{ updated: string }>('/admin/drafts', { method: 'PUT', body: JSON.stringify({ slug, text, updated }) }).then((d) => d.updated);
 export const deleteDraft = (slug: string) => call(`/admin/drafts?slug=${encodeURIComponent(slug)}`, { method: 'DELETE' });
 export const saveDraftImage = (slug: string, name: string, base64: string) =>
   call('/admin/drafts/images', { method: 'PUT', body: JSON.stringify({ slug, name, base64 }) });

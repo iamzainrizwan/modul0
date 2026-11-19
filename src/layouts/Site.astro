@@ -2,7 +2,7 @@
 import '../styles/tokens.css';
 import '../styles/terminal.css';
 import '../styles/site.css';
-import { person, links } from '../data/profile';
+import { person, links, featured, archive } from '../data/profile';
 import BootSequence from '../components/BootSequence';
 import QuakeTerminal from '../components/QuakeTerminal';
 import SectionNav from '../components/SectionNav';
@@ -154,7 +154,7 @@ const sections = [
     </script>
     <a class="skip" href="#main">Skip to content</a>
     {boot && <div class="boot-cover" aria-hidden="true" />}
-    {boot && <BootSequence client:load />}
+    {boot && <BootSequence client:load featured={featured.length} archived={archive.length} />}
 
     <div class="shell">
       <aside class="rail" transition:persist="rail">

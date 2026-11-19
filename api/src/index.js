@@ -44,6 +44,8 @@
 // - invisible and direction-changing unicode stripped
 // ips are never stored, only a salted hash.
 
+import { isDraft, imageTime } from './draft.js';
+
 const NAME_MAX = 40;
 const MESSAGE_MAX = 500;
 const BODY_MAX = 4096; // bytes, well over a full message
@@ -67,6 +69,7 @@ const FILE_MAX = 6_000_000; // bytes in one saved file (an image, after the page
 const DRAFT_MAX = 500_000; // bytes of markdown in one draft
 const DRAFT_IMAGE_MAX = 1_900_000; // bytes, under d1's 2 MB a value
 const DRAFTS_MAX = 50;
+const ORPHAN_DAYS = 7; // a draft image with no draft this long is let go (a post never saved)
 const SLUG = /^[a-z0-9][a-z0-9-]{0,80}$/;
 const IMAGE_NAME = /^[a-z0-9][a-z0-9._-]{0,80}\.(png|jpe?g|webp|gif)$/;
 const POSTS_MAX = 40; // files a listing loads (one github fetch each; workers allow 50)
@@ -570,7 +573,7 @@ async function saveFile(request, env) {
     // content json must stay json, or the next build fails
     if (path.endsWith('.json')) try { JSON.parse(text); } catch { return json({ error: 'bad-json' }, 400); }
     // the repo's public, so drafts never reach it: they're kept in d1 (drafts())
-    if (path.endsWith('.md') && /^---\n[\s\S]*?^draft:\s*true\s*$[\s\S]*?^---$/m.test(text)) return json({ error: 'draft' }, 400);
+    if (path.endsWith('.md') && isDraft(text)) return json({ error: 'draft' }, 400);
     content = toBase64(text);
   }
   const sha = typeof body.sha === 'string' && body.sha ? body.sha : undefined;
@@ -592,6 +595,7 @@ async function saveFile(request, env) {
 async function drafts(request, env, url) {
   const method = request.method;
   if (method === 'GET') {
+    await dropOrphans(env);
     const [posts, images] = await env.DB.batch([
       env.DB.prepare('SELECT slug, text, updated FROM drafts ORDER BY updated DESC LIMIT ?').bind(DRAFTS_MAX),
       env.DB.prepare('SELECT slug, name FROM draft_images ORDER BY name'),
@@ -615,13 +619,32 @@ async function drafts(request, env, url) {
   const text = String(body.text ?? '');
   if (!SLUG.test(slug) || !text.trim()) return json({ error: 'bad-request' }, 400);
   if (new TextEncoder().encode(text).length > DRAFT_MAX) return json({ error: 'too-long' }, 413);
+  // `updated` is the version the admin loaded: saving over a newer one (another
+  // tab saved since) is refused, not silently overwritten. without it (a new
+  // draft, or a live post going back to draft) it's an upsert
+  const updated = typeof body.updated === 'string' && body.updated ? body.updated : null;
+  if (updated) {
+    const row = await env.DB.prepare(
+      `UPDATE drafts SET text = ?1, updated = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE slug = ?2 AND updated = ?3 RETURNING updated`,
+    ).bind(text, slug, updated).first();
+    return row ? json({ ok: true, updated: row.updated }) : json({ error: 'stale' }, 409);
+  }
   const { n } = await env.DB.prepare('SELECT COUNT(*) AS n FROM drafts WHERE slug != ?').bind(slug).first();
   if (n >= DRAFTS_MAX) return json({ error: 'too-many' }, 400);
-  await env.DB.prepare(
-    `INSERT INTO drafts (slug, text) VALUES (?, ?)
-     ON CONFLICT (slug) DO UPDATE SET text = excluded.text, updated = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')`,
-  ).bind(slug, text).run();
-  return json({ ok: true });
+  const row = await env.DB.prepare(
+    `INSERT INTO drafts (slug, text) VALUES (?1, ?2)
+     ON CONFLICT (slug) DO UPDATE SET text = excluded.text, updated = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+     RETURNING updated`,
+  ).bind(slug, text).first();
+  return json({ ok: true, updated: row.updated });
+}
+
+// images uploaded for a post that was never saved as a draft have nothing to
+// clean them up: drop any whose name says it's over ORPHAN_DAYS old
+async function dropOrphans(env) {
+  const { results } = await env.DB.prepare('SELECT slug, name FROM draft_images WHERE slug NOT IN (SELECT slug FROM drafts)').all();
+  const old = results.filter((r) => Date.now() - imageTime(r.name) > ORPHAN_DAYS * 86400 * 1000);
+  if (old.length) await env.DB.batch(old.map((r) => env.DB.prepare('DELETE FROM draft_images WHERE slug = ? AND name = ?').bind(r.slug, r.name)));
 }
 
 const IMAGE_TYPES = { webp: 'image/webp', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif' };

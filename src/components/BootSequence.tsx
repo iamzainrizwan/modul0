@@ -21,7 +21,6 @@ const LINES: Line[] = [
   { text: 'connecting to alexandria', short: 'connect alexandria', status: 'ok' },
   { text: 'starting s3ntry health daemon', short: 'start s3ntry health', status: 'ok' },
   { text: 'ledgr: categoriser', short: 'ledgr: categoriser', status: 'wait' },
-  { text: 'indexing 3 featured projects, 18 archived', short: 'index 21 projects', status: 'ok' },
 ];
 
 const LINE_STEP = 115;
@@ -44,7 +43,13 @@ const KEYS: Key[] = (() => {
 
 type Phase = 'log' | 'name' | 'wipe' | 'reveal' | 'done';
 
-export default function BootSequence() {
+// the project count comes from profile.ts (Site.astro passes it), so adding
+// a project from the admin keeps it right
+export default function BootSequence({ featured, archived }: { featured: number; archived: number }) {
+  const lines: Line[] = [
+    ...LINES,
+    { text: `indexing ${featured} featured projects, ${archived} archived`, short: `index ${featured + archived} projects`, status: 'ok' },
+  ];
   const [active, setActive] = useState(false);
   const [shown, setShown] = useState(0);
   const [resolved, setResolved] = useState(0);
@@ -72,12 +77,12 @@ export default function BootSequence() {
     root.dataset.boot = 'running';
     setActive(true);
 
-    LINES.forEach((_, i) => {
+    lines.forEach((_, i) => {
       later(() => setShown(i + 1), LINE_STEP * (i + 1));
       later(() => setResolved(i + 1), LINE_STEP * (i + 1) + RESOLVE);
     });
 
-    let t = LINE_STEP * LINES.length + RESOLVE + 260;
+    let t = LINE_STEP * lines.length + RESOLVE + 260;
     later(() => setPhase('name'), t);
     t += 180;
     for (const k of KEYS) {
@@ -114,7 +119,7 @@ export default function BootSequence() {
 
   if (!active || phase === 'done') return null;
 
-  const filled = Math.round((resolved / LINES.length) * BAR);
+  const filled = Math.round((resolved / lines.length) * BAR);
 
   return (
     <div className="bootseq" role="presentation" aria-hidden="true" data-phase={phase}>
@@ -125,7 +130,7 @@ export default function BootSequence() {
               <span>modul0 bootloader</span>
               <span>v0.4</span>
             </div>
-            {LINES.slice(0, shown).map((l, i) => {
+            {lines.slice(0, shown).map((l, i) => {
               const done = i < resolved;
               return (
                 <div key={i} className="boot-line">

@@ -75,9 +75,8 @@ export `cv-master.tex` (it's a bullet store); the master is a source for facts o
   (webp, at most 1600px wide) and must be real: the repo's own README images
   or shots of the live thing, checked for anything private before they go in.
 - `src/components/` - React islands: `BootSequence` (first visit per session;
-  log -> typed name with a deliberate typo + backspace fix -> purple wipe. The
-  "N archived" count in its log is hardcoded: keep it equal to `archive.length`;
-  skipped for reduced motion; an inline script in Site.astro sets
+  log -> typed name with a deliberate typo + backspace fix -> purple wipe; its
+  project count comes from profile.ts as props; skipped for reduced motion; an inline script in Site.astro sets
   `html[data-boot=pending]` before paint so there's no flash), `ProjectExplorer`
   (featured + filterable archive), `QuakeTerminal` (drop-down terminal on every
   page, `` ` `` toggles, esc/exit closes), `SectionNav`, `Uptime`. Astro:
@@ -245,8 +244,11 @@ accuracy rule: don't add facts there that profile.ts doesn't have.
 
 ## Commands
 
-No tests or linter: the
-checks are `npm run build` passing plus the screenshot pass below.
+No linter. `npm test` (node's own runner,
+no deps; node >= 22.6) covers the two things that must not break quietly:
+the worker's draft guard (`api/src/draft.js`) and the admin's publish order
+(`src/scripts/admin/publish.ts`). Otherwise the checks are `npm run build`
+passing plus the screenshot pass below.
 `astro.config.mjs` reads `SITE`/`BASE` env vars (defaults: modul0.dev, `/`)
 and uses `trailingSlash: 'always'`, so internal links end in `/`.
 

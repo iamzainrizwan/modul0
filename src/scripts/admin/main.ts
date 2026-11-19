@@ -42,8 +42,13 @@ async function open() {
   say('');
   route();
   // each panel loads on its own; one failing doesn't stop the rest
-  const all = [loadPosts(), loadContent(), loadGuestbook(), loadWall(), loadStats()];
-  await Promise.allSettled(all);
+  const panels: [string, Promise<unknown>][] = [
+    ['posts', loadPosts()], ['content', loadContent()], ['guestbook', loadGuestbook()], ['wall', loadWall()], ['visits', loadStats()],
+  ];
+  const results = await Promise.allSettled(panels.map(([, p]) => p));
+  // a panel that didn't load says so, or an empty list reads like everything's gone
+  const failed = results.flatMap((r, i) => (r.status === 'rejected' ? [`${panels[i][0]}: ${explain(r.reason)}`] : []));
+  if (failed.length) say(`Couldn't load ${failed.join(' ')}`, true);
   loadOverview();
   route();
 }
