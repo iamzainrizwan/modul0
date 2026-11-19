@@ -621,7 +621,7 @@ section.hero { margin-top: 0; border-top: none; }
 .cv-first { margin-top: 3.5rem; }
 
 /* featured projects as three cards; the whole card is the link */
-.teasers { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+.teasers { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
 .teasers > li { display: flex; }
 .teaser {
   display: flex;
