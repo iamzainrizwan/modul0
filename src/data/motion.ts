@@ -69,6 +69,7 @@ export const extras: { id: Exclude<keyof Motion, 'style' | 'outro'>; label: stri
   { id: 'pointer', label: 'square pointer' },
 ];
 
-// chosen by zain on the test site, 2026-09-24 (pointer: on to try, 2026-09-28)
-export const defaults: Motion = { style: 'dither', outro: 'wipe', reveal: true, cursor: true, decode: true, pointer: true };
+// chosen by zain on the test site, 2026-09-24 (pointer: on to try, 2026-09-28;
+// outro: bayer, the stepped one, 2026-11-19)
+export const defaults: Motion = { style: 'dither', outro: 'bayer', reveal: true, cursor: true, decode: true, pointer: true };
 export const testSite = import.meta.env.PUBLIC_TEST === '1';
