@@ -10,7 +10,8 @@ export type MotionStyle = 'dither' | 'redraw' | 'print' | 'instant' | 'smooth';
 export type Outro =
   | 'wipe' | 'shutter' | 'slash' | 'rail' | 'crt' | 'cut' | 'mod' | 'tear' | 'bar'
   | 'bayer' | 'adam7' | 'front' | 'afterglow' | 'halftone' | 'static' | 'scan' | 'life'
-  | 'bayer60' | 'wipe60' | 'sweep60' | 'front60' | 'slide60' | 'grow60';
+  | 'bayer60' | 'wipe60' | 'sweep60' | 'front60' | 'slide60' | 'grow60'
+  | 'name-rings' | 'name-square' | 'name-diamond' | 'name-spiral' | 'name-radar' | 'name-blocks' | 'name-shock' | 'name-box';
 export type Motion = {
   style: MotionStyle;
   outro: Outro;
@@ -28,7 +29,7 @@ export const styles: { id: MotionStyle; label: string }[] = [
   { id: 'instant', label: 'instant' },
   { id: 'smooth', label: 'smooth' },
 ];
-export const outros: { id: Outro; label: string; group: 'sweep' | 'dither' | 'fps' }[] = [
+export const outros: { id: Outro; label: string; group: 'sweep' | 'dither' | 'fps' | 'name' }[] = [
   { id: 'wipe', label: 'wipe', group: 'sweep' },
   { id: 'shutter', label: 'shutter', group: 'sweep' },
   { id: 'slash', label: '% slash', group: 'sweep' },
@@ -52,6 +53,14 @@ export const outros: { id: Outro; label: string; group: 'sweep' | 'dither' | 'fp
   { id: 'front60', label: 'from name', group: 'fps' },
   { id: 'slide60', label: 'slide', group: 'fps' },
   { id: 'grow60', label: 'grow', group: 'fps' },
+  { id: 'name-rings', label: 'rings', group: 'name' },
+  { id: 'name-square', label: 'square', group: 'name' },
+  { id: 'name-diamond', label: 'diamond', group: 'name' },
+  { id: 'name-spiral', label: 'spiral', group: 'name' },
+  { id: 'name-radar', label: 'radar', group: 'name' },
+  { id: 'name-blocks', label: 'blocks', group: 'name' },
+  { id: 'name-shock', label: 'shockwave', group: 'name' },
+  { id: 'name-box', label: 'box', group: 'name' },
 ];
 export const extras: { id: Exclude<keyof Motion, 'style' | 'outro'>; label: string }[] = [
   { id: 'reveal', label: 'scroll reveal' },

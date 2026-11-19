@@ -248,6 +248,17 @@ function Hand({ outro, phase, cells, onEnd, screen }: { outro: Outro; phase: 'wi
     case 'slide60':
     case 'grow60':
       return <div className={`ot-${outro} ot-${inn ? 'in' : 'out'}`} key={phase} data-end />;
+    // from the name: a front spreading out of the rail's name (NameFlow)
+    case 'name-box':
+      return <NameFlow key={phase} shape={outro} phase={phase} onEnd={onEnd} />;
+    case 'name-rings':
+    case 'name-square':
+    case 'name-diamond':
+    case 'name-spiral':
+    case 'name-radar':
+    case 'name-blocks':
+    case 'name-shock':
+      return inn ? <NameFlow key="in" shape={outro} phase={phase} onEnd={onEnd} /> : <span className="ot-done" key="out" data-end />;
     case 'sweep60':
       return <Flow key={phase} kind={outro} phase={phase} onEnd={onEnd} />;
     case 'front60':
@@ -531,6 +542,100 @@ function Flow({ kind, phase, onEnd }: { kind: 'sweep60' | 'front60'; phase: 'wip
   }, []);
   // front60 is one pass, in the wipe
   const ms = kind === 'front60' ? 650 : phase === 'wipe' ? 320 : 420;
+  useTween(ms, (p) => draw.current(p), onEnd);
+  return <canvas className="ot-cells" ref={ref} />;
+}
+
+// ---- from the name: fronts that spread out of the rail's name ----
+// every cell gets a threshold t in [0, 1) from its place relative to the
+// name (the shape), grained by the bayer matrix; as p runs 0 to 1 the cells
+// change over in t's order. all but box take the boot's black off the page;
+// shock carries a purple band at the front; box is purple and comes back
+type NameShape = 'name-rings' | 'name-square' | 'name-diamond' | 'name-spiral' | 'name-radar' | 'name-blocks' | 'name-shock' | 'name-box';
+
+// raw order for a cell dx, dy cells from the name (w, h: the screen in cells);
+// normalised afterwards, so only the order matters
+const SHAPES: Record<NameShape, (dx: number, dy: number, w: number, h: number) => number> = {
+  'name-rings': (dx, dy) => { const d = Math.hypot(dx, dy); return d + 6 * ((d / 24) % 1); },
+  'name-square': (dx, dy) => Math.max(Math.abs(dx), Math.abs(dy)),
+  'name-diamond': (dx, dy) => Math.abs(dx) + Math.abs(dy),
+  'name-spiral': (dx, dy, w, h) => (Math.atan2(dy, dx) + Math.PI) / (2 * Math.PI) * Math.hypot(w, h) * 0.35 + Math.hypot(dx, dy),
+  'name-radar': (dx, dy) => (Math.atan2(dx, -dy) + Math.PI * 2) % (Math.PI * 2),
+  'name-blocks': (dx, dy) => Math.hypot(dx, dy) * (0.8 + Math.random() * 0.4),
+  'name-shock': (dx, dy) => Math.hypot(dx, dy),
+  // a rectangle the shape of the screen
+  'name-box': (dx, dy, w, h) => Math.max(Math.abs(dx) / w, Math.abs(dy) / h),
+};
+const NAME_CELL: Partial<Record<NameShape, number>> = { 'name-blocks': 24 };
+const NAME_GRAIN: Partial<Record<NameShape, number>> = { 'name-blocks': 0, 'name-radar': 0.12, 'name-box': 0.18 };
+const NAME_MS: Partial<Record<NameShape, number>> = { 'name-shock': 820, 'name-radar': 700, 'name-spiral': 750 };
+const SHOCK = 0.14; // the purple band's width, in t
+
+function NameFlow({ shape, phase, onEnd }: { shape: NameShape; phase: 'wipe' | 'reveal'; onEnd: () => void }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const draw = useRef<(p: number) => void>(() => {});
+  useEffect(() => {
+    const canvas = ref.current!;
+    const dpr = devicePixelRatio || 1;
+    const cell = NAME_CELL[shape] ?? 2;
+    const cols = Math.ceil(innerWidth / cell), rows = Math.ceil(innerHeight / cell), n = cols * rows;
+    canvas.width = Math.round(innerWidth * dpr);
+    canvas.height = Math.round(innerHeight * dpr);
+    const ctx = canvas.getContext('2d')!;
+    const small = document.createElement('canvas');
+    small.width = cols;
+    small.height = rows;
+    const sctx = small.getContext('2d')!;
+    // the two colours as rgb: drawn once, read back
+    const css = getComputedStyle(document.documentElement);
+    const rgb = (v: string) => {
+      sctx.fillStyle = css.getPropertyValue(v).trim() || '#000';
+      sctx.fillRect(0, 0, 1, 1);
+      return [...sctx.getImageData(0, 0, 1, 1).data.slice(0, 3)];
+    };
+    const ink = rgb(shape === 'name-box' ? '--purple' : '--void');
+    const purple = rgb('--purple');
+    // the name's centre, in cells (the screen's top left if it isn't there)
+    const r = document.querySelector('.rail-name')?.getBoundingClientRect();
+    const ox = r && r.width ? (r.left + r.width / 2) / cell : 0;
+    const oy = r && r.width ? (r.top + r.height / 2) / cell : 0;
+    const f = SHAPES[shape];
+    const t = new Float32Array(n);
+    let max = 0;
+    for (let i = 0; i < n; i++) {
+      t[i] = f(i % cols - ox, Math.floor(i / cols) - oy, cols, rows);
+      if (t[i] > max) max = t[i];
+    }
+    const g = NAME_GRAIN[shape] ?? 0.25;
+    for (let i = 0; i < n; i++) t[i] = (t[i] / (max || 1)) * (1 - g) * 0.999 + g * ((bayer8(i % cols, Math.floor(i / cols)) + 0.5) / 64);
+    const img = sctx.createImageData(cols, rows);
+    const d = img.data;
+    const put = (i: number, c: number[] | null) => {
+      if (!c) return void (d[i * 4 + 3] = 0);
+      d[i * 4] = c[0];
+      d[i * 4 + 1] = c[1];
+      d[i * 4 + 2] = c[2];
+      d[i * 4 + 3] = 255;
+    };
+    draw.current = (p) => {
+      if (shape === 'name-shock') {
+        // page inside the band, purple in it, black beyond
+        const q = p * (1 + SHOCK);
+        for (let i = 0; i < n; i++) put(i, t[i] < q - SHOCK ? null : t[i] < q ? purple : ink);
+      } else if (shape === 'name-box') {
+        // in: purple grows out to cover the boot; out: it pulls back into the name
+        for (let i = 0; i < n; i++) put(i, (phase === 'wipe' ? t[i] < p : t[i] < 1 - p) ? ink : null);
+      } else {
+        for (let i = 0; i < n; i++) put(i, t[i] >= p ? ink : null);
+      }
+      sctx.putImageData(img, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(small, 0, 0, cols * cell * dpr, rows * cell * dpr);
+    };
+    draw.current(0);
+  }, []);
+  const ms = shape === 'name-box' ? (phase === 'wipe' ? 340 : 440) : NAME_MS[shape] ?? 650;
   useTween(ms, (p) => draw.current(p), onEnd);
   return <canvas className="ot-cells" ref={ref} />;
 }
